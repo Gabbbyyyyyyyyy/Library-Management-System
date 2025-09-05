@@ -29,7 +29,6 @@
         private void InitializeComponent()
         {
             this.txtStudentNo = new System.Windows.Forms.TextBox();
-            this.txtFullName = new System.Windows.Forms.TextBox();
             this.txtCourse = new System.Windows.Forms.TextBox();
             this.txtYearLevel = new System.Windows.Forms.TextBox();
             this.btnAdd = new System.Windows.Forms.Button();
@@ -37,6 +36,8 @@
             this.btnDelete = new System.Windows.Forms.Button();
             this.btnSearch = new System.Windows.Forms.Button();
             this.dgvMembers = new System.Windows.Forms.DataGridView();
+            this.txtFirstName = new System.Windows.Forms.TextBox();
+            this.txtLastName = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.dgvMembers)).BeginInit();
             this.SuspendLayout();
             // 
@@ -47,14 +48,6 @@
             this.txtStudentNo.Size = new System.Drawing.Size(100, 22);
             this.txtStudentNo.TabIndex = 0;
             this.txtStudentNo.Text = " Student No.";
-            // 
-            // txtFullName
-            // 
-            this.txtFullName.Location = new System.Drawing.Point(350, 214);
-            this.txtFullName.Name = "txtFullName";
-            this.txtFullName.Size = new System.Drawing.Size(100, 22);
-            this.txtFullName.TabIndex = 1;
-            this.txtFullName.Text = "Full Name";
             // 
             // txtCourse
             // 
@@ -119,11 +112,31 @@
             this.dgvMembers.TabIndex = 8;
             this.dgvMembers.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvMembers_CellClick);
             // 
+            // txtFirstName
+            // 
+            this.txtFirstName.Location = new System.Drawing.Point(411, 187);
+            this.txtFirstName.Name = "txtFirstName";
+            this.txtFirstName.Size = new System.Drawing.Size(100, 22);
+            this.txtFirstName.TabIndex = 9;
+            this.txtFirstName.Text = "First Name";
+            this.txtFirstName.TextChanged += new System.EventHandler(this.txtFirstName_TextChanged);
+            // 
+            // txtLastName
+            // 
+            this.txtLastName.Location = new System.Drawing.Point(382, 249);
+            this.txtLastName.Name = "txtLastName";
+            this.txtLastName.Size = new System.Drawing.Size(100, 22);
+            this.txtLastName.TabIndex = 10;
+            this.txtLastName.Text = "Last Name";
+            this.txtLastName.TextChanged += new System.EventHandler(this.txtLastName_TextChanged);
+            // 
             // MembersForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.txtLastName);
+            this.Controls.Add(this.txtFirstName);
             this.Controls.Add(this.dgvMembers);
             this.Controls.Add(this.btnSearch);
             this.Controls.Add(this.btnDelete);
@@ -131,7 +144,6 @@
             this.Controls.Add(this.btnAdd);
             this.Controls.Add(this.txtYearLevel);
             this.Controls.Add(this.txtCourse);
-            this.Controls.Add(this.txtFullName);
             this.Controls.Add(this.txtStudentNo);
             this.Name = "MembersForm";
             this.Text = "MembersForm";
@@ -144,7 +156,6 @@
         #endregion
 
         private System.Windows.Forms.TextBox txtStudentNo;
-        private System.Windows.Forms.TextBox txtFullName;
         private System.Windows.Forms.TextBox txtCourse;
         private System.Windows.Forms.TextBox txtYearLevel;
         private System.Windows.Forms.Button btnAdd;
@@ -152,5 +163,7 @@
         private System.Windows.Forms.Button btnDelete;
         private System.Windows.Forms.Button btnSearch;
         private System.Windows.Forms.DataGridView dgvMembers;
+        private System.Windows.Forms.TextBox txtFirstName;
+        private System.Windows.Forms.TextBox txtLastName;
     }
 }

@@ -14,6 +14,9 @@ namespace Library_Management_System
 {
     public partial class MainForm : Form
     {
+        // Add this property here
+        public bool IsAdmin { get; set; } = false;
+
         public MainForm()
         {
             InitializeComponent();
@@ -29,6 +32,15 @@ namespace Library_Management_System
         {
             MembersForm membersForm = new MembersForm();
             membersForm.ShowDialog();
+        }
+
+        private void MainForm_Load(object sender, EventArgs e)
+        {
+            if (!IsAdmin)
+            {
+                // Disable admin-only buttons
+                button2.Enabled = false; // Members management
+            }
         }
 
         //private void button1_Click(object sender, EventArgs e)

@@ -22,10 +22,14 @@ namespace LibraryManagementSystem.Data
             {
                 con.Open();
                 string sql = @"
+
+                
+
                 CREATE TABLE IF NOT EXISTS Members (
                     MemberId   INTEGER PRIMARY KEY AUTOINCREMENT,
                     StudentNo  TEXT UNIQUE,
-                    FullName   TEXT NOT NULL,
+                    FirstName   TEXT NOT NULL,
+                    LastName   TEXT NOT NULL,
                     Course     TEXT,
                     YearLevel  TEXT
                 );

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 using Library_Management_System;
+using Library_Management_System.Forms;
 
 namespace LibraryManagementSystem
 {
@@ -19,7 +20,7 @@ namespace LibraryManagementSystem
             Data.Db.EnsureCreated();
 
             // Run your Main form
-            Application.Run(new MainForm());
+            Application.Run(new PreLoginButtons());
         }
     }
 }

@@ -169,5 +169,15 @@ namespace LibraryManagementSystem
                 txtCategory.Text = dgvBooks.Rows[e.RowIndex].Cells["Category"].Value.ToString();
             }
         }
+
+        private void txtISBN_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void txtAuthor_TextChanged(object sender, EventArgs e)
+        {
+
+        }
     }
 }
