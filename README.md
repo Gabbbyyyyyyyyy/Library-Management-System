@@ -11,7 +11,7 @@ A C# Windows Forms application for managing a library, using **SQLite** as the d
 ## Setup Instructions
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/LibraryManagementSystem.git
+   git clone https://github.com/Gabbbyyyyyyyyy/Library-Management-System.git
    cd LibraryManagementSystem
    
 2. Open the solution in **Visual Studio**.
