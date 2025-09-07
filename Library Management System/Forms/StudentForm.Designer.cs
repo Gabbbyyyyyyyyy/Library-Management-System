@@ -1,4 +1,7 @@
-﻿namespace Library_Management_System.Forms
+﻿using System.Drawing;
+using System;
+
+namespace Library_Management_System.Forms
 {
     partial class StudentForm
     {
@@ -28,6 +31,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(StudentForm));
             this.lblStudentNo = new System.Windows.Forms.Label();
             this.lblName = new System.Windows.Forms.Label();
             this.lblCourse = new System.Windows.Forms.Label();
@@ -36,6 +40,11 @@
             this.label2 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
+            this.panelNotification = new System.Windows.Forms.Panel();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.lblNotification = new System.Windows.Forms.Label();
+            this.panelNotification.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
             // lblStudentNo
@@ -115,11 +124,45 @@
             this.label4.TabIndex = 7;
             this.label4.Text = "Student No.";
             // 
+            // panelNotification
+            // 
+            this.panelNotification.BackColor = System.Drawing.Color.LightYellow;
+            this.panelNotification.Controls.Add(this.pictureBox1);
+            this.panelNotification.Controls.Add(this.lblNotification);
+            this.panelNotification.Location = new System.Drawing.Point(58, 82);
+            this.panelNotification.Name = "panelNotification";
+            this.panelNotification.Size = new System.Drawing.Size(619, 290);
+            this.panelNotification.TabIndex = 8;
+            this.panelNotification.Paint += new System.Windows.Forms.PaintEventHandler(this.panel1_Paint);
+            // 
+            // pictureBox1
+            // 
+            this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
+            this.pictureBox1.InitialImage = null;
+            this.pictureBox1.Location = new System.Drawing.Point(13, 22);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(53, 53);
+            this.pictureBox1.TabIndex = 1;
+            this.pictureBox1.TabStop = false;
+            this.pictureBox1.Click += new System.EventHandler(this.pictureBox1_Click);
+            // 
+            // lblNotification
+            // 
+            this.lblNotification.AutoSize = true;
+            this.lblNotification.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblNotification.Location = new System.Drawing.Point(91, 40);
+            this.lblNotification.Name = "lblNotification";
+            this.lblNotification.Size = new System.Drawing.Size(53, 20);
+            this.lblNotification.TabIndex = 0;
+            this.lblNotification.Text = "label5";
+            this.lblNotification.Click += new System.EventHandler(this.lblNotification_Click);
+            // 
             // StudentForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.panelNotification);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.label2);
@@ -128,9 +171,13 @@
             this.Controls.Add(this.lblCourse);
             this.Controls.Add(this.lblName);
             this.Controls.Add(this.lblStudentNo);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "StudentForm";
             this.Text = "StudentForm";
             this.Load += new System.EventHandler(this.StudentForm_Load);
+            this.panelNotification.ResumeLayout(false);
+            this.panelNotification.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -146,5 +193,8 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Panel panelNotification;
+        private System.Windows.Forms.Label lblNotification;
+        private System.Windows.Forms.PictureBox pictureBox1;
     }
 }

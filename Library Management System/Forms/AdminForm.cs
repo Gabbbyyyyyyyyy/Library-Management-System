@@ -65,7 +65,7 @@ namespace Library_Management_System.Forms
 
 
             // --- Admin Login ---
-            if (username == "admin" && password == "admin123")
+            if (username == "admin" && password == "admin")
             {
                 MessageBox.Show("Login successful!", "Welcome", MessageBoxButtons.OK, MessageBoxIcon.Information);
 

@@ -10,6 +10,8 @@ namespace LibraryManagementSystem.Data
         public static string DbPath => Path.Combine(Application.StartupPath, "library.db");
         public static string ConnectionString => $"Data Source={DbPath};Version=3;";
 
+        //DROP TABLE IF EXISTS Books; -> THIS WILL RESET ALL THE INFO OF YOUR BOOKS
+
         // Create DB and tables if not exist
         public static void EnsureCreated()
         {
@@ -34,13 +36,16 @@ namespace LibraryManagementSystem.Data
                     YearLevel  TEXT
                 );
 
+                
+
                 CREATE TABLE IF NOT EXISTS Books (
-                    BookId     INTEGER PRIMARY KEY AUTOINCREMENT,
-                    ISBN       TEXT,
-                    Title      TEXT NOT NULL,
-                    Author     TEXT,
-                    Category   TEXT,
-                    IsBorrowed INTEGER NOT NULL DEFAULT 0
+                    BookId          INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ISBN            TEXT,
+                    Title           TEXT NOT NULL,
+                    Author          TEXT,
+                    Category        TEXT,
+                    Quantity        INTEGER NOT NULL DEFAULT 1,
+                    AvailableCopies INTEGER NOT NULL DEFAULT 1
                 );
 
                 CREATE TABLE IF NOT EXISTS BorrowedBooks (
