@@ -25,7 +25,6 @@ namespace LibraryManagementSystem.Data
                 con.Open();
                 string sql = @"
 
-                
 
                 CREATE TABLE IF NOT EXISTS Members (
                     MemberId   INTEGER PRIMARY KEY AUTOINCREMENT,

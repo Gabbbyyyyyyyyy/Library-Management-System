@@ -142,6 +142,7 @@ namespace Library_Management_System.Forms
         // Student Number (exactly 6 digits, not blank)
         private void txtStudentNo_TextChanged(object sender, EventArgs e)
         {
+            // 1. Blank check (do this first!)
             if (string.IsNullOrWhiteSpace(txtStudentNo.Text))
             {
                 lblMessage.Text = "Student No cannot be blank.";
@@ -149,22 +150,38 @@ namespace Library_Management_System.Forms
                 return;
             }
 
-            if (!System.Text.RegularExpressions.Regex.IsMatch(txtStudentNo.Text, @"^\d{0,6}$"))
+            // 2. Letters or invalid chars check
+            if (!System.Text.RegularExpressions.Regex.IsMatch(txtStudentNo.Text, @"^\d+$"))
             {
                 txtStudentNo.Text = new string(txtStudentNo.Text.Where(char.IsDigit).ToArray());
                 txtStudentNo.SelectionStart = txtStudentNo.Text.Length;
+                MessageBox.Show("Student No cannot contain words or any symbols. Please enter numbers only.");
+                return;
             }
 
-            if (txtStudentNo.Text.Length != 6)
+            // 3. Restrict length to max 6 digits
+            if (txtStudentNo.Text.Length > 6)
             {
-                lblMessage.Text = "Student No must be exactly 6 digits.";
-                lblMessage.ForeColor = Color.Red;
+                txtStudentNo.Text = txtStudentNo.Text.Substring(0, 6); // cut extra digits
+                txtStudentNo.SelectionStart = txtStudentNo.Text.Length;
+                MessageBox.Show("Student No must be exactly 6 digits.");
+                return;
             }
+
+            //// 4. Final validation (must be exactly 6 digits)
+            //if (txtStudentNo.Text.Length != 6)
+            //{
+            //    lblMessage.Text = "Student No must be exactly 6 digits.";
+            //    lblMessage.ForeColor = Color.Red;
+            //}
             else
             {
-                lblMessage.Text = "";
+                lblMessage.Text = ""; // valid
             }
         }
+
+
+
 
         private void RegisterForm_Load(object sender, EventArgs e)
         {
