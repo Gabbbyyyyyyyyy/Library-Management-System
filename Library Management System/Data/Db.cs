@@ -23,13 +23,14 @@ namespace LibraryManagementSystem.Data
             using (var con = new SQLiteConnection(ConnectionString))
             {
                 con.Open();
-                string sql = @"
 
+                // ✅ Create Members table (without IsActive initially)
+                string sql = @"
 
                 CREATE TABLE IF NOT EXISTS Members (
                     MemberId   INTEGER PRIMARY KEY AUTOINCREMENT,
                     StudentNo  TEXT UNIQUE,
-                    FirstName   TEXT NOT NULL,
+                    FirstName  TEXT NOT NULL,
                     LastName   TEXT NOT NULL,
                     Course     TEXT,
                     YearLevel  TEXT
@@ -62,6 +63,29 @@ namespace LibraryManagementSystem.Data
                 using (var cmd = new SQLiteCommand(sql, con))
                 {
                     cmd.ExecuteNonQuery();
+                }
+                // ✅ Check if IsActive column exists
+                bool hasIsActive = false;
+                using (var cmd = new SQLiteCommand("PRAGMA table_info(Members);", con))
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        if (reader["name"].ToString().Equals("IsActive", StringComparison.OrdinalIgnoreCase))
+                        {
+                            hasIsActive = true;
+                            break;
+                        }
+                    }
+                }
+
+                // ✅ Add column only if missing
+                if (!hasIsActive)
+                {
+                    using (var cmd = new SQLiteCommand("ALTER TABLE Members ADD COLUMN IsActive INTEGER DEFAULT 1;", con))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
                 }
             }
         }

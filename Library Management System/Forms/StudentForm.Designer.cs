@@ -43,6 +43,7 @@ namespace Library_Management_System.Forms
             this.panelNotification = new System.Windows.Forms.Panel();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.lblNotification = new System.Windows.Forms.Label();
+            this.btnLogout = new System.Windows.Forms.Button();
             this.panelNotification.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
@@ -157,11 +158,23 @@ namespace Library_Management_System.Forms
             this.lblNotification.Text = "label5";
             this.lblNotification.Click += new System.EventHandler(this.lblNotification_Click);
             // 
+            // btnLogout
+            // 
+            this.btnLogout.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnLogout.Location = new System.Drawing.Point(58, 396);
+            this.btnLogout.Name = "btnLogout";
+            this.btnLogout.Size = new System.Drawing.Size(95, 42);
+            this.btnLogout.TabIndex = 9;
+            this.btnLogout.Text = "Logout";
+            this.btnLogout.UseVisualStyleBackColor = true;
+            this.btnLogout.Click += new System.EventHandler(this.btnLogout_Click);
+            // 
             // StudentForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.btnLogout);
             this.Controls.Add(this.panelNotification);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.label3);
@@ -196,5 +209,6 @@ namespace Library_Management_System.Forms
         private System.Windows.Forms.Panel panelNotification;
         private System.Windows.Forms.Label lblNotification;
         private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.Button btnLogout;
     }
 }

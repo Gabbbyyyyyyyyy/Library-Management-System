@@ -82,6 +82,10 @@ namespace Library_Management_System.Forms
             txtPassword.Focus(); // Focus back on password
             }
 
+        private void AdminForm_Load(object sender, EventArgs e)
+        {
+
         }
+    }
     }
 

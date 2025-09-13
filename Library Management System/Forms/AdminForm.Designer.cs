@@ -99,6 +99,7 @@ namespace Library_Management_System.Forms
             this.Controls.Add(this.txtUsername);
             this.Name = "AdminForm";
             this.Text = "AdminForn";
+            this.Load += new System.EventHandler(this.AdminForm_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 

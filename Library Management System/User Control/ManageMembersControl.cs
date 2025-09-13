@@ -2,43 +2,67 @@
 using System.Data;
 using System.Data.SQLite;
 using System.Drawing;
-using System.Linq;
 using System.Windows.Forms;
-using Library_Management_System.Forms;
+using Library_Management_System.Models;
 using LibraryManagementSystem.Data;
 
 namespace LibraryManagementSystem
 {
-    public partial class MembersForm : UserControl
+    public partial class ManageMembersControl : UserControl
     {
-        public MembersForm()
+        public ManageMembersControl()
         {
             InitializeComponent();
             LoadMembers();
             dgvMembers.CellFormatting += dgvMembers_CellFormatting;
+            dgvMembers.SelectionChanged += dgvMembers_SelectionChanged;
+            this.Size = Screen.PrimaryScreen.Bounds.Size;
+            this.Location = Screen.PrimaryScreen.Bounds.Location;
+            DataGridViewHelper.ApplyDefaultStyle(dgvMembers);
+            // Apply global searchbox helper
+            TextBoxHelper.ApplySearchBox(txtSearch, "Search members...", txtSearch_KeyDown);
+            txtSearch.TextChanged += txtSearch_TextChanged; // live search
+
 
         }
 
+        // call this when Enter is pressed in the search TextBox
+        private void txtSearch_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.SuppressKeyPress = true; // prevent ding
+                                           // Option A: if you have a PerformSearch method:
+                                           // PerformSearch();
+
+                // Option B: directly call your loader
+                LoadMembers(txtSearch.Text.Trim());
+
+                // If you have a search button, you can also do:
+                // btnSearch.PerformClick();
+            }
+        }
+
+
+        // Load Members into DataGridView
         private void LoadMembers(string txtSearch = "")
         {
             using (var con = Db.GetConnection())
             {
                 con.Open();
                 string query = @"
-            SELECT 
-                MemberId, 
-                StudentNo, 
-                FirstName, 
-                LastName, 
-                Course, 
-                YearLevel,
-                CASE 
-                    WHEN IsActive = 1 THEN 'Active' 
-                    ELSE 'Inactive' 
-                END AS Status
-            FROM Members";
-
-
+                    SELECT 
+                        MemberId, 
+                        StudentNo, 
+                        FirstName, 
+                        LastName, 
+                        Course, 
+                        YearLevel,
+                        CASE 
+                            WHEN IsActive = 1 THEN 'Active' 
+                            ELSE 'Inactive' 
+                        END AS Status
+                    FROM Members";
 
                 if (!string.IsNullOrWhiteSpace(txtSearch))
                 {
@@ -60,22 +84,19 @@ namespace LibraryManagementSystem
             }
         }
 
+        // Style the Status column
         private void dgvMembers_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {
             if (dgvMembers.Columns[e.ColumnIndex].Name == "Status" && e.Value != null)
             {
                 if (e.Value.ToString() == "Inactive")
-                {
                     e.CellStyle.ForeColor = Color.Red;
-                }
                 else
-                {
                     e.CellStyle.ForeColor = Color.Green;
-                }
             }
         }
 
-
+        // Deactivate a member
         private void btnDeactivate_Click(object sender, EventArgs e)
         {
             if (dgvMembers.SelectedRows.Count == 0)
@@ -99,11 +120,10 @@ namespace LibraryManagementSystem
             }
 
             MessageBox.Show("Member deactivated successfully!");
-            LoadMembers(); // make sure this method only loads active members
+            LoadMembers();
         }
 
-
-
+        // Show member details when clicked
         private void dgvMembers_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex >= 0)
@@ -117,18 +137,7 @@ namespace LibraryManagementSystem
             }
         }
 
-
-
-        private void MembersForm_Load(object sender, EventArgs e)
-        {
-
-        }
-
-        private void txtSearch_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
+        // Update Member (open edit form)
         private void btnUpdate_Click(object sender, EventArgs e)
         {
             if (dgvMembers.SelectedRows.Count == 0)
@@ -151,6 +160,7 @@ namespace LibraryManagementSystem
             }
         }
 
+        // Reactivate Member
         private void btnReactivate_Click(object sender, EventArgs e)
         {
             if (dgvMembers.SelectedRows.Count == 0)
@@ -177,14 +187,40 @@ namespace LibraryManagementSystem
             LoadMembers();
         }
 
+        // Enable/Disable Deactivate Button depending on member status
         private void dgvMembers_SelectionChanged(object sender, EventArgs e)
         {
             if (dgvMembers.SelectedRows.Count > 0)
             {
                 string status = dgvMembers.SelectedRows[0].Cells["Status"].Value.ToString();
-                btnReactivate.Enabled = status == "Inactive";
+                btnDeactivate.Enabled = status == "Active";   // ✅ enable only if Active
+                btnReactivate.Enabled = status == "Inactive"; // keep your original logic
+            }
+            else
+            {
+                // No row selected, disable both
+                btnDeactivate.Enabled = false;
+                btnReactivate.Enabled = false;
             }
         }
 
+
+
+
+        // Search members live
+        private void txtSearch_TextChanged(object sender, EventArgs e)
+        {
+            LoadMembers(txtSearch.Text.Trim());
+        }
+
+        private void ManageMembersControl_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label6_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

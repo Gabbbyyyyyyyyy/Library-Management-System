@@ -2,35 +2,42 @@
 using System.Data;
 using System.Data.SQLite;
 using System.Drawing;
-using System.Windows.Forms;
-using LibraryManagementSystem.Data;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq; // install Newtonsoft.Json via NuGet
-using System.Linq;
-
+using System.Windows.Forms;
+using Newtonsoft.Json.Linq; // install via NuGet
+using LibraryManagementSystem.Data;
+using Library_Management_System.Models;
 
 
 namespace LibraryManagementSystem
 {
-
-    public partial class BooksForm : UserControl
+    public partial class ManageBooksControl : UserControl
     {
-        public BooksForm()
+        private ErrorProvider errorProvider1 = new ErrorProvider();
+
+        public ManageBooksControl()
         {
             InitializeComponent();
             LoadBooks();
+
             dgvBooks.ReadOnly = true;
             dgvBooks.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvBooks.AllowUserToAddRows = false;
             dgvBooks.AllowUserToDeleteRows = false;
+            DataGridViewHelper.ApplyDefaultStyle(dgvBooks);
+
+            // Prevent auto-selection after loading data
+            dgvBooks.DataBindingComplete += (s, e) => dgvBooks.ClearSelection();
+
             SendMessage(txtSearch.Handle, EM_SETCUEBANNER, 0, "Search...");
             txtSearch.KeyDown += txtSearch_KeyDown;
-
+            this.Dock = DockStyle.Fill;
+            this.Size = Screen.PrimaryScreen.Bounds.Size;
+            this.Location = Screen.PrimaryScreen.Bounds.Location;
         }
-
-
 
         private async Task FetchBookInfo(string searchText)
         {
@@ -85,7 +92,7 @@ namespace LibraryManagementSystem
 
         private const int EM_SETCUEBANNER = 0x1501;
 
-
+        // Load Books into DataGridView
         private void LoadBooks(string search = "")
         {
             using (var con = Db.GetConnection())
@@ -216,11 +223,6 @@ namespace LibraryManagementSystem
 
 
 
-
-
-        private ErrorProvider errorProvider1 = new ErrorProvider();
-
-
         private void btnUpdate_Click(object sender, EventArgs e)
         {
             // Step 1: Ensure a book row is selected
@@ -325,7 +327,7 @@ namespace LibraryManagementSystem
             LoadBooks(txtSearch.Text); // Make sure you add a txtSearch TextBox in your form
         }
 
-       
+
 
         private void ClearInputs()
         {
@@ -749,6 +751,12 @@ namespace LibraryManagementSystem
 
         }
 
+        private void ManageBooksControl_Load(object sender, EventArgs e)
+        {
+            // You can leave this empty or put initialization code here
+        }
+
+
         private void txtTitle_TextChanged(object sender, EventArgs e)
         {
             string title = txtTitle.Text.Trim();
@@ -764,6 +772,7 @@ namespace LibraryManagementSystem
                 txtTitle.SelectionStart = txtTitle.Text.Length; // Keep cursor at the end
             }
         }
+
 
 
         private void txtCategory_TextChanged(object sender, EventArgs e)

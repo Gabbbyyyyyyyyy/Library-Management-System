@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Data.SQLite;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -40,21 +41,63 @@ namespace Library_Management_System.Forms
                 return;
             }
 
+            // Check if student exists and is active
+            using (var con = Db.GetConnection())
+            {
+                con.Open();
+                string query = "SELECT IsActive FROM Members WHERE StudentNo = @studentNo";
+                using (var cmd = new SQLiteCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@studentNo", studentNo);
+                    object result = cmd.ExecuteScalar();
 
+                    if (result == null)
+                    {
+                        lblMessage.Text = "Invalid Student No.";
+                        lblMessage.ForeColor = System.Drawing.Color.Red;
+                        return;
+                    }
 
+                    int isActive = Convert.ToInt32(result);
+
+                    if (isActive == 0)
+                    {
+                        MessageBox.Show(
+                            "Your account has been deactivated.\nPlease inquire at the library admin desk.",
+                            "Account Deactivated",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Warning
+                        );
+                        txtStudentNo.Clear();
+                        return;
+                    }
+                }
+            }
+
+            // ✅ Student is active, proceed to login
             if (authService.Authenticate(studentNo))
             {
                 this.Hide();
                 StudentForm studentForm = new StudentForm(studentNo);
-                //studentForm.FormClosed += (s, args) => this.Show(); // Show Login again when StudentForm is closed
-                studentForm.Show(); // ✅ Use Show() instead of ShowDialog()
+                studentForm.FormClosed += (s, args) =>
+                {
+                    // When StudentForm is closed/logged out, reset login form
+                    this.Show();
+                    txtStudentNo.Clear();
+                    lblMessage.Text = "";
+                };
+                studentForm.Show();
             }
             else
             {
                 lblMessage.Text = "Invalid Student No.";
                 lblMessage.ForeColor = System.Drawing.Color.Red;
+                txtStudentNo.Clear();
             }
         }
+
+
+
 
 
         private void txtPassword_MaskInputRejected(object sender, MaskInputRejectedEventArgs e)

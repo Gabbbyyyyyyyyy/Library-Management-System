@@ -24,7 +24,8 @@ namespace Library_Management_System.Forms
             using (var con = Db.GetConnection())
             {
                 con.Open();
-                string query = "SELECT StudentNo, FirstName, LastName, Course, YearLevel FROM Members WHERE StudentNo=@studentNo";
+                string query = "SELECT StudentNo, FirstName, LastName, Course, YearLevel, IsActive FROM Members WHERE StudentNo=@studentNo";
+
 
                 using (var cmd = new SQLiteCommand(query, con))
                 {
@@ -33,6 +34,22 @@ namespace Library_Management_System.Forms
                     {
                         if (reader.Read())
                         {
+
+                            // Check if account is active
+                            bool isActive = Convert.ToInt32(reader["IsActive"]) == 1;
+                            if (!isActive)
+                            {
+                                MessageBox.Show("⚠️ Your account has been deactivated.\n" +
+                                                    "Please inquire at the library administrator.",
+                                                    "Account Deactivated",
+                                                    MessageBoxButtons.OK,
+                                                    MessageBoxIcon.Warning
+                                                );
+
+                                this.Close(); // close the StudentForm
+                                return;
+                            }
+                            // If active → show student info
                             lblStudentNo.Text = reader["StudentNo"].ToString();
                             lblName.Text = reader["FirstName"].ToString() + " " + reader["LastName"].ToString();
                             lblCourse.Text = reader["Course"].ToString();
@@ -159,5 +176,15 @@ namespace Library_Management_System.Forms
         {
             
         }
+
+        private void btnLogout_Click(object sender, EventArgs e)
+        {
+            // Show message first
+            MessageBox.Show("Logout successful!", "Logout", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            // Now close the StudentForm → LoginForm will reappear (because of FormClosed handler in LoginForm)
+            this.Close();
+        }
+
     }
 }
