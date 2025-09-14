@@ -116,6 +116,9 @@ namespace LibraryManagementSystem
                     {
                         DataTable dt = new DataTable();
                         da.Fill(dt);
+
+                        // Set a taller row height
+                        dgvBooks.RowTemplate.Height = 40; // adjust the number as you like
                         dgvBooks.DataSource = dt;
 
                         // Remove default selection
@@ -799,5 +802,7 @@ namespace LibraryManagementSystem
         {
 
         }
+
+        
     }
 }

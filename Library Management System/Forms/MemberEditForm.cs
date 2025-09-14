@@ -30,14 +30,19 @@ namespace LibraryManagementSystem
              
             }
 
-            if (!System.Text.RegularExpressions.Regex.IsMatch(txtFirstName.Text, @"^[a-zA-Z\s]*$"))
+            if (!System.Text.RegularExpressions.Regex.IsMatch(txtFirstName.Text, @"^[a-zA-Z\s.]*$"))
             {
-                MessageBox.Show("First Name must contain words only (no numbers or special characters).",
+                MessageBox.Show("First Name must contain letters, spaces, or periods only (no numbers or other special characters).",
                     "Invalid Input", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
-                txtFirstName.Text = new string(txtFirstName.Text.Where(c => char.IsLetter(c) || char.IsWhiteSpace(c)).ToArray());
+                // Keep only letters, spaces, or periods
+                txtFirstName.Text = new string(txtFirstName.Text
+                                               .Where(c => char.IsLetter(c) || char.IsWhiteSpace(c) || c == '.')
+                                               .ToArray());
+
                 txtFirstName.SelectionStart = txtFirstName.Text.Length;
             }
+
         }
 
         // Last Name (letters only, not blank)

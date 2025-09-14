@@ -17,6 +17,8 @@ namespace Library_Management_System
     {
         // Add this property here
         public bool IsAdmin { get; set; } = false;
+        public string Username { get; set; } = "ADMIN";
+
 
         // Inside MainForm.Designer.cs
         private System.Windows.Forms.PictureBox pictureBoxLogo;
@@ -57,8 +59,11 @@ namespace Library_Management_System
 
         private void MainForm_Load(object sender, EventArgs e)
         {
-            
+            // Load Dashboard with the logged-in username
+            LoadControl(new DashboardControl(Username));
         }
+
+
 
         private void btnDashboard_Click(object sender, EventArgs e)
         {
@@ -67,18 +72,29 @@ namespace Library_Management_System
 
         private void btnLogout_Click(object sender, EventArgs e)
         {
-            // Show message first
-            MessageBox.Show("Logout successful!", "Logout", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            // Ask user for confirmation
+            DialogResult result = MessageBox.Show(
+                "Are you sure you want to logout?",
+                "Confirm Logout",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question
+            );
 
-            // Now close the StudentForm → LoginForm will reappear (because of FormClosed handler in LoginForm)
-            this.Close();
+            if (result == DialogResult.Yes)
+            {
+                // Only logout if user clicks Yes
+                MessageBox.Show("Logout successful!", "Logout", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                this.Close();
+            }
+            // If user clicks No, nothing happens
         }
+
 
         private void panelContainer_Paint(object sender, PaintEventArgs e)
         {
 
         }
-        private void LoadControl(UserControl control)
+        public void LoadControl(UserControl control)
         {
             panelContainer.Controls.Clear();
             control.Dock = DockStyle.Fill;
@@ -91,6 +107,36 @@ namespace Library_Management_System
         }
 
         private void pictureBox1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label6_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void panel1_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void panel2_Paint(object sender, PaintEventArgs e)
         {
 
         }

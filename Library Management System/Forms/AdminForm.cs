@@ -70,11 +70,18 @@ namespace Library_Management_System.Forms
                 MessageBox.Show("Login successful!", "Welcome", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 this.Hide();
-                MainForm mainForm = new MainForm();
+
+                // Pass the username to MainForm
+                MainForm mainForm = new MainForm
+                {
+                    Username = username // <-- this property will be added to MainForm
+                };
                 mainForm.ShowDialog();
+
                 this.Close();
                 return;
             }
+
 
             // --- Incorrect credentials ---
             MessageBox.Show("Incorrect username or password.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);

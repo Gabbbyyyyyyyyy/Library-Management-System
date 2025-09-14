@@ -19,6 +19,7 @@ namespace LibraryManagementSystem
 
         }
 
+        // Load Members into DataGridView
         private void LoadMembers(string txtSearch = "")
         {
             using (var con = Db.GetConnection())
@@ -38,8 +39,6 @@ namespace LibraryManagementSystem
                 END AS Status
             FROM Members";
 
-
-
                 if (!string.IsNullOrWhiteSpace(txtSearch))
                 {
                     query += " WHERE StudentNo LIKE @search OR FirstName LIKE @search OR LastName LIKE @search OR Course LIKE @search";
@@ -55,10 +54,23 @@ namespace LibraryManagementSystem
                         DataTable dt = new DataTable();
                         da.Fill(dt);
                         dgvMembers.DataSource = dt;
+
+                        // ✅ Clear selection
+                        dgvMembers.ClearSelection();
+
+                        // ✅ Ensure no current cell is set (prevents first row from appearing selected)
+                        if (dgvMembers.Rows.Count > 0)
+                            dgvMembers.CurrentCell = null;
+
+                        // ✅ Disable buttons since nothing is selected
+                        btnDeactivate.Enabled = false;
+                        btnReactivate.Enabled = false;
                     }
                 }
             }
         }
+
+
 
         private void dgvMembers_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {

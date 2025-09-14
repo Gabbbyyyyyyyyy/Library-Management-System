@@ -1,4 +1,6 @@
-﻿namespace LibraryManagementSystem
+﻿using System.Drawing;
+
+namespace LibraryManagementSystem
 {
     partial class ManageMembersControl
     {
@@ -35,10 +37,9 @@
             this.dgvMembers = new System.Windows.Forms.DataGridView();
             this.txtSearch = new System.Windows.Forms.TextBox();
             this.btnReactivate = new System.Windows.Forms.Button();
-            this.panel2 = new System.Windows.Forms.Panel();
+            this.lblSearchMessage = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dgvMembers)).BeginInit();
-            this.panel2.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnUpdate
@@ -95,20 +96,21 @@
             this.btnReactivate.UseVisualStyleBackColor = true;
             this.btnReactivate.Click += new System.EventHandler(this.btnReactivate_Click);
             // 
-            // panel2
+            // lblSearchMessage
             // 
-            this.panel2.Controls.Add(this.label6);
-            this.panel2.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panel2.Location = new System.Drawing.Point(0, 0);
-            this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(1749, 100);
-            this.panel2.TabIndex = 20;
+            this.lblSearchMessage.AutoSize = true;
+            this.lblSearchMessage.BackColor = System.Drawing.Color.Transparent;
+            this.lblSearchMessage.Font = new System.Drawing.Font("Microsoft Sans Serif", 20F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblSearchMessage.Location = new System.Drawing.Point(876, 512);
+            this.lblSearchMessage.Name = "lblSearchMessage";
+            this.lblSearchMessage.Size = new System.Drawing.Size(0, 39);
+            this.lblSearchMessage.TabIndex = 21;
             // 
             // label6
             // 
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 16.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(289, 15);
+            this.label6.Location = new System.Drawing.Point(281, 77);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(131, 32);
             this.label6.TabIndex = 0;
@@ -120,7 +122,8 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.panel2);
+            this.Controls.Add(this.label6);
+            this.Controls.Add(this.lblSearchMessage);
             this.Controls.Add(this.btnReactivate);
             this.Controls.Add(this.txtSearch);
             this.Controls.Add(this.dgvMembers);
@@ -130,8 +133,6 @@
             this.Size = new System.Drawing.Size(1749, 959);
             this.Load += new System.EventHandler(this.ManageMembersControl_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvMembers)).EndInit();
-            this.panel2.ResumeLayout(false);
-            this.panel2.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -143,7 +144,7 @@
         private System.Windows.Forms.DataGridView dgvMembers;
         private System.Windows.Forms.TextBox txtSearch;
         private System.Windows.Forms.Button btnReactivate;
-        private System.Windows.Forms.Panel panel2;
+        private System.Windows.Forms.Label lblSearchMessage;
         private System.Windows.Forms.Label label6;
     }
 }
