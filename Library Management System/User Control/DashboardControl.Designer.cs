@@ -94,6 +94,7 @@ namespace Library_Management_System.User_Control
             this.lblBorrowedBooks.Size = new System.Drawing.Size(189, 29);
             this.lblBorrowedBooks.TabIndex = 0;
             this.lblBorrowedBooks.Text = "📖 Borrowed: 0";
+            this.lblBorrowedBooks.Click += new System.EventHandler(this.lblBorrowedBooks_Click);
             // 
             // pnlAvailableBooks
             // 
@@ -177,14 +178,14 @@ namespace Library_Management_System.User_Control
             this.panel2.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel2.Location = new System.Drawing.Point(0, 0);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(1814, 68);
+            this.panel2.Size = new System.Drawing.Size(1814, 62);
             this.panel2.TabIndex = 0;
             // 
             // label1
             // 
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 16.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(218, 71);
+            this.label1.Location = new System.Drawing.Point(206, 65);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(89, 32);
             this.label1.TabIndex = 1;
@@ -193,9 +194,9 @@ namespace Library_Management_System.User_Control
             // panel1
             // 
             this.panel1.Dock = System.Windows.Forms.DockStyle.Left;
-            this.panel1.Location = new System.Drawing.Point(0, 68);
+            this.panel1.Location = new System.Drawing.Point(0, 62);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(200, 634);
+            this.panel1.Size = new System.Drawing.Size(200, 640);
             this.panel1.TabIndex = 6;
             // 
             // DashboardControl

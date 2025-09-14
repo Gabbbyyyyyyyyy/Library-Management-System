@@ -234,19 +234,18 @@ namespace LibraryManagementSystem
                 MessageBox.Show("Select a book to update.");
                 return;
             }
+
             // Validate quantity input
             if (string.IsNullOrWhiteSpace(txtQuantity.Text) || !int.TryParse(txtQuantity.Text, out int newQty) || newQty < 1)
             {
-                errorProvider1.SetError(txtQuantity, "Please enter a valid quantity."); // Red icon + tooltip
+                errorProvider1.SetError(txtQuantity, "Please enter a valid quantity.");
                 MessageBox.Show("Please enter a valid quantity.", "Invalid Input", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
             else
             {
-                errorProvider1.SetError(txtQuantity, ""); // Clear error
+                errorProvider1.SetError(txtQuantity, "");
             }
-
-
 
             // Step 2: Ask for confirmation
             var confirm = MessageBox.Show(
@@ -258,29 +257,52 @@ namespace LibraryManagementSystem
             if (confirm != DialogResult.Yes)
                 return;
 
-            // Step 3: Get the BookId from the selected row
+            // Step 3: Get the BookId
             int bookId = Convert.ToInt32(dgvBooks.SelectedRows[0].Cells["BookId"].Value);
 
-            // Step 4: Update the book in the database
             using (var con = Db.GetConnection())
             {
                 con.Open();
 
-                string query = "UPDATE Books SET Quantity=@qty WHERE BookId=@id";
+                // Get current values
+                string getQuery = "SELECT Quantity, AvailableCopies FROM Books WHERE BookId=@id";
+                int currentQty = 0, currentAvailable = 0;
 
+                using (var getCmd = new SQLiteCommand(getQuery, con))
+                {
+                    getCmd.Parameters.AddWithValue("@id", bookId);
+                    using (var reader = getCmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            currentQty = Convert.ToInt32(reader["Quantity"]);
+                            currentAvailable = Convert.ToInt32(reader["AvailableCopies"]);
+                        }
+                    }
+                }
+
+                // Compute difference
+                int diff = newQty - currentQty;
+                int newAvailable = currentAvailable + diff;
+
+                if (newAvailable < 0) newAvailable = 0; // just in case
+
+                // Update both Quantity & AvailableCopies
+                string query = "UPDATE Books SET Quantity=@qty, AvailableCopies=@available WHERE BookId=@id";
                 using (var cmd = new SQLiteCommand(query, con))
                 {
                     cmd.Parameters.AddWithValue("@qty", newQty);
+                    cmd.Parameters.AddWithValue("@available", newAvailable);
                     cmd.Parameters.AddWithValue("@id", bookId);
                     cmd.ExecuteNonQuery();
                 }
             }
 
-            // Step 5: Show success + refresh grid
-            MessageBox.Show("Book quantity updated successfully!");
+            MessageBox.Show("Book updated successfully!");
             LoadBooks();
-            txtQuantity.Clear(); // Clear textbox
+            txtQuantity.Clear();
         }
+
 
 
 
@@ -756,7 +778,30 @@ namespace LibraryManagementSystem
 
         private void ManageBooksControl_Load(object sender, EventArgs e)
         {
-            // You can leave this empty or put initialization code here
+            // Initialize grid data
+            LoadBooks();
+
+            // Attach CellFormatting event for coloring
+            dgvBooks.CellFormatting += dgvBooks_CellFormatting;
+        }
+
+        private void dgvBooks_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (dgvBooks.Columns[e.ColumnIndex].Name == "Status" && e.Value != null)
+            {
+                string status = e.Value.ToString();
+
+                if (status == "Borrowed Out")
+                {
+                    e.CellStyle.ForeColor = Color.Red;
+                    e.CellStyle.Font = new Font(dgvBooks.Font, FontStyle.Bold);
+                }
+                else if (status == "Available")
+                {
+                    e.CellStyle.ForeColor = Color.Green;
+                    e.CellStyle.Font = new Font(dgvBooks.Font, FontStyle.Bold);
+                }
+            }
         }
 
 

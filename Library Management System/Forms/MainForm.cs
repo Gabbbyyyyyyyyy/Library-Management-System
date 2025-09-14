@@ -123,7 +123,7 @@ namespace Library_Management_System
 
         private void button3_Click(object sender, EventArgs e)
         {
-
+            LoadControl(new BorrowBooksControl());
         }
 
         private void button4_Click(object sender, EventArgs e)

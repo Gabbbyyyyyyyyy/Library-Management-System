@@ -22,6 +22,9 @@ namespace Library_Management_System.Forms
 
             // Listen for changes in username textbox
             txtUsername.TextChanged += TxtUsername_TextChanged;
+            this.KeyPreview = true;
+            this.KeyDown += new KeyEventHandler(LoginForm_KeyDown);
+
 
         }
 
@@ -41,6 +44,18 @@ namespace Library_Management_System.Forms
         private void maskedTextBox1_MaskInputRejected(object sender, MaskInputRejectedEventArgs e)
         {
 
+        }
+
+        private void LoginForm_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                // Call the button1_Click event
+                button1_Click(sender, e);
+
+                // Prevent the "ding" sound
+                e.SuppressKeyPress = true;
+            }
         }
 
         private void button1_Click(object sender, EventArgs e)

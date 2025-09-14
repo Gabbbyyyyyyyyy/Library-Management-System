@@ -48,7 +48,7 @@ namespace LibraryManagementSystem.Data
                     AvailableCopies INTEGER NOT NULL DEFAULT 1
                 );
 
-                CREATE TABLE IF NOT EXISTS BorrowedBooks (
+                CREATE TABLE IF NOT EXISTS Borrowings (
                     BorrowId   INTEGER PRIMARY KEY AUTOINCREMENT,
                     MemberId   INTEGER NOT NULL,
                     BookId     INTEGER NOT NULL,
