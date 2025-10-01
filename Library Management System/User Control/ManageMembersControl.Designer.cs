@@ -49,6 +49,7 @@ namespace LibraryManagementSystem
             this.btnUpdate.Name = "btnUpdate";
             this.btnUpdate.Size = new System.Drawing.Size(102, 38);
             this.btnUpdate.TabIndex = 5;
+            this.btnUpdate.TabStop = false;
             this.btnUpdate.Text = "Edit";
             this.btnUpdate.UseVisualStyleBackColor = true;
             this.btnUpdate.Click += new System.EventHandler(this.btnUpdate_Click);
@@ -116,7 +117,7 @@ namespace LibraryManagementSystem
             this.label6.TabIndex = 0;
             this.label6.Text = "Members";
             this.label6.TextAlign = System.Drawing.ContentAlignment.TopCenter;
-            this.label6.Click += new System.EventHandler(this.label6_Click);
+            //this.label6.Click += new System.EventHandler(this.label6_Click);
             // 
             // ManageMembersControl
             // 

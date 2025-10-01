@@ -15,6 +15,12 @@ namespace Library_Management_System.Forms
         public PreLoginButtons()
         {
             InitializeComponent();
+
+            this.Dock = DockStyle.Fill;
+            this.Size = Screen.PrimaryScreen.Bounds.Size;
+            this.Location = Screen.PrimaryScreen.Bounds.Location;
+           
+
         }
 
         private void button1_Click(object sender, EventArgs e)

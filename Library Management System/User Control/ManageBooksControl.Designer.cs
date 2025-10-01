@@ -8,7 +8,7 @@ namespace LibraryManagementSystem
         /// Required designer variable.
         /// </summary>
         private System.ComponentModel.IContainer components = null;
-        private System.Windows.Forms.Button btnSearch;
+        
 
 
         /// <summary>

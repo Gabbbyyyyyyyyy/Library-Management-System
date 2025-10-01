@@ -7,19 +7,16 @@ namespace LibraryManagementSystem
 {
     static class Program
     {
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
         [STAThread]
         static void Main()
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            // ✅ Ensure DB and tables are created
+            // Ensures DB file + tables exist
             Data.Db.EnsureCreated();
 
-            // Run your Main form
+            // Run your startup form
             Application.Run(new PreLoginButtons());
         }
     }

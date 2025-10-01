@@ -382,115 +382,147 @@ namespace LibraryManagementSystem
             }
             return true;
         }
-        private async Task FetchAndSaveAllBooksFromAPI(params string[] categories)
+        public async Task FetchAndSaveAllBooksFromAPI(string[] categories)
         {
-            try
+            using (var con = new SQLiteConnection(Db.ConnectionString))
             {
-                using (var con = Db.GetConnection())
+                con.Open();
+
+                foreach (var category in categories)
                 {
-                    con.Open();
+                    // ✅ Skip if we already have books from this category
+                    if (CategoryExists(con, category))
+                    {
+                        Console.WriteLine($"Skipping {category}, already cached.");
+                        continue;
+                    }
 
-                    // Prepare tasks for each category
-                    var tasks = categories.Select(cat => FetchCategoryFromAPI(cat, con));
-                    await Task.WhenAll(tasks); // Run all categories in parallel asynchronously
+                    // Otherwise, fetch from API
+                    await FetchCategoryFromAPI(category);
+
+                    // Small delay to avoid 429
+                    await Task.Delay(1000);
                 }
-
-                LoadBooks(); // Refresh DataGridView after fetching all categories
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error fetching books from API: " + ex.Message);
             }
         }
 
-        // Separate method to fetch a single category
-        // Fetch a single category and save to SQLite
-        private async Task FetchCategoryFromAPI(string category, SQLiteConnection con)
+
+        private bool CategoryExists(SQLiteConnection con, string category)
         {
-            using (HttpClient client = new HttpClient())
+            string sql = "SELECT COUNT(*) FROM Books WHERE Category = @Category";
+            using (var cmd = new SQLiteCommand(sql, con))
             {
-                int startIndex = 0;
-                int maxResults = 40;
-                bool moreResults = true;
+                cmd.Parameters.AddWithValue("@Category", category);
+                long count = (long)cmd.ExecuteScalar();
+                return count > 0;
+            }
+        }
 
-                while (moreResults)
+
+        private async Task FetchCategoryFromAPI(string category)
+        {
+            using (var con = Db.GetConnection())
+            {
+                await con.OpenAsync();
+                using (HttpClient client = new HttpClient())
                 {
-                    string url = $"https://www.googleapis.com/books/v1/volumes?q={category}&startIndex={startIndex}&maxResults={maxResults}";
-                    var response = await client.GetStringAsync(url);
-                    JObject json = JObject.Parse(response);
+                    int startIndex = 0;
+                    int maxResults = 20;
+                    bool moreResults = true;
 
-                    if (json["items"] != null)
+                    while (moreResults)
                     {
-                        foreach (var item in json["items"])
-                        {
-                            var volumeInfo = item["volumeInfo"];
+                        string apiKey = "AIzaSyBXvUHhGqOI0F6w0-CSaUk2bjs25KMrfE0";
+                        string url = $"https://www.googleapis.com/books/v1/volumes?q={category}&startIndex={startIndex}&maxResults={maxResults}&key={apiKey}";
 
-                            string isbn = "";
-                            var identifiers = volumeInfo["industryIdentifiers"];
-                            if (identifiers != null)
+                        string response = await SafeGetAsync(client, url);
+
+                        JObject json = JObject.Parse(response);
+
+                        if (json["items"] != null)
+                        {
+                            foreach (var item in json["items"])
                             {
-                                foreach (var id in identifiers)
+                                var volumeInfo = item["volumeInfo"];
+                                string isbn = "";
+
+                                var identifiers = volumeInfo["industryIdentifiers"];
+                                if (identifiers != null)
                                 {
-                                    if (id["type"].ToString() == "ISBN_13")
+                                    foreach (var id in identifiers)
                                     {
-                                        isbn = id["identifier"].ToString();
-                                        break;
+                                        if (id["type"]?.ToString() == "ISBN_13")
+                                        {
+                                            isbn = id["identifier"]?.ToString();
+                                            break;
+                                        }
                                     }
                                 }
-                            }
 
-                            if (string.IsNullOrWhiteSpace(isbn)) continue; // Skip if no ISBN
+                                if (string.IsNullOrWhiteSpace(isbn)) continue;
 
-                            string title = volumeInfo["title"]?.ToString() ?? "Unknown Title";
-                            string author = volumeInfo["authors"] != null ? string.Join(", ", volumeInfo["authors"]) : "Unknown Author";
-                            string cat = volumeInfo["categories"] != null ? string.Join(", ", volumeInfo["categories"]) : "Uncategorized";
-                            int qty = 1;
+                                string title = volumeInfo["title"]?.ToString() ?? "Unknown Title";
+                                string author = volumeInfo["authors"] != null ? string.Join(", ", volumeInfo["authors"]) : "Unknown Author";
+                                string cat = volumeInfo["categories"] != null ? string.Join(", ", volumeInfo["categories"]) : "Uncategorized";
 
-                            // Check if ISBN exists
-                            string checkQuery = "SELECT BookId FROM Books WHERE ISBN=@isbn";
-                            using (var checkCmd = new SQLiteCommand(checkQuery, con))
-                            {
-                                checkCmd.Parameters.AddWithValue("@isbn", isbn);
-                                using (var reader = checkCmd.ExecuteReader())
+                                // Check if book exists
+                                string checkQuery = "SELECT 1 FROM Books WHERE ISBN=@isbn";
+                                using (var checkCmd = new SQLiteCommand(checkQuery, con))
                                 {
-                                    if (reader.Read())
-                                    {
-                                        // Book already exists → DO NOTHING
-                                        reader.Close();
-                                    }
-                                    else
-                                    {
-                                        reader.Close();
+                                    checkCmd.Parameters.AddWithValue("@isbn", isbn);
+                                    var exists = checkCmd.ExecuteScalar();
 
-                                        // Insert new book
+                                    if (exists == null)
+                                    {
                                         string insertQuery = "INSERT INTO Books (ISBN, Title, Author, Category, Quantity, AvailableCopies) " +
-                                                             "VALUES (@isbn, @title, @author, @category, @qty, @qty)";
+                                                             "VALUES (@isbn, @title, @author, @category, 1, 1)";
                                         using (var insertCmd = new SQLiteCommand(insertQuery, con))
                                         {
                                             insertCmd.Parameters.AddWithValue("@isbn", isbn);
                                             insertCmd.Parameters.AddWithValue("@title", title);
                                             insertCmd.Parameters.AddWithValue("@author", author);
-                                            insertCmd.Parameters.AddWithValue("@category", category);
-                                            insertCmd.Parameters.AddWithValue("@qty", qty);
+                                            insertCmd.Parameters.AddWithValue("@category", cat);
                                             insertCmd.ExecuteNonQuery();
                                         }
                                     }
                                 }
                             }
-                        }
 
-                        // Prepare for next page
-                        int itemsCount = ((JArray)json["items"]).Count;
-                        startIndex += itemsCount;
-                        if (itemsCount < maxResults) moreResults = false;
-                    }
-                    else
-                    {
-                        moreResults = false;
+                            int itemsCount = ((JArray)json["items"]).Count;
+                            startIndex += itemsCount;
+                            if (itemsCount < maxResults) moreResults = false;
+                        }
+                        else
+                        {
+                            moreResults = false;
+                        }
                     }
                 }
             }
         }
+
+        private async Task<string> SafeGetAsync(HttpClient client, string url)
+        {
+            int retries = 3;
+            for (int i = 0; i < retries; i++)
+            {
+                var response = await client.GetAsync(url);
+
+                if (response.IsSuccessStatusCode)
+                    return await response.Content.ReadAsStringAsync();
+
+                if ((int)response.StatusCode == 429) // Too Many Requests
+                {
+                    await Task.Delay(2000 * (i + 1)); // Exponential backoff
+                    continue;
+                }
+
+                response.EnsureSuccessStatusCode(); // Throw for other errors
+            }
+
+            throw new HttpRequestException("Too many retries, API still failing.");
+        }
+
 
 
 
@@ -548,14 +580,6 @@ namespace LibraryManagementSystem
         }
 
 
-        private async void BooksForm_Load(object sender, EventArgs e)
-        {
-            LoadBooks(); // Always load existing books from SQLite
-
-            // Fetch API books in the background (multi-category, async)
-            string[] categories = { "programming", "library", "mathematics", "science", "history", "fiction" };
-            await FetchAndSaveAllBooksFromAPI(categories);
-        }
 
 
 
@@ -776,14 +800,16 @@ namespace LibraryManagementSystem
 
         }
 
-        private void ManageBooksControl_Load(object sender, EventArgs e)
+        
+        private async void ManageBooksControl_Load(object sender, EventArgs e)
         {
-            // Initialize grid data
-            LoadBooks();
+            LoadBooks(); // Always load existing books from SQLite
 
-            // Attach CellFormatting event for coloring
-            dgvBooks.CellFormatting += dgvBooks_CellFormatting;
+            // Fetch API books in the background (multi-category, async)
+            string[] categories = { "programming", "library", "mathematics", "science", "history", "fiction" };
+            await FetchAndSaveAllBooksFromAPI(categories);
         }
+
 
         private void dgvBooks_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {

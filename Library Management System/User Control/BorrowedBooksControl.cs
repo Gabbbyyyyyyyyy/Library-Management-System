@@ -70,7 +70,7 @@ namespace Library_Management_System.User_Control
 
             // Current borrowed count
             var dtCount = DatabaseHelper.Query(
-                "SELECT COUNT(*) as cnt FROM Borrowing WHERE MemberID = @m AND ReturnDate IS NULL",
+                "SELECT COUNT(*) as cnt FROM Borrowings WHERE MemberID = @m AND ReturnDate IS NULL",
                 new SQLiteParameter("@m", currentMemberId));
 
             int borrowedCount = Convert.ToInt32(dtCount.Rows[0]["cnt"]);
@@ -95,7 +95,7 @@ namespace Library_Management_System.User_Control
 
             // Check borrow limit
             var dtCount = DatabaseHelper.Query(
-                "SELECT COUNT(*) as cnt FROM Borrowing WHERE MemberID = @m AND ReturnDate IS NULL",
+                "SELECT COUNT(*) as cnt FROM Borrowings WHERE MemberID = @m AND ReturnDate IS NULL",
                 new SQLiteParameter("@m", currentMemberId));
 
             int borrowedCount = Convert.ToInt32(dtCount.Rows[0]["cnt"]);
@@ -119,7 +119,7 @@ namespace Library_Management_System.User_Control
                     // Insert borrowing
                     using (var cmd = new SQLiteCommand(conn))
                     {
-                        cmd.CommandText = "INSERT INTO Borrowing (MemberID, BookID, BorrowDate, DueDate) VALUES (@m,@b,@bd,@dd)";
+                        cmd.CommandText = "INSERT INTO Borrowings (MemberID, BookID, BorrowDate, DueDate) VALUES (@m,@b,@bd,@dd)";
                         cmd.Parameters.AddWithValue("@m", currentMemberId);
                         cmd.Parameters.AddWithValue("@b", bookId);
                         cmd.Parameters.AddWithValue("@bd", borrowDate.ToString("yyyy-MM-dd"));

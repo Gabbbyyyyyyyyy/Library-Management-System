@@ -116,6 +116,7 @@ namespace Library_Management_System.User_Control
             this.lblAvailableBooks.Size = new System.Drawing.Size(182, 29);
             this.lblAvailableBooks.TabIndex = 0;
             this.lblAvailableBooks.Text = "✅ Available: 0";
+            this.lblAvailableBooks.Click += new System.EventHandler(this.lblAvailableBooks_Click);
             // 
             // pnlActiveMembers
             // 
@@ -212,6 +213,7 @@ namespace Library_Management_System.User_Control
             this.Controls.Add(this.pnlOverdueBooks);
             this.Name = "DashboardControl";
             this.Size = new System.Drawing.Size(1814, 702);
+            this.Load += new System.EventHandler(this.DashboardControl_Load);
             this.pnlTotalBooks.ResumeLayout(false);
             this.pnlTotalBooks.PerformLayout();
             this.pnlBorrowedBooks.ResumeLayout(false);

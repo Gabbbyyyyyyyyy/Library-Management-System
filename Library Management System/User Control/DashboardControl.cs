@@ -73,7 +73,7 @@ namespace Library_Management_System.User_Control
                     "SELECT COUNT(*) FROM Books", con).ExecuteScalar());
 
                 int borrowedBooks = Convert.ToInt32(new SQLiteCommand(
-                    "SELECT COUNT(*) FROM Borrowing WHERE ReturnDate IS NULL", con).ExecuteScalar());
+                    "SELECT COUNT(*) FROM Borrowings WHERE ReturnDate IS NULL", con).ExecuteScalar());
 
                 int availableBooks = totalBooks - borrowedBooks;
 
@@ -81,7 +81,7 @@ namespace Library_Management_System.User_Control
                     "SELECT COUNT(*) FROM Members WHERE IsActive = 1", con).ExecuteScalar());
 
                 int overdueBooks = Convert.ToInt32(new SQLiteCommand(
-                    "SELECT COUNT(*) FROM Borrowing WHERE ReturnDate IS NULL AND DueDate < DATE('now')", con).ExecuteScalar());
+                    "SELECT COUNT(*) FROM Borrowings WHERE ReturnDate IS NULL AND DueDate < DATE('now')", con).ExecuteScalar());
 
                 lblTotalBooks.Text = $"📚 Total Books: {totalBooks}";
                 lblBorrowedBooks.Text = $"📖 Borrowed: {borrowedBooks}";
@@ -178,7 +178,7 @@ namespace Library_Management_System.User_Control
             try
             {
                 var dt = DatabaseHelper.Query(
-                    "SELECT COUNT(*) AS cnt FROM Borrowing WHERE ReturnDate IS NULL"
+                    "SELECT COUNT(*) AS cnt FROM Borrowings WHERE ReturnDate IS NULL"
                 );
 
                 int borrowedCount = Convert.ToInt32(dt.Rows[0]["cnt"]);
@@ -197,7 +197,14 @@ namespace Library_Management_System.User_Control
             LoadDashboardStats();
         }
 
+        private void lblAvailableBooks_Click(object sender, EventArgs e)
+        {
 
+        }
 
+        private void DashboardControl_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }

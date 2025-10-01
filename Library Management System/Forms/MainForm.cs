@@ -80,6 +80,7 @@ namespace Library_Management_System
                 MessageBoxIcon.Question
             );
 
+
             if (result == DialogResult.Yes)
             {
                 // Only logout if user clicks Yes
@@ -128,8 +129,17 @@ namespace Library_Management_System
 
         private void button4_Click(object sender, EventArgs e)
         {
+            // Clear existing controls in the panelContainer
+            panelContainer.Controls.Clear();
 
+            // Create instance of ReturnBooksControl
+            ReturnBooksControl returnBooks = new ReturnBooksControl();
+            returnBooks.Dock = DockStyle.Fill;
+
+            // Add it to the container
+            panelContainer.Controls.Add(returnBooks);
         }
+
 
         private void button5_Click(object sender, EventArgs e)
         {

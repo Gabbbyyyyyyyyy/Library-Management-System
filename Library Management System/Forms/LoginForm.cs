@@ -23,12 +23,26 @@ namespace Library_Management_System.Forms
         {
             InitializeComponent();
             Db.EnsureCreated(); // Create DB if not exist
+            this.KeyPreview = true;
+            this.KeyDown += new KeyEventHandler(LoginForm_KeyDown);
         }
 
         private void lblMessage_Click(object sender, EventArgs e)
         {
 
         }
+        private void LoginForm_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                // Call the button1_Click event
+                btnLogin_Click(sender, e);
+
+                // Prevent the "ding" sound
+                e.SuppressKeyPress = true;
+            }
+        }
+
 
         private void btnLogin_Click(object sender, EventArgs e)
         {
@@ -57,6 +71,7 @@ namespace Library_Management_System.Forms
                         lblMessage.ForeColor = System.Drawing.Color.Red;
                         return;
                     }
+                    
 
                     int isActive = Convert.ToInt32(result);
 
@@ -122,6 +137,11 @@ namespace Library_Management_System.Forms
                 txtStudentNo.Text = txtStudentNo.Text.Substring(0, 6);
                 txtStudentNo.SelectionStart = txtStudentNo.Text.Length; // Keep cursor at end
             }
+        }
+
+        private void LoginForm_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

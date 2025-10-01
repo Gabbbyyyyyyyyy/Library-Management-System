@@ -124,6 +124,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Data\Books.cs" />
+    <Compile Include="Data\Borrowings.cs" />
+    <Compile Include="Data\Members.cs" />
     <Compile Include="Forms\AdminForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -161,6 +164,24 @@
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="User Control Student\AvailbleCopies.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="User Control Student\AvailbleCopies.Designer.cs">
+      <DependentUpon>AvailbleCopies.cs</DependentUpon>
+    </Compile>
+    <Compile Include="User Control Student\Borrowing.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="User Control Student\Borrowing.Designer.cs">
+      <DependentUpon>Borrowing.cs</DependentUpon>
+    </Compile>
+    <Compile Include="User Control Student\RecordOfBorrowings.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="User Control Student\RecordOfBorrowings.Designer.cs">
+      <DependentUpon>RecordOfBorrowings.cs</DependentUpon>
     </Compile>
     <Compile Include="User Control\BorrowedBooksControl.cs">
       <SubType>UserControl</SubType>
@@ -254,6 +275,15 @@
     <EmbeddedResource Include="Forms\StudentForm.resx">
       <DependentUpon>StudentForm.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="User Control Student\AvailbleCopies.resx">
+      <DependentUpon>AvailbleCopies.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="User Control Student\Borrowing.resx">
+      <DependentUpon>Borrowing.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="User Control Student\RecordOfBorrowings.resx">
+      <DependentUpon>RecordOfBorrowings.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="User Control\BorrowedBooksControl.resx">
       <DependentUpon>BorrowedBooksControl.cs</DependentUpon>
     </EmbeddedResource>
@@ -270,6 +300,9 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <SubType>Designer</SubType>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="User Control\ReturnBooksControl.resx">
+      <DependentUpon>ReturnBooksControl.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="Data\library.db" />
     <None Include="packages.config" />
@@ -302,6 +335,13 @@
     <None Include="Resources\return.png" />
     <None Include="Resources\dashboard1.png" />
     <None Include="Resources\logout.png" />
+    <None Include="Resources\bg.jpg" />
+    <None Include="Resources\bg1.jpg" />
+    <None Include="Resources\admin.png" />
+    <None Include="Resources\admin1.png" />
+    <None Include="Resources\student.ico" />
+    <None Include="Resources\admin_icon_32x32.png" />
+    <None Include="Resources\admin_icon_32x32_transparent.png" />
     <Content Include="schema.sql" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
