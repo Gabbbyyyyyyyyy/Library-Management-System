@@ -15,24 +15,107 @@ namespace Library_Management_System.Forms
             base.Dispose(disposing);
         }
 
+        // Add this field
+        private Panel panelContent;
+
         private void InitializeComponent()
         {
+            this.button5 = new System.Windows.Forms.Button();
+            this.lblCourse = new System.Windows.Forms.Label();
+            this.btnRecords = new System.Windows.Forms.Button();
+            this.label1 = new System.Windows.Forms.Label();
+            this.lblName = new System.Windows.Forms.Label();
+            this.lblYearLevel = new System.Windows.Forms.Label();
+            this.btnAvailableCopies = new System.Windows.Forms.Button();
             this.label4 = new System.Windows.Forms.Label();
+            this.lblStudentNo = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
-            this.label1 = new System.Windows.Forms.Label();
-            this.lblYearLevel = new System.Windows.Forms.Label();
-            this.lblCourse = new System.Windows.Forms.Label();
-            this.lblName = new System.Windows.Forms.Label();
-            this.lblStudentNo = new System.Windows.Forms.Label();
-            this.panelTop = new System.Windows.Forms.Panel();
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.btnRecords = new System.Windows.Forms.Button();
             this.btnBorrowing = new System.Windows.Forms.Button();
-            this.btnAvailableCopies = new System.Windows.Forms.Button();
-            this.btnLogout = new System.Windows.Forms.Button();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.panelContent = new System.Windows.Forms.Panel();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
+            // 
+            // button5
+            // 
+            this.button5.FlatAppearance.BorderSize = 0;
+            this.button5.FlatAppearance.MouseOverBackColor = System.Drawing.Color.LightGray;
+            this.button5.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button5.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button5.Image = global::Library_Management_System.Properties.Resources.logout;
+            this.button5.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.button5.Location = new System.Drawing.Point(12, 859);
+            this.button5.Name = "button5";
+            this.button5.Size = new System.Drawing.Size(255, 48);
+            this.button5.TabIndex = 6;
+            this.button5.Text = "          Logout";
+            this.button5.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.button5.UseVisualStyleBackColor = true;
+            // 
+            // lblCourse
+            // 
+            this.lblCourse.Location = new System.Drawing.Point(593, 115);
+            this.lblCourse.Name = "lblCourse";
+            this.lblCourse.Size = new System.Drawing.Size(100, 23);
+            this.lblCourse.TabIndex = 2;
+            // 
+            // btnRecords
+            // 
+            this.btnRecords.FlatAppearance.BorderSize = 0;
+            this.btnRecords.FlatAppearance.MouseOverBackColor = System.Drawing.Color.LightGray;
+            this.btnRecords.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnRecords.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnRecords.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnRecords.Location = new System.Drawing.Point(12, 287);
+            this.btnRecords.Name = "btnRecords";
+            this.btnRecords.Size = new System.Drawing.Size(260, 48);
+            this.btnRecords.TabIndex = 1;
+            this.btnRecords.Text = "Records";
+            this.btnRecords.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnRecords.UseVisualStyleBackColor = true;
+            this.btnRecords.Click += new System.EventHandler(this.btnRecords_Click);
+            // 
+            // label1
+            // 
+            this.label1.Location = new System.Drawing.Point(303, 115);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(100, 23);
+            this.label1.TabIndex = 4;
+            this.label1.Text = "Name:";
+            // 
+            // lblName
+            // 
+            this.lblName.Location = new System.Drawing.Point(363, 115);
+            this.lblName.Name = "lblName";
+            this.lblName.Size = new System.Drawing.Size(100, 23);
+            this.lblName.TabIndex = 1;
+            // 
+            // lblYearLevel
+            // 
+            this.lblYearLevel.Location = new System.Drawing.Point(813, 115);
+            this.lblYearLevel.Name = "lblYearLevel";
+            this.lblYearLevel.Size = new System.Drawing.Size(100, 23);
+            this.lblYearLevel.TabIndex = 3;
+            // 
+            // btnAvailableCopies
+            // 
+            this.btnAvailableCopies.BackColor = System.Drawing.Color.White;
+            this.btnAvailableCopies.FlatAppearance.BorderSize = 0;
+            this.btnAvailableCopies.FlatAppearance.MouseOverBackColor = System.Drawing.Color.LightGray;
+            this.btnAvailableCopies.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnAvailableCopies.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnAvailableCopies.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnAvailableCopies.Location = new System.Drawing.Point(12, 160);
+            this.btnAvailableCopies.Name = "btnAvailableCopies";
+            this.btnAvailableCopies.Size = new System.Drawing.Size(260, 48);
+            this.btnAvailableCopies.TabIndex = 5;
+            this.btnAvailableCopies.Text = "Available Copies";
+            this.btnAvailableCopies.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnAvailableCopies.UseVisualStyleBackColor = false;
+            this.btnAvailableCopies.Click += new System.EventHandler(this.btnAvailableCopies_Click);
             // 
             // label4
             // 
@@ -41,6 +124,13 @@ namespace Library_Management_System.Forms
             this.label4.Size = new System.Drawing.Size(100, 23);
             this.label4.TabIndex = 7;
             this.label4.Text = "Student No:";
+            // 
+            // lblStudentNo
+            // 
+            this.lblStudentNo.Location = new System.Drawing.Point(1023, 115);
+            this.lblStudentNo.Name = "lblStudentNo";
+            this.lblStudentNo.Size = new System.Drawing.Size(100, 23);
+            this.lblStudentNo.TabIndex = 0;
             // 
             // label3
             // 
@@ -58,112 +148,62 @@ namespace Library_Management_System.Forms
             this.label2.TabIndex = 5;
             this.label2.Text = "Course:";
             // 
-            // label1
+            // btnBorrowing
             // 
-            this.label1.Location = new System.Drawing.Point(303, 115);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(100, 23);
-            this.label1.TabIndex = 4;
-            this.label1.Text = "Name:";
+            this.btnBorrowing.FlatAppearance.BorderSize = 0;
+            this.btnBorrowing.FlatAppearance.MouseOverBackColor = System.Drawing.Color.LightGray;
+            this.btnBorrowing.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnBorrowing.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnBorrowing.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnBorrowing.Location = new System.Drawing.Point(12, 224);
+            this.btnBorrowing.Name = "btnBorrowing";
+            this.btnBorrowing.Size = new System.Drawing.Size(260, 48);
+            this.btnBorrowing.TabIndex = 0;
+            this.btnBorrowing.Text = "Borrowing";
+            this.btnBorrowing.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnBorrowing.UseVisualStyleBackColor = true;
+            this.btnBorrowing.Click += new System.EventHandler(this.btnBorrowing_Click);
             // 
-            // lblYearLevel
+            // pictureBox1
             // 
-            this.lblYearLevel.Location = new System.Drawing.Point(813, 115);
-            this.lblYearLevel.Name = "lblYearLevel";
-            this.lblYearLevel.Size = new System.Drawing.Size(100, 23);
-            this.lblYearLevel.TabIndex = 3;
-            // 
-            // lblCourse
-            // 
-            this.lblCourse.Location = new System.Drawing.Point(593, 115);
-            this.lblCourse.Name = "lblCourse";
-            this.lblCourse.Size = new System.Drawing.Size(100, 23);
-            this.lblCourse.TabIndex = 2;
-            // 
-            // lblName
-            // 
-            this.lblName.Location = new System.Drawing.Point(363, 115);
-            this.lblName.Name = "lblName";
-            this.lblName.Size = new System.Drawing.Size(100, 23);
-            this.lblName.TabIndex = 1;
-            // 
-            // lblStudentNo
-            // 
-            this.lblStudentNo.Location = new System.Drawing.Point(1023, 115);
-            this.lblStudentNo.Name = "lblStudentNo";
-            this.lblStudentNo.Size = new System.Drawing.Size(100, 23);
-            this.lblStudentNo.TabIndex = 0;
-            // 
-            // panelTop
-            // 
-            this.panelTop.BackColor = System.Drawing.Color.White;
-            this.panelTop.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panelTop.Location = new System.Drawing.Point(0, 0);
-            this.panelTop.Name = "panelTop";
-            this.panelTop.Size = new System.Drawing.Size(1313, 80);
-            this.panelTop.TabIndex = 1;
+            this.pictureBox1.Image = global::Library_Management_System.Properties.Resources.logo1_removebg_preview;
+            this.pictureBox1.Location = new System.Drawing.Point(12, 12);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(201, 56);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBox1.TabIndex = 8;
+            this.pictureBox1.TabStop = false;
             // 
             // panel1
             // 
             this.panel1.BackColor = System.Drawing.Color.White;
-            this.panel1.Controls.Add(this.btnRecords);
+            this.panel1.Controls.Add(this.pictureBox1);
             this.panel1.Controls.Add(this.btnBorrowing);
             this.panel1.Controls.Add(this.btnAvailableCopies);
-            this.panel1.Controls.Add(this.btnLogout);
+            this.panel1.Controls.Add(this.btnRecords);
+            this.panel1.Controls.Add(this.button5);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Left;
-            this.panel1.Location = new System.Drawing.Point(0, 80);
+            this.panel1.Location = new System.Drawing.Point(0, 0);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(275, 798);
-            this.panel1.TabIndex = 11;
+            this.panel1.Size = new System.Drawing.Size(275, 878);
+            this.panel1.TabIndex = 12;
             // 
-            // btnRecords
+            // panelContent
             // 
-            this.btnRecords.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnRecords.Location = new System.Drawing.Point(31, 300);
-            this.btnRecords.Name = "btnRecords";
-            this.btnRecords.Size = new System.Drawing.Size(182, 50);
-            this.btnRecords.TabIndex = 11;
-            this.btnRecords.Text = "Records";
-            this.btnRecords.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // btnBorrowing
-            // 
-            this.btnBorrowing.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnBorrowing.Location = new System.Drawing.Point(31, 226);
-            this.btnBorrowing.Name = "btnBorrowing";
-            this.btnBorrowing.Size = new System.Drawing.Size(182, 50);
-            this.btnBorrowing.TabIndex = 10;
-            this.btnBorrowing.Text = "Borrowing";
-            this.btnBorrowing.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // btnAvailableCopies
-            // 
-            this.btnAvailableCopies.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnAvailableCopies.Location = new System.Drawing.Point(31, 148);
-            this.btnAvailableCopies.Name = "btnAvailableCopies";
-            this.btnAvailableCopies.Size = new System.Drawing.Size(182, 50);
-            this.btnAvailableCopies.TabIndex = 9;
-            this.btnAvailableCopies.Text = "Available Copies";
-            this.btnAvailableCopies.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnAvailableCopies.Click += new System.EventHandler(this.btnAvailableCopies_Click_1);
-            // 
-            // btnLogout
-            // 
-            this.btnLogout.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnLogout.Location = new System.Drawing.Point(31, 614);
-            this.btnLogout.Name = "btnLogout";
-            this.btnLogout.Size = new System.Drawing.Size(182, 50);
-            this.btnLogout.TabIndex = 8;
-            this.btnLogout.Text = "Logout";
-            this.btnLogout.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.panelContent.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panelContent.Location = new System.Drawing.Point(275, 0);
+            this.panelContent.Name = "panelContent";
+            this.panelContent.Size = new System.Drawing.Size(1175, 878);
+            this.panelContent.TabIndex = 13;
             // 
             // StudentForm
             // 
-            this.ClientSize = new System.Drawing.Size(1313, 878);
+            this.BackColor = System.Drawing.Color.White;
+            this.ClientSize = new System.Drawing.Size(1450, 878);
+            this.Controls.Add(this.panelContent);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.lblStudentNo);
             this.Controls.Add(this.lblName);
-            this.Controls.Add(this.panelTop);
             this.Controls.Add(this.lblCourse);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.lblYearLevel);
@@ -173,24 +213,27 @@ namespace Library_Management_System.Forms
             this.Name = "StudentForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Student Area";
+            this.Load += new System.EventHandler(this.StudentForm_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.panel1.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
+
+        private Button button5;
+        private Label lblCourse;
+        private Button btnRecords;
+        private Label label1;
+        private Label lblName;
+        private Label lblYearLevel;
+        private Button btnAvailableCopies;
         private Label label4;
+        private Label lblStudentNo;
         private Label label3;
         private Label label2;
-        private Label label1;
-        private Label lblYearLevel;
-        private Label lblCourse;
-        private Label lblName;
-        private Label lblStudentNo;
-        private Panel panelTop;
-        private Panel panel1;
-        private Button btnRecords;
         private Button btnBorrowing;
-        private Button btnAvailableCopies;
-        private Button btnLogout;
+        private PictureBox pictureBox1;
+        private Panel panel1;
     }
 }
 

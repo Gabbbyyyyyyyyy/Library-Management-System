@@ -1,6 +1,7 @@
 ﻿using System.Data.SQLite;
 using System.IO;
 using System.Windows.Forms;
+using Library_Management_System.Data;
 
 namespace LibraryManagementSystem.Data
 {
@@ -25,6 +26,7 @@ public static void EnsureCreated()
                 Members.EnsureCreated(con);
                 Books.EnsureCreated(con);
                 Borrowings.EnsureCreated(con);
+                Reservations.EnsureCreated(con);
             }
         }
 

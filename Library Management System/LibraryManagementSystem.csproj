@@ -127,6 +127,7 @@
     <Compile Include="Data\Books.cs" />
     <Compile Include="Data\Borrowings.cs" />
     <Compile Include="Data\Members.cs" />
+    <Compile Include="Data\Reservations.cs" />
     <Compile Include="Forms\AdminForm.cs">
       <SubType>Form</SubType>
     </Compile>

@@ -131,28 +131,27 @@ namespace LibraryManagementSystem
                 con.Open();
 
                 string query = @"
-                    SELECT 
-                        m.MemberId, 
-                        m.StudentNo, 
-                        m.FirstName, 
-                        m.LastName, 
-                        m.Course, 
-                        m.YearLevel,
-                        CASE WHEN m.IsActive = 1 THEN 'Active' ELSE 'Inactive' END AS Status,
-                        CASE 
-                            WHEN EXISTS (
-                                SELECT 1 
-                                FROM Borrowings b 
-                                WHERE b.MemberId = m.MemberId AND (b.ReturnDate IS NULL OR b.ReturnDate = '')
-                            ) THEN 'Borrowings'
-                            ELSE 'No Borrowings'
-                        END AS HasPendingBorrow
-                    FROM Members m";
+            SELECT 
+                m.MemberId, 
+                m.StudentNo, 
+                m.FirstName, 
+                m.LastName, 
+                m.Course, 
+                m.YearLevel,
+                CASE WHEN m.IsActive = 1 THEN 'Active' ELSE 'Inactive' END AS Status,
+                CASE 
+                    WHEN EXISTS (
+                        SELECT 1 
+                        FROM Borrowings b 
+                        WHERE b.MemberId = m.MemberId AND (b.ReturnDate IS NULL OR b.ReturnDate = '')
+                    ) THEN 'Borrowings'
+                    ELSE 'No Borrowings'
+                END AS HasPendingBorrow
+            FROM Members m";
 
                 if (!string.IsNullOrWhiteSpace(searchText))
                 {
                     query += " WHERE (StudentNo LIKE @search OR FirstName LIKE @search OR LastName LIKE @search OR Course LIKE @search)";
-
                 }
 
                 using (var cmd = new SQLiteCommand(query, con))
@@ -166,8 +165,17 @@ namespace LibraryManagementSystem
                         da.Fill(dt);
                         dgvMembers.DataSource = dt;
 
+                        // Format rows and add color for HasPendingBorrow
                         foreach (DataGridViewRow row in dgvMembers.Rows)
+                        {
                             row.Height = 40;
+
+                            string pending = row.Cells["HasPendingBorrow"].Value.ToString();
+                            if (pending == "Borrowings")
+                                row.Cells["HasPendingBorrow"].Style.ForeColor = Color.Red;
+                            else
+                                row.Cells["HasPendingBorrow"].Style.ForeColor = Color.Green;
+                        }
 
                         dgvMembers.ClearSelection();
                         dgvMembers.CurrentCell = null;
@@ -179,6 +187,7 @@ namespace LibraryManagementSystem
                 }
             }
         }
+
 
         private void dgvMembers_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {
@@ -257,18 +266,32 @@ namespace LibraryManagementSystem
         {
             if (dgvMembers.SelectedRows.Count == 0) return;
 
-            string hasPending = dgvMembers.SelectedRows[0].Cells["HasPendingBorrow"].Value.ToString();
-            if (hasPending == "Borrowings")
-            {
-                MessageBox.Show("This member cannot be deactivated because they still have borrowed books.",
-                                "Action Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
             int memberId = Convert.ToInt32(dgvMembers.SelectedRows[0].Cells["MemberId"].Value);
+
             using (var con = Db.GetConnection())
             {
                 con.Open();
+
+                // Check if member has any active borrowings (ReturnDate IS NULL)
+                string checkQuery = "SELECT COUNT(*) FROM Borrowings WHERE MemberId = @memberId AND ReturnDate IS NULL";
+                using (var cmd = new SQLiteCommand(checkQuery, con))
+                {
+                    cmd.Parameters.AddWithValue("@memberId", memberId);
+                    int activeBorrows = Convert.ToInt32(cmd.ExecuteScalar());
+
+                    if (activeBorrows > 0)
+                    {
+                        MessageBox.Show(
+                            "This member cannot be deactivated because they still have borrowed books.",
+                            "Action Denied",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Warning
+                        );
+                        return;
+                    }
+                }
+
+                // If no active borrowings, deactivate the member
                 using (var cmd = new SQLiteCommand("UPDATE Members SET IsActive = 0 WHERE MemberId = @id", con))
                 {
                     cmd.Parameters.AddWithValue("@id", memberId);
@@ -279,6 +302,7 @@ namespace LibraryManagementSystem
             MessageBox.Show("Member deactivated successfully!");
             LoadMembers(txtSearch.Text.Trim());
         }
+
 
         private void btnReactivate_Click(object sender, EventArgs e)
         {

@@ -98,9 +98,18 @@ namespace LibraryManagementSystem
             using (var con = Db.GetConnection())
             {
                 con.Open();
-                string query = "SELECT BookId, ISBN, Title, Author, Category, Quantity, AvailableCopies, " +
-                      "CASE WHEN AvailableCopies = 0 THEN 'Borrowed Out' ELSE 'Available' END AS Status " +
-                      "FROM Books";
+                string query = @"
+                    SELECT 
+                        BookId, ISBN, Title, Author, Category, Quantity, AvailableCopies,
+                        CASE 
+                            WHEN EXISTS (SELECT 1 FROM Reservations r WHERE r.BookId = b.BookId AND r.Status = 'Active') 
+                                THEN 'Reserved'
+                            WHEN AvailableCopies = 0 
+                                THEN 'Not Available'
+                            ELSE 'Available'
+                        END AS Status
+                    FROM Books b";
+
 
                 if (!string.IsNullOrWhiteSpace(search))
                 {
@@ -120,10 +129,35 @@ namespace LibraryManagementSystem
                         // Set a taller row height
                         dgvBooks.RowTemplate.Height = 40; // adjust the number as you like
                         dgvBooks.DataSource = dt;
+                        // Color only the Status text
+                        ColorStatusColumnText();
 
                         // Remove default selection
                         if (dgvBooks.Rows.Count > 0)
                             dgvBooks.ClearSelection();
+                    }
+                }
+            }
+        }
+        private void ColorStatusColumnText()
+        {
+            foreach (DataGridViewRow row in dgvBooks.Rows)
+            {
+                if (row.Cells["Status"].Value != null)
+                {
+                    string status = row.Cells["Status"].Value.ToString();
+
+                    switch (status)
+                    {
+                        case "Available":
+                            row.Cells["Status"].Style.ForeColor = Color.Green;
+                            break;
+                        case "Reserved":
+                            row.Cells["Status"].Style.ForeColor = Color.Orange;
+                            break;
+                        case "Not Available":
+                            row.Cells["Status"].Style.ForeColor = Color.Red;
+                            break;
                     }
                 }
             }

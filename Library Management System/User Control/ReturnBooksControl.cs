@@ -2,7 +2,6 @@
 using System.Data;
 using System.Data.SQLite;
 using System.Windows.Forms;
-using Library_Management_System.Forms;
 using LibraryManagementSystem.Data;
 
 namespace Library_Management_System.User_Control
@@ -13,8 +12,9 @@ namespace Library_Management_System.User_Control
         {
             InitializeComponent();
             LoadBorrowedBooks();
-            // Subscribe to event
-            StudentForm.BookReturned += () => LoadBorrowedBooks();
+
+            // Subscribe to student event
+            Library_Management_System.User_Control_Student.Borrowing.BookReturned += LoadBorrowedBooks;
         }
 
         private void LoadBorrowedBooks()
@@ -24,69 +24,16 @@ namespace Library_Management_System.User_Control
                        m.FirstName || ' ' || m.LastName AS FullName, 
                        b.Title, 
                        br.BorrowDate, 
-                       br.DueDate
+                       br.DueDate,
+                       br.ReturnDate,
+                       br.Penalty,
+                       br.Status
                 FROM Borrowings br
                 INNER JOIN Members m ON br.MemberId = m.MemberId
                 INNER JOIN Books b ON br.BookId = b.BookId
-                WHERE br.ReturnDate IS NULL
+                WHERE br.ReturnDate IS NOT NULL AND br.Status = 'Pending'
             ");
             dgvBorrowedBooks.DataSource = dt;
-        }
-
-        private void BtnReturn_Click(object sender, EventArgs e)
-        {
-            lblMessage.Text = "";
-
-            if (dgvBorrowedBooks.SelectedRows.Count == 0)
-            {
-                lblMessage.Text = "Select a borrowed book to return.";
-                return;
-            }
-
-            var sel = dgvBorrowedBooks.SelectedRows[0];
-            int borrowId = Convert.ToInt32(sel.Cells["BorrowId"].Value);
-            DateTime dueDate = Convert.ToDateTime(sel.Cells["DueDate"].Value);
-            int bookId = GetBookIdFromBorrowing(borrowId);
-
-            DateTime returnDate = DateTime.Now.Date;
-            int penalty = 0;
-
-            if (returnDate > dueDate)
-            {
-                penalty = (returnDate - dueDate).Days * 5; // Example: ₱5 per day late
-            }
-
-            using (var conn = new SQLiteConnection("Data Source=library.db;Version=3;"))
-            {
-                conn.Open();
-                using (var trans = conn.BeginTransaction())
-                {
-                    // Update Borrowings table
-                    using (var cmd = new SQLiteCommand(conn))
-                    {
-                        cmd.CommandText = "UPDATE Borrowings SET ReturnDate=@rd, Penalty=@p WHERE BorrowId=@id";
-                        cmd.Parameters.AddWithValue("@rd", returnDate.ToString("yyyy-MM-dd"));
-                        cmd.Parameters.AddWithValue("@p", penalty);
-                        cmd.Parameters.AddWithValue("@id", borrowId);
-                        cmd.ExecuteNonQuery();
-                    }
-
-                    // Increment book availability
-                    using (var cmd2 = new SQLiteCommand(conn))
-                    {
-                        cmd2.CommandText = "UPDATE Books SET AvailableCopies = AvailableCopies + 1 WHERE BookId=@b";
-                        cmd2.Parameters.AddWithValue("@b", bookId);
-                        cmd2.ExecuteNonQuery();
-                    }
-
-                    trans.Commit();
-                }
-            }
-
-            lblMessage.Text = penalty > 0
-                ? $"Book returned. Penalty: ₱{penalty}"
-                : "Book returned successfully.";
-            LoadBorrowedBooks();
         }
 
         private int GetBookIdFromBorrowing(int borrowId)
@@ -97,14 +44,55 @@ namespace Library_Management_System.User_Control
             return dt.Rows.Count > 0 ? Convert.ToInt32(dt.Rows[0]["BookId"]) : -1;
         }
 
-        private void dgvBorrowedBooks_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private void BtnAcceptReturn_Click(object sender, EventArgs e)
         {
+            if (dgvBorrowedBooks.SelectedRows.Count == 0) return;
 
-        }
+            var sel = dgvBorrowedBooks.SelectedRows[0];
+            int borrowId = Convert.ToInt32(sel.Cells["BorrowId"].Value);
+            int bookId = GetBookIdFromBorrowing(borrowId);
 
-        private void ReturnBooksControl_Load(object sender, EventArgs e)
-        {
+            using (var conn = new SQLiteConnection("Data Source=library.db;Version=3;"))
+            {
+                conn.Open();
+                using (var trans = conn.BeginTransaction())
+                {
+                    // Update Borrowings status to Accepted
+                    using (var cmd = new SQLiteCommand(conn))
+                    {
+                        cmd.CommandText = "UPDATE Borrowings SET Status='Accepted' WHERE BorrowId=@id";
+                        cmd.Parameters.AddWithValue("@id", borrowId);
+                        cmd.ExecuteNonQuery();
+                    }
 
+                    // Increment AvailableCopies
+                    using (var cmd2 = new SQLiteCommand(conn))
+                    {
+                        cmd2.CommandText = "UPDATE Books SET AvailableCopies = AvailableCopies + 1 WHERE BookId=@b";
+                        cmd2.Parameters.AddWithValue("@b", bookId);
+                        cmd2.ExecuteNonQuery();
+                    }
+
+                    // Update student HasPendingBorrow if tracked
+                    using (var cmd3 = new SQLiteCommand(conn))
+                    {
+                        cmd3.CommandText = @"
+                            UPDATE Members
+                            SET HasPendingBorrow = (
+                                SELECT COUNT(*) 
+                                FROM Borrowings 
+                                WHERE MemberId = Members.MemberId AND ReturnDate IS NULL
+                            )
+                            WHERE MemberId = (SELECT MemberId FROM Borrowings WHERE BorrowId=@id)";
+                        cmd3.Parameters.AddWithValue("@id", borrowId);
+                        cmd3.ExecuteNonQuery();
+                    }
+
+                    trans.Commit();
+                }
+            }
+
+            LoadBorrowedBooks(); // Refresh grid
         }
     }
 }
