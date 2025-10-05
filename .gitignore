@@ -366,3 +366,6 @@ FodyWeavers.xsd
 *.db
 *.db-shm
 *.db-wal
+
+# But include the main library database in the Data folder
+!Data/library.db
