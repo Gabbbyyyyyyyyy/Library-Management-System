@@ -7,7 +7,14 @@ namespace LibraryManagementSystem.Data
 {
     public static class DatabaseHelper
     {
-        private static readonly string DbPath = Path.Combine(Application.StartupPath, "Data", "library.db");
+        // Get the base project directory (3 levels up from bin/Debug)
+        private static readonly string ProjectPath = Path.GetFullPath(
+            Path.Combine(Application.StartupPath, @"..\..\..")
+        );
+
+        // Point to your Data/library.db inside the project
+        private static readonly string DbPath = Path.Combine(ProjectPath, "Data", "library.db");
+
         private static readonly string ConnectionString = $"Data Source={DbPath};Version=3;";
 
         public static DataTable Query(string sql, params SQLiteParameter[] parameters)
