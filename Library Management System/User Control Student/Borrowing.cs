@@ -110,7 +110,8 @@ namespace Library_Management_System.User_Control_Student
             using (var con = Db.GetConnection())
             {
                 con.Open();
-                string updateQuery = "UPDATE Borrowings SET ReturnDate = @returnDate WHERE BorrowId = @borrowId";
+                string updateQuery = "UPDATE Borrowings SET ReturnDate = @returnDate, Status = 'Pending' WHERE BorrowId = @borrowId";
+
 
                 using (var cmd = new System.Data.SQLite.SQLiteCommand(updateQuery, con))
                 {

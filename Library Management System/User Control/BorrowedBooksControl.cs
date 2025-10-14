@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Data;
 using System.Data.SQLite;
+using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using LibraryManagementSystem.Data;
 
@@ -10,19 +12,191 @@ namespace Library_Management_System.User_Control
     {
         private const int MaxBorrowLimit = 1;
         private const int DefaultLoanDays = 1; // due date = borrowdate + 1 day
-
         private int currentMemberId = -1;
 
         public BorrowBooksControl()
         {
             InitializeComponent();
+
+            // ✅ Ensure Borrowings table has Status column
+            EnsureBorrowingsStatusColumn();
+
             LoadAvailableBooks();
+            SendMessage(txtSearch.Handle, EM_SETCUEBANNER, 0, "Search books...");
+            txtSearch.KeyDown += txtSearch_KeyDown;
+        }
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        private static extern Int32 SendMessage(IntPtr hWnd, int msg, int wParam, string lParam);
+
+        private const int EM_SETCUEBANNER = 0x1501;
+
+        // ✅ Automatically check and add missing Status column
+        private void EnsureBorrowingsStatusColumn()
+        {
+            using (var con = Db.GetConnection())
+            {
+                con.Open();
+                bool hasStatusColumn = false;
+
+                using (var cmd = new SQLiteCommand("PRAGMA table_info(Borrowings);", con))
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        string columnName = reader["name"].ToString();
+                        if (columnName.Equals("Status", StringComparison.OrdinalIgnoreCase))
+                        {
+                            hasStatusColumn = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!hasStatusColumn)
+                {
+                    using (var alterCmd = new SQLiteCommand("ALTER TABLE Borrowings ADD COLUMN Status TEXT DEFAULT 'Borrowed';", con))
+                    {
+                        alterCmd.ExecuteNonQuery();
+                    }
+                    Console.WriteLine("✅ Added missing 'Status' column to Borrowings table.");
+                }
+            }
         }
 
         private void LoadAvailableBooks()
         {
-            var dt = DatabaseHelper.Query("SELECT BookID, Title, Author, AvailableCopies FROM Books WHERE AvailableCopies > 0");
-            dgvAvailableBooks.DataSource = dt;
+            using (var con = Db.GetConnection())
+            {
+                con.Open();
+
+                string query = @"
+                    SELECT 
+                        b.BookId, 
+                        b.ISBN, 
+                        b.Title, 
+                        b.Author, 
+                        b.Category, 
+                        b.Quantity, 
+                        b.AvailableCopies,
+                        CASE 
+                            WHEN EXISTS (SELECT 1 FROM Reservations r WHERE r.BookId = b.BookId AND r.Status = 'Active') THEN 'Reserved'
+                            WHEN b.AvailableCopies = 0 THEN 'Not Available'
+                            ELSE 'Available'
+                        END AS Status
+                    FROM Books b";
+
+                using (var cmd = new SQLiteCommand(query, con))
+                using (var da = new SQLiteDataAdapter(cmd))
+                {
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
+                    dgvAvailableBooks.DataSource = dt;
+
+                    dgvAvailableBooks.ReadOnly = true;
+                    dgvAvailableBooks.RowTemplate.Height = 40;
+                    dgvAvailableBooks.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+                    dgvAvailableBooks.AllowUserToAddRows = false;
+
+                    ColorStatusColumnText();
+                }
+            }
+        }
+
+        private void ColorStatusColumnText()
+        {
+            foreach (DataGridViewRow row in dgvAvailableBooks.Rows)
+            {
+                if (row.Cells["Status"].Value != null)
+                {
+                    string status = row.Cells["Status"].Value.ToString();
+
+                    switch (status)
+                    {
+                        case "Available":
+                            row.Cells["Status"].Style.ForeColor = Color.Green;
+                            break;
+                        case "Reserved":
+                            row.Cells["Status"].Style.ForeColor = Color.Orange;
+                            break;
+                        case "Not Available":
+                            row.Cells["Status"].Style.ForeColor = Color.Red;
+                            break;
+                    }
+                }
+            }
+        }
+
+        private void txtSearch_TextChanged(object sender, EventArgs e)
+        {
+            using (var con = Db.GetConnection())
+            {
+                con.Open();
+                string query = @"
+                    SELECT 
+                        b.BookId, b.ISBN, b.Title, b.Author, b.Category, 
+                        b.Quantity, b.AvailableCopies,
+                        CASE 
+                            WHEN EXISTS (SELECT 1 FROM Reservations r WHERE r.BookId = b.BookId AND r.Status = 'Active') THEN 'Reserved'
+                            WHEN b.AvailableCopies = 0 THEN 'Not Available'
+                            ELSE 'Available'
+                        END AS Status
+                    FROM Books b
+                    WHERE b.Title LIKE @search 
+                       OR b.Author LIKE @search 
+                       OR b.Category LIKE @search 
+                       OR b.ISBN LIKE @search";
+
+                using (var cmd = new SQLiteCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@search", "%" + txtSearch.Text + "%");
+                    using (var da = new SQLiteDataAdapter(cmd))
+                    {
+                        DataTable dt = new DataTable();
+                        da.Fill(dt);
+                        dgvAvailableBooks.DataSource = dt;
+                        ColorStatusColumnText();
+                    }
+                }
+            }
+        }
+
+        private void txtSearch_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.SuppressKeyPress = true;
+                PerformSearch();
+            }
+        }
+
+        private void PerformSearch()
+        {
+            string searchText = txtSearch.Text.Trim();
+
+            using (var con = Db.GetConnection())
+            {
+                con.Open();
+                string query = @"SELECT BookId, ISBN, Title, Author, Category, Quantity, AvailableCopies,
+                        CASE WHEN AvailableCopies = 0 THEN 'Borrowed Out' ELSE 'Available' END AS Status
+                        FROM Books
+                        WHERE Title LIKE @search 
+                           OR Author LIKE @search 
+                           OR Category LIKE @search 
+                           OR ISBN LIKE @search";
+
+                using (var cmd = new SQLiteCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@search", "%" + searchText + "%");
+
+                    using (var da = new SQLiteDataAdapter(cmd))
+                    {
+                        DataTable dt = new DataTable();
+                        da.Fill(dt);
+                        dgvAvailableBooks.DataSource = dt;
+                    }
+                }
+            }
         }
 
         private void BtnLoadMember_Click(object sender, EventArgs e)
@@ -34,7 +208,6 @@ namespace Library_Management_System.User_Control
                 return;
             }
 
-            // Get member details
             var dt = DatabaseHelper.Query(@"
                 SELECT 
                     MemberID, 
@@ -64,11 +237,8 @@ namespace Library_Management_System.User_Control
 
             currentMemberId = memberId;
             lblMemberName.Text = row["FullName"].ToString();
-
-            // Show due date
             lblDueDate.Text = "Due Date: " + DateTime.Now.AddDays(DefaultLoanDays).ToShortDateString();
 
-            // Current borrowed count
             var dtCount = DatabaseHelper.Query(
                 "SELECT COUNT(*) as cnt FROM Borrowings WHERE MemberID = @m AND ReturnDate IS NULL",
                 new SQLiteParameter("@m", currentMemberId));
@@ -93,7 +263,6 @@ namespace Library_Management_System.User_Control
                 return;
             }
 
-            // Check borrow limit
             var dtCount = DatabaseHelper.Query(
                 "SELECT COUNT(*) as cnt FROM Borrowings WHERE MemberID = @m AND ReturnDate IS NULL",
                 new SQLiteParameter("@m", currentMemberId));
@@ -111,15 +280,14 @@ namespace Library_Management_System.User_Control
             DateTime borrowDate = DateTime.Now.Date;
             DateTime dueDate = borrowDate.AddDays(DefaultLoanDays);
 
-            using (var conn = new SQLiteConnection("Data Source=library.db;Version=3;"))
+            using (var conn = Db.GetConnection())
             {
                 conn.Open();
                 using (var trans = conn.BeginTransaction())
                 {
-                    // Insert borrowing
                     using (var cmd = new SQLiteCommand(conn))
                     {
-                        cmd.CommandText = "INSERT INTO Borrowings (MemberID, BookID, BorrowDate, DueDate) VALUES (@m,@b,@bd,@dd)";
+                        cmd.CommandText = "INSERT INTO Borrowings (MemberID, BookID, BorrowDate, DueDate, Status) VALUES (@m,@b,@bd,@dd,'Borrowed')";
                         cmd.Parameters.AddWithValue("@m", currentMemberId);
                         cmd.Parameters.AddWithValue("@b", bookId);
                         cmd.Parameters.AddWithValue("@bd", borrowDate.ToString("yyyy-MM-dd"));
@@ -127,7 +295,6 @@ namespace Library_Management_System.User_Control
                         cmd.ExecuteNonQuery();
                     }
 
-                    // Decrement available copies
                     using (var cmd2 = new SQLiteCommand(conn))
                     {
                         cmd2.CommandText = "UPDATE Books SET AvailableCopies = AvailableCopies - 1 WHERE BookID = @b";
@@ -142,9 +309,7 @@ namespace Library_Management_System.User_Control
             lblMessage.Text = "Book issued successfully.";
             LoadAvailableBooks();
 
-            // ✅ Refresh dashboard counts instantly
-            MainForm parentForm = this.FindForm() as MainForm;
-            if (parentForm != null)
+            if (this.FindForm() is MainForm parentForm)
             {
                 foreach (Control ctrl in parentForm.Controls)
                 {
@@ -157,14 +322,7 @@ namespace Library_Management_System.User_Control
             }
         }
 
-        private void BorrowBooksControl_Load(object sender, EventArgs e)
-        {
-
-        }
-
-        private void dgvAvailableBooks_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-
-        }
+        private void BorrowBooksControl_Load(object sender, EventArgs e) { }
+        private void dgvAvailableBooks_CellContentClick(object sender, DataGridViewCellEventArgs e) { }
     }
 }

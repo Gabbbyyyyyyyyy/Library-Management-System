@@ -35,13 +35,14 @@
             this.lblDueDate = new System.Windows.Forms.Label();
             this.lblMessage = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
+            this.txtSearch = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.dgvAvailableBooks)).BeginInit();
             this.SuspendLayout();
             // 
             // txtMemberID
             // 
             this.txtMemberID.Location = new System.Drawing.Point(328, 242);
-            this.txtMemberID.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.txtMemberID.Margin = new System.Windows.Forms.Padding(4);
             this.txtMemberID.Name = "txtMemberID";
             this.txtMemberID.Size = new System.Drawing.Size(199, 22);
             this.txtMemberID.TabIndex = 0;
@@ -49,7 +50,7 @@
             // btnLoadMember
             // 
             this.btnLoadMember.Location = new System.Drawing.Point(541, 239);
-            this.btnLoadMember.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnLoadMember.Margin = new System.Windows.Forms.Padding(4);
             this.btnLoadMember.Name = "btnLoadMember";
             this.btnLoadMember.Size = new System.Drawing.Size(133, 31);
             this.btnLoadMember.TabIndex = 1;
@@ -74,7 +75,7 @@
             this.dgvAvailableBooks.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvAvailableBooks.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvAvailableBooks.Location = new System.Drawing.Point(277, 350);
-            this.dgvAvailableBooks.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.dgvAvailableBooks.Margin = new System.Windows.Forms.Padding(4);
             this.dgvAvailableBooks.MultiSelect = false;
             this.dgvAvailableBooks.Name = "dgvAvailableBooks";
             this.dgvAvailableBooks.ReadOnly = true;
@@ -87,7 +88,7 @@
             // btnIssue
             // 
             this.btnIssue.Location = new System.Drawing.Point(754, 233);
-            this.btnIssue.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btnIssue.Margin = new System.Windows.Forms.Padding(4);
             this.btnIssue.Name = "btnIssue";
             this.btnIssue.Size = new System.Drawing.Size(133, 37);
             this.btnIssue.TabIndex = 4;
@@ -127,10 +128,19 @@
             this.label6.Text = "Borrow";
             this.label6.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
+            // txtSearch
+            // 
+            this.txtSearch.Location = new System.Drawing.Point(1763, 321);
+            this.txtSearch.Name = "txtSearch";
+            this.txtSearch.Size = new System.Drawing.Size(242, 22);
+            this.txtSearch.TabIndex = 0;
+            this.txtSearch.TextChanged += new System.EventHandler(this.txtSearch_TextChanged);
+            // 
             // BorrowBooksControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.txtSearch);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.lblMessage);
             this.Controls.Add(this.lblDueDate);
@@ -139,7 +149,7 @@
             this.Controls.Add(this.lblMemberName);
             this.Controls.Add(this.btnLoadMember);
             this.Controls.Add(this.txtMemberID);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "BorrowBooksControl";
             this.Size = new System.Drawing.Size(1855, 947);
             this.Load += new System.EventHandler(this.BorrowBooksControl_Load);
@@ -152,5 +162,6 @@
         #endregion
 
         private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.TextBox txtSearch;
     }
 }

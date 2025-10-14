@@ -32,7 +32,7 @@ namespace LibraryManagementSystem
             // Prevent auto-selection after loading data
             dgvBooks.DataBindingComplete += (s, e) => dgvBooks.ClearSelection();
 
-            SendMessage(txtSearch.Handle, EM_SETCUEBANNER, 0, "Search...");
+            SendMessage(txtSearch.Handle, EM_SETCUEBANNER, 0, "Search books...");
             txtSearch.KeyDown += txtSearch_KeyDown;
             this.Dock = DockStyle.Fill;
             this.Size = Screen.PrimaryScreen.Bounds.Size;
@@ -834,15 +834,52 @@ namespace LibraryManagementSystem
 
         }
 
-        
+
         private async void ManageBooksControl_Load(object sender, EventArgs e)
         {
-            LoadBooks(); // Always load existing books from SQLite
+            try
+            {
+                // 1. Load existing books from SQLite (persistent data)
+                LoadBooks();
 
-            // Fetch API books in the background (multi-category, async)
-            string[] categories = { "programming", "library", "mathematics", "science", "history", "fiction" };
-            await FetchAndSaveAllBooksFromAPI(categories);
+                // 2. Check if the Books table already contains data
+                using (var con = Db.GetConnection())
+                {
+                    con.Open();
+                    string checkQuery = "SELECT COUNT(*) FROM Books";
+                    using (var cmd = new SQLiteCommand(checkQuery, con))
+                    {
+                        long count = (long)cmd.ExecuteScalar();
+
+                        // 3. If empty, fetch from API and save locally
+                        if (count == 0)
+                        {
+                            string[] categories =
+                            {
+                        "programming",
+                        "library",
+                        "mathematics",
+                        "science",
+                        "history",
+                        "fiction"
+                    };
+
+                            await FetchAndSaveAllBooksFromAPI(categories);
+
+                            // 4. Reload to display fetched data
+                            LoadBooks();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading books: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
+
+
+
 
 
         private void dgvBooks_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)

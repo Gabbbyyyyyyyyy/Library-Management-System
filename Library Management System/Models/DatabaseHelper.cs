@@ -1,4 +1,5 @@
-﻿using System;
+﻿using System.IO;
+using System.Windows.Forms;
 using System.Data;
 using System.Data.SQLite;
 
@@ -6,8 +7,8 @@ namespace LibraryManagementSystem.Data
 {
     public static class DatabaseHelper
     {
-        // Change path to your DB file
-        private const string ConnectionString = "Data Source=library.db;Version=3;";
+        private static readonly string DbPath = Path.Combine(Application.StartupPath, "Data", "library.db");
+        private static readonly string ConnectionString = $"Data Source={DbPath};Version=3;";
 
         public static DataTable Query(string sql, params SQLiteParameter[] parameters)
         {

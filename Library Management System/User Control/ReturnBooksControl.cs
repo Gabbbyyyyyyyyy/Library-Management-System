@@ -52,7 +52,7 @@ namespace Library_Management_System.User_Control
             int borrowId = Convert.ToInt32(sel.Cells["BorrowId"].Value);
             int bookId = GetBookIdFromBorrowing(borrowId);
 
-            using (var conn = new SQLiteConnection("Data Source=library.db;Version=3;"))
+            using (var conn = Db.GetConnection())
             {
                 conn.Open();
                 using (var trans = conn.BeginTransaction())
@@ -94,5 +94,68 @@ namespace Library_Management_System.User_Control
 
             LoadBorrowedBooks(); // Refresh grid
         }
+
+        private void dgvBorrowedBooks_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void btnReturn_Click(object sender, EventArgs e)
+        {
+            if (dgvBorrowedBooks.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("⚠️ Please select a book to mark as returned.");
+                return;
+            }
+
+            var selectedRow = dgvBorrowedBooks.SelectedRows[0];
+            int borrowId = Convert.ToInt32(selectedRow.Cells["BorrowId"].Value);
+
+            // Get BookId of the selected borrow
+            int bookId = GetBookIdFromBorrowing(borrowId);
+            if (bookId == -1)
+            {
+                MessageBox.Show("❌ Unable to find the book record for this borrowing.");
+                return;
+            }
+
+            using (var conn = Db.GetConnection())
+            {
+                conn.Open();
+                using (var trans = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        // Step 1: Update Borrowing status to 'Returned'
+                        using (var cmd = new SQLiteCommand("UPDATE Borrowings SET Status = 'Returned' WHERE BorrowId = @id", conn))
+                        {
+                            cmd.Parameters.AddWithValue("@id", borrowId);
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        // Step 2: Update Book's AvailableCopies
+                        using (var cmd2 = new SQLiteCommand("UPDATE Books SET AvailableCopies = AvailableCopies + 1 WHERE BookId = @b", conn))
+                        {
+                            cmd2.Parameters.AddWithValue("@b", bookId);
+                            cmd2.ExecuteNonQuery();
+                        }
+
+                        // Step 3: Commit changes
+                        trans.Commit();
+
+                        // Step 4: Remove the book from DataGridView
+                        dgvBorrowedBooks.Rows.Remove(selectedRow);
+
+                        MessageBox.Show("✅ Book successfully returned and stock updated!");
+                    }
+                    catch (Exception ex)
+                    {
+                        trans.Rollback();
+                        MessageBox.Show("❌ Error while returning book:\n" + ex.Message);
+                    }
+                }
+            }
+        }
+
     }
 }

@@ -41,7 +41,7 @@
             this.dgvBorrowedBooks.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dgvBorrowedBooks.Size = new System.Drawing.Size(855, 399);
             this.dgvBorrowedBooks.TabIndex = 0;
-            //this.dgvBorrowedBooks.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvBorrowedBooks_CellContentClick);
+            this.dgvBorrowedBooks.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvBorrowedBooks_CellContentClick);
             // 
             // btnReturn
             // 
@@ -52,7 +52,7 @@
             this.btnReturn.TabIndex = 1;
             this.btnReturn.Text = "Return Book";
             this.btnReturn.UseVisualStyleBackColor = true;
-            //this.btnReturn.Click += new System.EventHandler(this.BtnReturn_Click);
+            this.btnReturn.Click += new System.EventHandler(this.btnReturn_Click);
             // 
             // lblMessage
             // 
@@ -75,7 +75,6 @@
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "ReturnBooksControl";
             this.Size = new System.Drawing.Size(1395, 684);
-            //this.Load += new System.EventHandler(this.ReturnBooksControl_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvBorrowedBooks)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
