@@ -199,34 +199,59 @@ namespace Library_Management_System.User_Control
             }
         }
 
+
+
         private void BtnLoadMember_Click(object sender, EventArgs e)
         {
             lblMessage.Text = "";
-            if (!int.TryParse(txtMemberID.Text.Trim(), out int memberId))
+
+            string studentNo = txtMemberID.Text.Trim();
+            if (string.IsNullOrEmpty(studentNo))
             {
-                lblMessage.Text = "Enter valid Member ID.";
+                lblMessage.Text = "Enter a Student Number.";
                 return;
             }
 
-            var dt = DatabaseHelper.Query(@"
-                SELECT 
-                    MemberID, 
-                    (FirstName || ' ' || LastName) AS FullName, 
-                    IsActive 
-                FROM Members 
-                WHERE MemberID = @m",
-                new SQLiteParameter("@m", memberId));
+            DataTable dtMember = new DataTable();
 
-            if (dt.Rows.Count == 0)
+            using (var con = Db.GetConnection())
             {
-                lblMessage.Text = "Member not found.";
+                con.Open();
+
+                // 🔍 Actual search query
+                string sql = @"
+            SELECT 
+                MemberId,
+                StudentNo,
+                (FirstName || ' ' || LastName) AS FullName,
+                IsActive
+            FROM Members
+            WHERE TRIM(CAST(StudentNo AS TEXT)) = TRIM(CAST(@s AS TEXT));";
+
+                using (var cmd = new SQLiteCommand(sql, con))
+                {
+                    cmd.Parameters.AddWithValue("@s", studentNo);
+
+                    using (var adapter = new SQLiteDataAdapter(cmd))
+                    {
+                        adapter.Fill(dtMember);
+                    }
+                }
+            }
+
+            // 🧠 Now process results outside the connection
+            if (dtMember.Rows.Count == 0)
+            {
+                lblMessage.Text = $"No member found with Student Number: {studentNo}";
                 currentMemberId = -1;
                 lblMemberName.Text = "";
                 return;
             }
 
-            var row = dt.Rows[0];
-            bool isActive = Convert.ToInt32(row["IsActive"]) == 1;
+            var row = dtMember.Rows[0];
+
+            // ⚙️ Check if member is active
+            bool isActive = row["IsActive"] != DBNull.Value && Convert.ToInt32(row["IsActive"]) == 1;
             if (!isActive)
             {
                 lblMessage.Text = "Member is inactive.";
@@ -235,17 +260,27 @@ namespace Library_Management_System.User_Control
                 return;
             }
 
-            currentMemberId = memberId;
+            // ✅ Store MemberId internally
+            currentMemberId = Convert.ToInt32(row["MemberId"]);
+
+            // 🧾 Display member info
             lblMemberName.Text = row["FullName"].ToString();
             lblDueDate.Text = "Due Date: " + DateTime.Now.AddDays(DefaultLoanDays).ToShortDateString();
 
+            // 📚 Count currently borrowed books
             var dtCount = DatabaseHelper.Query(
-                "SELECT COUNT(*) as cnt FROM Borrowings WHERE MemberID = @m AND ReturnDate IS NULL",
+                "SELECT COUNT(*) AS cnt FROM Borrowings WHERE MemberID = @m AND ReturnDate IS NULL",
                 new SQLiteParameter("@m", currentMemberId));
 
             int borrowedCount = Convert.ToInt32(dtCount.Rows[0]["cnt"]);
-            lblMessage.Text = $"Current borrowed: {borrowedCount}. Max allowed: {MaxBorrowLimit}";
+            lblMessage.Text = $"Student {studentNo} currently borrowed {borrowedCount}. Max allowed: {MaxBorrowLimit}";
         }
+
+
+
+
+
+
 
         private void BtnIssue_Click(object sender, EventArgs e)
         {
@@ -324,5 +359,10 @@ namespace Library_Management_System.User_Control
 
         private void BorrowBooksControl_Load(object sender, EventArgs e) { }
         private void dgvAvailableBooks_CellContentClick(object sender, DataGridViewCellEventArgs e) { }
+
+        private void txtMemberID_TextChanged(object sender, EventArgs e)
+        {
+
+        }
     }
 }

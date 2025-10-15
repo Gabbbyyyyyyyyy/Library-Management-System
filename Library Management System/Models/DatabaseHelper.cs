@@ -12,9 +12,10 @@ namespace LibraryManagementSystem.Data
             Path.Combine(Application.StartupPath, @"..\..\..")
         );
 
-        // Point to your Data/library.db inside the project
-        private static readonly string DbPath = Path.Combine(ProjectPath, "Data", "library.db");
+        // ✅ Always use the bin\Debug\Data\library.db file
+        private static readonly string DbPath = Path.Combine(Application.StartupPath, "Data", "library.db");
 
+        // ✅ Connection string pointing to the same DB used by Db.cs
         private static readonly string ConnectionString = $"Data Source={DbPath};Version=3;";
 
         public static DataTable Query(string sql, params SQLiteParameter[] parameters)

@@ -19,22 +19,29 @@ namespace Library_Management_System.User_Control
 
         private void LoadBorrowedBooks()
         {
+
             var dt = DatabaseHelper.Query(@"
-                SELECT br.BorrowId, 
-                       m.FirstName || ' ' || m.LastName AS FullName, 
-                       b.Title, 
-                       br.BorrowDate, 
-                       br.DueDate,
-                       br.ReturnDate,
-                       br.Penalty,
-                       br.Status
-                FROM Borrowings br
-                INNER JOIN Members m ON br.MemberId = m.MemberId
-                INNER JOIN Books b ON br.BookId = b.BookId
-                WHERE br.ReturnDate IS NOT NULL AND br.Status = 'Pending'
-            ");
+        SELECT br.BorrowId, 
+               m.FirstName || ' ' || m.LastName AS FullName, 
+               b.Title, 
+               br.BorrowDate, 
+               br.DueDate,
+               br.ReturnDate,
+               br.Penalty,
+               br.Status
+        FROM Borrowings br
+        INNER JOIN Members m ON br.MemberId = m.MemberId
+        INNER JOIN Books b ON br.BookId = b.BookId
+        WHERE br.ReturnDate IS NOT NULL AND br.Status = 'Pending'
+        ORDER BY br.ReturnDate DESC;
+    ");
+
+            dgvBorrowedBooks.DataSource = null;
             dgvBorrowedBooks.DataSource = dt;
+
+           
         }
+
 
         private int GetBookIdFromBorrowing(int borrowId)
         {

@@ -46,6 +46,7 @@
             this.txtMemberID.Name = "txtMemberID";
             this.txtMemberID.Size = new System.Drawing.Size(199, 22);
             this.txtMemberID.TabIndex = 0;
+            this.txtMemberID.TextChanged += new System.EventHandler(this.txtMemberID_TextChanged);
             // 
             // btnLoadMember
             // 
