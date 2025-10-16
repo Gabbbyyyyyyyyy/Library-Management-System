@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Data.SQLite;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,6 +23,10 @@ namespace Library_Management_System.Forms
         public LoginForm()
         {
             InitializeComponent();
+
+            this.Dock = DockStyle.Fill;
+            this.Size = Screen.PrimaryScreen.Bounds.Size;
+            this.Location = Screen.PrimaryScreen.Bounds.Location;
             Db.EnsureCreated(); // Create DB if not exist
             this.KeyPreview = true;
             this.KeyDown += new KeyEventHandler(LoginForm_KeyDown);
@@ -141,7 +146,58 @@ namespace Library_Management_System.Forms
 
         private void LoginForm_Load(object sender, EventArgs e)
         {
+            // Center the panel on the form
+            panel1.Location = new Point(
+                (this.ClientSize.Width - panel1.Width) / 2,
+                (this.ClientSize.Height - panel1.Height) / 2
+            );
 
+            // Optional: make sure the panel repaints properly
+            panel1.Invalidate();
         }
+
+
+
+        private void panel1_Paint(object sender, PaintEventArgs e)
+        {
+            Panel panel = sender as Panel;
+            if (panel == null) return;
+
+            Graphics g = e.Graphics;
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+            int shadowSize = 20; // how far the shadow spreads
+            int maxAlpha = 120;  // shadow darkness (0–255)
+
+            // Draw shadow outside the panel boundaries
+            for (int i = 0; i < shadowSize; i++)
+            {
+                int alpha = maxAlpha - (i * maxAlpha / shadowSize);
+                using (SolidBrush brush = new SolidBrush(Color.FromArgb(alpha, 0, 0, 0)))
+                {
+                    g.FillRectangle(
+                        brush,
+                        -i,                     // expand left
+                        -i,                     // expand top
+                        panel.Width + i * 2,    // expand right
+                        panel.Height + i * 2    // expand bottom
+                    );
+                }
+            }
+
+            // Draw the actual panel background over the shadow
+            using (SolidBrush backBrush = new SolidBrush(panel.BackColor))
+            {
+                g.FillRectangle(backBrush, 0, 0, panel.Width, panel.Height);
+            }
+        }
+
+
+
+
+
+
+
+
     }
 }

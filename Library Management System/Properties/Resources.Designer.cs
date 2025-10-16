@@ -103,9 +103,9 @@ namespace Library_Management_System.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap admin1 {
+        internal static System.Drawing.Bitmap backgroundImage1 {
             get {
-                object obj = ResourceManager.GetObject("admin1", resourceCulture);
+                object obj = ResourceManager.GetObject("backgroundImage1", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -113,19 +113,9 @@ namespace Library_Management_System.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap bg {
+        internal static System.Drawing.Bitmap bgS {
             get {
-                object obj = ResourceManager.GetObject("bg", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap bg1 {
-            get {
-                object obj = ResourceManager.GetObject("bg1", resourceCulture);
+                object obj = ResourceManager.GetObject("bgS", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

@@ -1,112 +1,105 @@
 ﻿using System;
+using System.Drawing;
+using System.Windows.Forms;
 
 namespace Library_Management_System.Forms
 {
     partial class PreLoginButtons
     {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
-            {
                 components.Dispose();
-            }
             base.Dispose(disposing);
         }
 
         #region Windows Form Designer generated code
 
-        /// <summary>
-        /// Required method for Designer support - do not modify
-        /// the contents of this method with the code editor.
-        /// </summary>
         private void InitializeComponent()
         {
-            this.btnAdmin = new System.Windows.Forms.Button();
-            this.btnStudent = new System.Windows.Forms.Button();
-            this.btnRegister = new System.Windows.Forms.Button();
+            this.button1 = new System.Windows.Forms.Button();
+            this.label1 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
+            this.button2 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
-            // btnAdmin
+            // button1
             // 
-            this.btnAdmin.BackColor = System.Drawing.Color.Transparent;
-            this.btnAdmin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnAdmin.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnAdmin.Image = global::Library_Management_System.Properties.Resources.admin_icon_32x32_transparent;
-            this.btnAdmin.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnAdmin.Location = new System.Drawing.Point(671, 444);
-            this.btnAdmin.Name = "btnAdmin";
-            this.btnAdmin.Size = new System.Drawing.Size(229, 66);
-            this.btnAdmin.TabIndex = 0;
-            this.btnAdmin.TabStop = false;
-            this.btnAdmin.Text = "Admin log in";
-            this.btnAdmin.UseVisualStyleBackColor = false;
-            this.btnAdmin.Click += new System.EventHandler(this.button1_Click);
+            this.button1.BackColor = System.Drawing.Color.White;
+            this.button1.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button1.Location = new System.Drawing.Point(1769, 31);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(171, 47);
+            this.button1.TabIndex = 6;
+            this.button1.Text = "Log in";
+            this.button1.UseVisualStyleBackColor = false;
+            this.button1.Click += new System.EventHandler(this.button1_Click_1);
             // 
-            // btnStudent
+            // label1
             // 
-            this.btnStudent.BackColor = System.Drawing.Color.Transparent;
-            this.btnStudent.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnStudent.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnStudent.Image = global::Library_Management_System.Properties.Resources.student;
-            this.btnStudent.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnStudent.Location = new System.Drawing.Point(1141, 444);
-            this.btnStudent.Name = "btnStudent";
-            this.btnStudent.Size = new System.Drawing.Size(229, 66);
-            this.btnStudent.TabIndex = 1;
-            this.btnStudent.TabStop = false;
-            this.btnStudent.Text = "    Student log in";
-            this.btnStudent.UseVisualStyleBackColor = false;
-            this.btnStudent.Click += new System.EventHandler(this.btnStudent_Click);
+            this.label1.AutoSize = true;
+            this.label1.BackColor = System.Drawing.Color.Transparent;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 70.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.Location = new System.Drawing.Point(892, 234);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(748, 536);
+            this.label1.TabIndex = 7;
+            this.label1.Text = "Welcome to \r\nLibrary\r\nManagement\r\nSystem!";
+            this.label1.Click += new System.EventHandler(this.label1_Click);
             // 
-            // btnRegister
+            // label2
             // 
-            this.btnRegister.BackColor = System.Drawing.Color.Transparent;
-            this.btnRegister.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnRegister.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnRegister.Location = new System.Drawing.Point(906, 591);
-            this.btnRegister.Name = "btnRegister";
-            this.btnRegister.Size = new System.Drawing.Size(229, 66);
-            this.btnRegister.TabIndex = 5;
-            this.btnRegister.TabStop = false;
-            this.btnRegister.Text = "Register as a student";
-            this.btnRegister.UseVisualStyleBackColor = false;
-            this.btnRegister.Click += new System.EventHandler(this.btnRegister_Click);
+            this.label2.AutoSize = true;
+            this.label2.BackColor = System.Drawing.Color.Transparent;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 19.2F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.Location = new System.Drawing.Point(908, 866);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(667, 37);
+            this.label2.TabIndex = 8;
+            this.label2.Text = "Discover, borrow, and learn — all in one place.";
+            // 
+            // button2
+            // 
+            this.button2.BackColor = System.Drawing.Color.Transparent;
+            this.button2.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.button2.FlatAppearance.BorderSize = 0;
+            this.button2.FlatAppearance.MouseDownBackColor = System.Drawing.Color.White;
+            this.button2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button2.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button2.Location = new System.Drawing.Point(1557, 31);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(121, 47);
+            this.button2.TabIndex = 9;
+            this.button2.Text = "About";
+            this.button2.UseVisualStyleBackColor = false;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
             // PreLoginButtons
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackgroundImage = global::Library_Management_System.Properties.Resources.bg1;
+            this.BackgroundImage = global::Library_Management_System.Properties.Resources.backgroundImage1;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.ClientSize = new System.Drawing.Size(1778, 897);
-            this.Controls.Add(this.btnRegister);
-            this.Controls.Add(this.btnStudent);
-            this.Controls.Add(this.btnAdmin);
+            this.Controls.Add(this.button2);
+            this.Controls.Add(this.label2);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.button1);
             this.Name = "PreLoginButtons";
             this.Text = "PreLogin";
             this.Load += new System.EventHandler(this.PreLoginButtons_Load);
             this.ResumeLayout(false);
+            this.PerformLayout();
 
-        }
-
-        private void btnRegister_Click_1(object sender, EventArgs e)
-        {
-            throw new NotImplementedException();
         }
 
         #endregion
-
-        private System.Windows.Forms.Button btnAdmin;
-        private System.Windows.Forms.Button btnStudent;
-        private System.Windows.Forms.Button btnRegister;
+        private System.Windows.Forms.Button button1;
+        private Label label1;
+        private Label label2;
+        private Button button2;
     }
 }

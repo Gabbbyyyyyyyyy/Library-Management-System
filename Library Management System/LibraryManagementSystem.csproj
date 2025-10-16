@@ -140,6 +140,12 @@
     <Compile Include="Forms\MemberEditForm.Designer.cs">
       <DependentUpon>MemberEditForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\ModeSelectorForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\ModeSelectorForm.Designer.cs">
+      <DependentUpon>ModeSelectorForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\PreLoginButtons.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -160,6 +166,9 @@
     </Compile>
     <Compile Include="Models\DatabaseHelper.cs" />
     <Compile Include="Models\DataGridViewHelper.cs" />
+    <Compile Include="Models\RoundedButton.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Models\TextBoxHelper.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -267,6 +276,9 @@
     <EmbeddedResource Include="Forms\MembersForm.resx">
       <DependentUpon>MembersForm.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Forms\ModeSelectorForm.resx">
+      <DependentUpon>ModeSelectorForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\PreLoginButtons.resx">
       <DependentUpon>PreLoginButtons.cs</DependentUpon>
     </EmbeddedResource>
@@ -336,13 +348,15 @@
     <None Include="Resources\return.png" />
     <None Include="Resources\dashboard1.png" />
     <None Include="Resources\logout.png" />
-    <None Include="Resources\bg.jpg" />
-    <None Include="Resources\bg1.jpg" />
     <None Include="Resources\admin.png" />
     <None Include="Resources\admin1.png" />
     <None Include="Resources\student.ico" />
     <None Include="Resources\admin_icon_32x32.png" />
     <None Include="Resources\admin_icon_32x32_transparent.png" />
+    <None Include="Resources\bg.png" />
+    <None Include="Resources\backgroundImage.png" />
+    <None Include="Resources\backgroundImage1.png" />
+    <None Include="Resources\bgS.jpg" />
     <Content Include="schema.sql" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
