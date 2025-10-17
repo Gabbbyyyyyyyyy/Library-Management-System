@@ -17,7 +17,7 @@ namespace Library_Management_System
         private TextBox txtPassword;
         private Button btnLogin;
         private Timer rollDownTimer;
-        private int targetHeight = 280;
+        private int targetHeight = 290;
         // animation helpers (add near other private fields)
         private int animationStep = 0;
         private readonly int animationMaxSteps = 30; // how many ticks the animation runs for (larger = slower)
@@ -57,8 +57,8 @@ namespace Library_Management_System
             this.KeyDown += ModeSelectorForm_KeyDown;
 
             // Set default button color and style
-            btnAdmin.ForeColor = ColorTranslator.FromHtml("#381313");
-            btnAdmin.BackColor = ColorTranslator.FromHtml("#f2dabe");
+            btnAdmin.ForeColor = Color.White;
+            btnAdmin.BackColor = ColorTranslator.FromHtml("#381313");
             //btnAdmin.ForeColor = Color.White;
             btnAdmin.FlatStyle = FlatStyle.Flat;
             btnAdmin.FlatAppearance.BorderSize = 0;
@@ -66,12 +66,13 @@ namespace Library_Management_System
             btnStudent.FlatStyle = FlatStyle.Flat;
             btnStudent.FlatAppearance.BorderSize = 0;
             btnStudent.BackColor = Color.Transparent;
-            btnStudent.ForeColor = ColorTranslator.FromHtml("#381313");
+            btnStudent.ForeColor = Color.Black;
 
 
             // Apply rounded edges
             SetButtonRounded(btnAdmin, 20); // 20 = corner radius
             SetButtonRounded(btnStudent, 20); // 20 = corner radius
+
 
             // 👇 Add custom paint handler for student button border
             btnStudent.Paint += (s, e) => DrawRoundedBorder(btnStudent, e.Graphics, 20);
@@ -260,6 +261,8 @@ private void btnStudent_Click_1(object sender, EventArgs e)
             btnAdmin.Enabled = false;
             btnStudent.Enabled = false;
 
+
+
             // Apply a smooth "roll down" animation to the whole form first
             AnimateWindow(this.Handle, 400, AW_VER_POSITIVE | AW_SLIDE | AW_ACTIVATE | AW_BLEND);
 
@@ -325,7 +328,7 @@ private void btnStudent_Click_1(object sender, EventArgs e)
             Label lblTitle = new Label
             {
                 Text = "Admin Login",
-                Font = new Font("Segoe UI", 16, FontStyle.Bold),
+                Font = new Font("Microsoft Sans Serif", 16, FontStyle.Bold),
                 ForeColor = ColorTranslator.FromHtml("#381313"),
                 AutoSize = false,
                 TextAlign = ContentAlignment.MiddleCenter,
@@ -337,42 +340,114 @@ private void btnStudent_Click_1(object sender, EventArgs e)
             Label lblUser = new Label
             {
                 Text = "Username",
-                Font = new Font("Segoe UI", 10),
-                ForeColor = ColorTranslator.FromHtml("#381313"),
+                Font = new Font("Microsoft Sans Serif", 11),
+                ForeColor = SystemColors.ControlText,
                 Location = new Point(45, 85),
                 AutoSize = true
             };
             pnlAdminLogin.Controls.Add(lblUser);
 
+            // Panel wrapper for Username TextBox (custom border)
+            Panel pnlUsernameBorder = new Panel
+            {
+                Width = 270,
+                Height = 34, // a bit taller to match styling
+                Location = new Point(45, 110),
+                BackColor = Color.Transparent
+            };
+            pnlUsernameBorder.Paint += (s, e) =>
+            {
+                int radius = 6;
+                int penWidth = 1;
+                Color borderColor = ColorTranslator.FromHtml("#E5E7EB");
+
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                Rectangle rect = new Rectangle(0, 0, pnlUsernameBorder.Width - 1, pnlUsernameBorder.Height - 1);
+
+                using (GraphicsPath path = new GraphicsPath())
+                {
+                    path.AddArc(rect.X, rect.Y, radius, radius, 180, 90);
+                    path.AddArc(rect.Right - radius, rect.Y, radius, radius, 270, 90);
+                    path.AddArc(rect.Right - radius, rect.Bottom - radius, radius, radius, 0, 90);
+                    path.AddArc(rect.X, rect.Bottom - radius, radius, radius, 90, 90);
+                    path.CloseFigure();
+
+                    using (Pen pen = new Pen(borderColor, penWidth))
+                    {
+                        pen.LineJoin = LineJoin.Round;
+                        e.Graphics.DrawPath(pen, path);
+                    }
+                }
+            };
+            
+
             txtUsername = new TextBox
             {
                 Width = 270,
                 Location = new Point(45, 110),
-                BorderStyle = BorderStyle.FixedSingle,
+                //BorderStyle = BorderStyle.FixedSingle,
                 Font = new Font("Segoe UI", 10)
             };
+
             pnlAdminLogin.Controls.Add(txtUsername);
+            pnlAdminLogin.Controls.Add(pnlUsernameBorder);
 
             Label lblPass = new Label
             {
                 Text = "Password",
-                Font = new Font("Segoe UI", 10),
-                ForeColor = ColorTranslator.FromHtml("#381313"),
+                Font = new Font("Microsoft Sans Serif", 11),
+                ForeColor = SystemColors.ControlText,
                 Location = new Point(45, 150),
                 AutoSize = true
             };
             pnlAdminLogin.Controls.Add(lblPass);
+
+            // Panel wrapper for Password TextBox (custom border)
+            Panel pnlPasswordBorder = new Panel
+            {
+                Width = 270,
+                Height = 34,
+                Location = new Point(45, 110),
+                BackColor = Color.Transparent
+            };
+            pnlPasswordBorder.Paint += (s, e) =>
+            {
+                int radius = 6;
+                int penWidth = 1;
+                Color borderColor = ColorTranslator.FromHtml("#D1D5DB");
+
+
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                Rectangle rect = new Rectangle(0, 0, pnlPasswordBorder.Width - 1, pnlPasswordBorder.Height - 1);
+
+                using (GraphicsPath path = new GraphicsPath())
+                {
+                    path.AddArc(rect.X, rect.Y, radius, radius, 180, 90);
+                    path.AddArc(rect.Right - radius, rect.Y, radius, radius, 270, 90);
+                    path.AddArc(rect.Right - radius, rect.Bottom - radius, radius, radius, 0, 90);
+                    path.AddArc(rect.X, rect.Bottom - radius, radius, radius, 90, 90);
+                    path.CloseFigure();
+
+                    using (Pen pen = new Pen(borderColor, penWidth))
+                    {
+                        pen.LineJoin = LineJoin.Round;
+                        e.Graphics.DrawPath(pen, path);
+                    }
+                }
+            };
+           
 
             txtPassword = new TextBox
             {
                 Width = 270,
                 Location = new Point(45, 175),
                 UseSystemPasswordChar = true,
-                BorderStyle = BorderStyle.FixedSingle,
+                //BorderStyle = BorderStyle.FixedSingle,
                 Font = new Font("Segoe UI", 10),
                 Enabled = false // disabled until username is typed
             };
             pnlAdminLogin.Controls.Add(txtPassword);
+            pnlAdminLogin.Controls.Add(pnlPasswordBorder);
 
             btnLogin = new Button
             {
@@ -383,9 +458,15 @@ private void btnStudent_Click_1(object sender, EventArgs e)
                 BackColor = ColorTranslator.FromHtml("#381313"),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold)
+                Font = new Font("Segoe UI", 12, FontStyle.Bold)
             };
             btnLogin.FlatAppearance.BorderSize = 0;
+            // ✅ Use your existing SetButtonRounded system
+            SetButtonRounded(btnLogin, 20); // 10 = corner radius
+
+            // Login logic
+            btnLogin.Click += BtnLogin_Click;
+
             pnlAdminLogin.Controls.Add(btnLogin);
 
             // Enable password box when username is typed

@@ -33,7 +33,103 @@ namespace Library_Management_System.Forms
             // Enable smoother drawing
             this.DoubleBuffered = true;
             this.Paint += LoginForm_Paint; // ✅ Draw shadow here instead of inside the panel
+
+            btnLogin.BackColor = ColorTranslator.FromHtml("#381313");
+            btnLogin.ForeColor = Color.White;
+            btnLogin.FlatStyle = FlatStyle.Flat;
+
+
+            //// Apply rounded edges
+            SetButtonRounded(btnLogin, 1); // 20 = corner radius
         }
+
+        private void SetButtonRounded(Button btn, int radius)
+        {
+            // Make sure system doesn't draw its own border
+            btn.FlatStyle = FlatStyle.Flat;
+            btn.FlatAppearance.BorderSize = 0;
+            btn.TabStop = false; // prevents focus dotted rectangle (optional)
+
+            // Recreate region whenever size changes
+            btn.Resize -= Btn_Resize; // avoid duplicate handlers
+            btn.Resize += Btn_Resize;
+
+            // Paint custom border
+            btn.Paint -= Btn_Paint;
+            btn.Paint += Btn_Paint;
+
+            // Apply initial region now
+            ApplyRoundedRegion(btn, radius);
+        }
+
+        private void Btn_Resize(object sender, EventArgs e)
+        {
+            var btn = sender as Button;
+            if (btn != null)
+                ApplyRoundedRegion(btn, 20); // or store radius per-button if needed
+        }
+
+        private void ApplyRoundedRegion(Button btn, int radius)
+        {
+            Rectangle rect = btn.ClientRectangle;
+            int diameter = radius * 2;
+
+            using (GraphicsPath path = new GraphicsPath())
+            {
+                // Use RectangleF to be precise and avoid clipping
+                path.AddArc(rect.X, rect.Y, diameter, diameter, 180, 90);
+                path.AddArc(rect.Right - diameter, rect.Y, diameter, diameter, 270, 90);
+                path.AddArc(rect.Right - diameter, rect.Bottom - diameter, diameter, diameter, 0, 90);
+                path.AddArc(rect.X, rect.Bottom - diameter, diameter, diameter, 90, 90);
+                path.CloseFigure();
+
+                // Set region from path (region will clip the control shape perfectly)
+                btn.Region = new Region(path);
+            }
+        }
+
+        private void Btn_Paint(object sender, PaintEventArgs e)
+        {
+            var btn = sender as Button;
+            if (btn == null) return;
+
+            int radius = 20;                 // same radius as before
+            float penWidth = 1.4f;           // slightly thicker for smoother edges
+            Color borderColor = Color.FromArgb(120, 56, 19, 19); // rich but soft brown
+
+            // Enable highest-quality smoothing
+            e.Graphics.SmoothingMode = SmoothingMode.HighQuality;
+            e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            e.Graphics.CompositingQuality = CompositingQuality.HighQuality;
+
+            // Draw slightly inside the button bounds
+            RectangleF rect = new RectangleF(
+                penWidth / 2f,
+                penWidth / 2f,
+                btn.ClientSize.Width - penWidth - 1f,
+                btn.ClientSize.Height - penWidth - 1f
+            );
+
+            float diameter = radius * 2f;
+            using (GraphicsPath path = new GraphicsPath())
+            {
+                path.AddArc(rect.X, rect.Y, diameter, diameter, 180, 90);
+                path.AddArc(rect.Right - diameter, rect.Y, diameter, diameter, 270, 90);
+                path.AddArc(rect.Right - diameter, rect.Bottom - diameter, diameter, diameter, 0, 90);
+                path.AddArc(rect.X, rect.Bottom - diameter, diameter, diameter, 90, 90);
+                path.CloseFigure();
+
+                using (Pen pen = new Pen(borderColor, penWidth))
+                {
+                    pen.LineJoin = LineJoin.Round;
+                    pen.StartCap = LineCap.Round;
+                    pen.EndCap = LineCap.Round;
+
+                    e.Graphics.DrawPath(pen, path);
+                }
+            }
+        }
+
 
         private void lblMessage_Click(object sender, EventArgs e) { }
 

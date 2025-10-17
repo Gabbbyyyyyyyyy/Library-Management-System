@@ -278,6 +278,7 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\ModeSelectorForm.resx">
       <DependentUpon>ModeSelectorForm.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\PreLoginButtons.resx">
       <DependentUpon>PreLoginButtons.cs</DependentUpon>
@@ -357,6 +358,22 @@
     <None Include="Resources\backgroundImage.png" />
     <None Include="Resources\backgroundImage1.png" />
     <None Include="Resources\bgS.jpg" />
+    <None Include="Resources\logo2.png" />
+    <None Include="Resources\dashboard_icon.png" />
+    <None Include="Resources\MBooks.png" />
+    <None Include="Resources\Members.png" />
+    <None Include="Resources\BBooks.png" />
+    <None Include="Resources\RBooks.png" />
+    <None Include="Resources\Reports.png" />
+    <None Include="Resources\Setting.png" />
+    <None Include="Resources\Logout %282%29.png" />
+    <None Include="Resources\Contrast.png" />
+    <None Include="Resources\Collapse.png" />
+    <None Include="Resources\collapse_icon.bmp" />
+    <None Include="Resources\collapse_icon.png" />
+    <None Include="Resources\myLogo.png" />
+    <None Include="Resources\myLogo1.png" />
+    <None Include="Resources\Logout1.png" />
     <Content Include="schema.sql" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
