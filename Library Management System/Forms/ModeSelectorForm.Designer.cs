@@ -38,9 +38,8 @@
             this.btnAdmin.BackColor = System.Drawing.Color.Transparent;
             this.btnAdmin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnAdmin.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnAdmin.Image = global::Library_Management_System.Properties.Resources.admin_icon_32x32_transparent;
             this.btnAdmin.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnAdmin.Location = new System.Drawing.Point(124, 173);
+            this.btnAdmin.Location = new System.Drawing.Point(55, 187);
             this.btnAdmin.Name = "btnAdmin";
             this.btnAdmin.Size = new System.Drawing.Size(406, 54);
             this.btnAdmin.TabIndex = 1;
@@ -54,9 +53,8 @@
             this.btnStudent.BackColor = System.Drawing.Color.Transparent;
             this.btnStudent.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnStudent.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnStudent.Image = global::Library_Management_System.Properties.Resources.student;
             this.btnStudent.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnStudent.Location = new System.Drawing.Point(124, 87);
+            this.btnStudent.Location = new System.Drawing.Point(55, 101);
             this.btnStudent.Name = "btnStudent";
             this.btnStudent.Size = new System.Drawing.Size(406, 54);
             this.btnStudent.TabIndex = 2;
@@ -68,9 +66,10 @@
             // btnRegister
             // 
             this.btnRegister.BackColor = System.Drawing.Color.Transparent;
+            this.btnRegister.FlatAppearance.BorderSize = 0;
             this.btnRegister.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnRegister.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnRegister.Location = new System.Drawing.Point(318, 259);
+            this.btnRegister.Location = new System.Drawing.Point(249, 282);
             this.btnRegister.Name = "btnRegister";
             this.btnRegister.Size = new System.Drawing.Size(212, 32);
             this.btnRegister.TabIndex = 6;
@@ -83,7 +82,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(690, 397);
+            this.ClientSize = new System.Drawing.Size(549, 397);
             this.Controls.Add(this.btnRegister);
             this.Controls.Add(this.btnStudent);
             this.Controls.Add(this.btnAdmin);

@@ -29,6 +29,7 @@ namespace Library_Management_System.Forms
             // 
             this.button1.BackColor = System.Drawing.Color.White;
             this.button1.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.button1.FlatAppearance.BorderSize = 0;
             this.button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.button1.Location = new System.Drawing.Point(1769, 31);
             this.button1.Name = "button1";
@@ -45,7 +46,7 @@ namespace Library_Management_System.Forms
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 70.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.Location = new System.Drawing.Point(892, 234);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(748, 536);
+            this.label1.Size = new System.Drawing.Size(737, 528);
             this.label1.TabIndex = 7;
             this.label1.Text = "Welcome to \r\nLibrary\r\nManagement\r\nSystem!";
             this.label1.Click += new System.EventHandler(this.label1_Click);
