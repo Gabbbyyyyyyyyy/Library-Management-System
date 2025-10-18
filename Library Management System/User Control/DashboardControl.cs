@@ -126,7 +126,7 @@ namespace Library_Management_System.User_Control
             MainForm parentForm = this.FindForm() as MainForm;
             if (parentForm != null)
             {
-                parentForm.LoadControl(new ManageBooksControl());
+                parentForm.OpenManageBooksFromDashboard();
             }
         }
 
@@ -141,7 +141,7 @@ namespace Library_Management_System.User_Control
             MainForm parentForm = this.FindForm() as MainForm;
             if (parentForm != null)
             {
-                parentForm.LoadControl(new ManageMembersControl());
+                parentForm.OpenManageMembersFromDashboard();
             }
         }
 
@@ -203,6 +203,16 @@ namespace Library_Management_System.User_Control
         }
 
         private void DashboardControl_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void lblTotalBooks_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void lblActiveMembers_Click(object sender, EventArgs e)
         {
 
         }

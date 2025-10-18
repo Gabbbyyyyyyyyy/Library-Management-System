@@ -72,6 +72,7 @@ namespace Library_Management_System.User_Control
             this.lblTotalBooks.Size = new System.Drawing.Size(215, 29);
             this.lblTotalBooks.TabIndex = 0;
             this.lblTotalBooks.Text = "📚 Total Books: 0";
+            this.lblTotalBooks.Click += new System.EventHandler(this.lblTotalBooks_Click);
             // 
             // pnlBorrowedBooks
             // 
@@ -139,6 +140,7 @@ namespace Library_Management_System.User_Control
             this.lblActiveMembers.Size = new System.Drawing.Size(261, 29);
             this.lblActiveMembers.TabIndex = 0;
             this.lblActiveMembers.Text = "👥 Active Members: 0";
+            this.lblActiveMembers.Click += new System.EventHandler(this.lblActiveMembers_Click);
             // 
             // pnlOverdueBooks
             // 
@@ -174,7 +176,7 @@ namespace Library_Management_System.User_Control
             // 
             // panel2
             // 
-            this.panel2.BackColor = System.Drawing.Color.White;
+            this.panel2.BackColor = System.Drawing.Color.WhiteSmoke;
             this.panel2.Controls.Add(this.lblGreeting);
             this.panel2.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel2.Location = new System.Drawing.Point(0, 0);
@@ -202,7 +204,7 @@ namespace Library_Management_System.User_Control
             // 
             // DashboardControl
             // 
-            this.BackColor = System.Drawing.Color.White;
+            this.BackColor = System.Drawing.Color.WhiteSmoke;
             this.Controls.Add(this.label1);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.panel2);

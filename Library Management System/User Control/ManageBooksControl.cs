@@ -151,17 +151,24 @@ namespace LibraryManagementSystem
                     {
                         case "Available":
                             row.Cells["Status"].Style.ForeColor = Color.Green;
+                            row.Cells["Status"].Style.Font = new Font(dgvBooks.Font, FontStyle.Regular);
                             break;
+
                         case "Reserved":
                             row.Cells["Status"].Style.ForeColor = Color.Orange;
+                            row.Cells["Status"].Style.Font = new Font(dgvBooks.Font, FontStyle.Regular);
                             break;
+
                         case "Not Available":
+                        case "Borrowed Out":
                             row.Cells["Status"].Style.ForeColor = Color.Red;
+                            row.Cells["Status"].Style.Font = new Font(dgvBooks.Font, FontStyle.Regular);
                             break;
                     }
                 }
             }
         }
+
 
         // When a row is clicked, fill only the Quantity textbox
         private void dgvBooks_CellClick(object sender, DataGridViewCellEventArgs e)
@@ -679,6 +686,9 @@ namespace LibraryManagementSystem
                         da.Fill(dt);
                         dgvBooks.DataSource = dt;
 
+                        // Apply color after binding
+                        ColorStatusColumnText();
+
                         // Use the DataTable to check if any rows exist
                         if (dt.Rows.Count == 0)
                         {
@@ -724,9 +734,11 @@ namespace LibraryManagementSystem
                     {
                         DataTable dt = new DataTable();
                         da.Fill(dt);
-                        dgvBooks.DataSource = dt;
+                   
 
                         dgvBooks.DataSource = dt; // Always update DataGridView
+                                                  // Apply color after binding
+                        ColorStatusColumnText();
 
                         if (dt.Rows.Count == 0)
                         {
@@ -882,24 +894,24 @@ namespace LibraryManagementSystem
 
 
 
-        private void dgvBooks_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
-        {
-            if (dgvBooks.Columns[e.ColumnIndex].Name == "Status" && e.Value != null)
-            {
-                string status = e.Value.ToString();
+        //private void dgvBooks_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        //{
+        //    if (dgvBooks.Columns[e.ColumnIndex].Name == "Status" && e.Value != null)
+        //    {
+        //        string status = e.Value.ToString();
 
-                if (status == "Borrowed Out")
-                {
-                    e.CellStyle.ForeColor = Color.Red;
-                    e.CellStyle.Font = new Font(dgvBooks.Font, FontStyle.Bold);
-                }
-                else if (status == "Available")
-                {
-                    e.CellStyle.ForeColor = Color.Green;
-                    e.CellStyle.Font = new Font(dgvBooks.Font, FontStyle.Bold);
-                }
-            }
-        }
+        //        if (status == "Borrowed Out")
+        //        {
+        //            e.CellStyle.ForeColor = Color.Red;
+        //            e.CellStyle.Font = new Font(dgvBooks.Font, FontStyle.Bold);
+        //        }
+        //        else if (status == "Available")
+        //        {
+        //            e.CellStyle.ForeColor = Color.Green;
+        //            e.CellStyle.Font = new Font(dgvBooks.Font, FontStyle.Bold);
+        //        }
+        //    }
+        //}
 
 
         private void txtTitle_TextChanged(object sender, EventArgs e)

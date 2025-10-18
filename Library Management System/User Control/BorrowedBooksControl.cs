@@ -20,6 +20,17 @@ namespace Library_Management_System.User_Control
 
             // ✅ Ensure Borrowings table has Status column
             EnsureBorrowingsStatusColumn();
+            EnsureBooksStatusColumn();
+
+            dgvAvailableBooks.CellFormatting += dgvAvailableBooks_CellFormatting;
+            dgvAvailableBooks.EnableHeadersVisualStyles = false;
+
+            dgvAvailableBooks.DataBindingComplete += (s, e) =>
+            {
+                dgvAvailableBooks.ClearSelection();
+                dgvAvailableBooks.CurrentCell = null;
+            };
+
 
             LoadAvailableBooks();
             SendMessage(txtSearch.Handle, EM_SETCUEBANNER, 0, "Search books...");
@@ -30,6 +41,33 @@ namespace Library_Management_System.User_Control
         private static extern Int32 SendMessage(IntPtr hWnd, int msg, int wParam, string lParam);
 
         private const int EM_SETCUEBANNER = 0x1501;
+
+        private void dgvAvailableBooks_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (dgvAvailableBooks.Columns[e.ColumnIndex].Name == "Status" && e.Value != null)
+            {
+                string status = e.Value.ToString().Trim();
+
+                switch (status)
+                {
+                    case "Available":
+                        e.CellStyle.ForeColor = Color.Green;
+                        break;
+                    case "Not Available":
+                        e.CellStyle.ForeColor = Color.Red;
+                        break;
+                    case "Reserved":
+                        e.CellStyle.ForeColor = Color.Orange;
+                        break;
+                    default:
+                        e.CellStyle.ForeColor = Color.Black;
+                        break;
+                }
+
+                e.FormattingApplied = true;
+            }
+        }
+
 
         // ✅ Automatically check and add missing Status column
         private void EnsureBorrowingsStatusColumn()
@@ -79,11 +117,7 @@ namespace Library_Management_System.User_Control
                         b.Category, 
                         b.Quantity, 
                         b.AvailableCopies,
-                        CASE 
-                            WHEN EXISTS (SELECT 1 FROM Reservations r WHERE r.BookId = b.BookId AND r.Status = 'Active') THEN 'Reserved'
-                            WHEN b.AvailableCopies = 0 THEN 'Not Available'
-                            ELSE 'Available'
-                        END AS Status
+                        b.Status
                     FROM Books b";
 
                 using (var cmd = new SQLiteCommand(query, con))
@@ -98,34 +132,86 @@ namespace Library_Management_System.User_Control
                     dgvAvailableBooks.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
                     dgvAvailableBooks.AllowUserToAddRows = false;
 
-                    ColorStatusColumnText();
+                    // ✅ Forcefully clear any lingering selection and focus
+                    dgvAvailableBooks.ClearSelection();
+                    dgvAvailableBooks.CurrentCell = null;
+                    dgvAvailableBooks.Focus(); // optional: removes dotted focus box
+
+
+
+
+                    //ColorStatusColumnText();
                 }
             }
         }
-
-        private void ColorStatusColumnText()
+        private void EnsureBooksStatusColumn()
         {
-            foreach (DataGridViewRow row in dgvAvailableBooks.Rows)
+            using (var con = Db.GetConnection())
             {
-                if (row.Cells["Status"].Value != null)
-                {
-                    string status = row.Cells["Status"].Value.ToString();
+                con.Open();
+                bool hasStatusColumn = false;
 
-                    switch (status)
+                using (var cmd = new SQLiteCommand("PRAGMA table_info(Books);", con))
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
                     {
-                        case "Available":
-                            row.Cells["Status"].Style.ForeColor = Color.Green;
+                        string columnName = reader["name"].ToString();
+                        if (columnName.Equals("Status", StringComparison.OrdinalIgnoreCase))
+                        {
+                            hasStatusColumn = true;
                             break;
-                        case "Reserved":
-                            row.Cells["Status"].Style.ForeColor = Color.Orange;
-                            break;
-                        case "Not Available":
-                            row.Cells["Status"].Style.ForeColor = Color.Red;
-                            break;
+                        }
                     }
                 }
+
+                if (!hasStatusColumn)
+                {
+                    using (var alterCmd = new SQLiteCommand(
+                        "ALTER TABLE Books ADD COLUMN Status TEXT DEFAULT 'Available';", con))
+                    {
+                        alterCmd.ExecuteNonQuery();
+                    }
+
+                    using (var updateCmd = new SQLiteCommand(
+                        "UPDATE Books SET Status = CASE WHEN AvailableCopies > 0 THEN 'Available' ELSE 'Not Available' END;", con))
+                    {
+                        updateCmd.ExecuteNonQuery();
+                    }
+
+                    Console.WriteLine("✅ Added missing 'Status' column to Books table.");
+                }
             }
         }
+
+
+        //private void ColorStatusColumnText()
+        //{
+        //    foreach (DataGridViewRow row in dgvAvailableBooks.Rows)
+        //    {
+        //        if (row.Cells["Status"].Value != null)
+        //        {
+        //            string status = row.Cells["Status"].Value.ToString().Trim();
+
+        //            // Default black text
+        //            row.Cells["Status"].Style.ForeColor = Color.Black;
+
+        //            switch (status)
+        //            {
+        //                case "Available":
+        //                    row.Cells["Status"].Style.ForeColor = Color.Green;
+        //                    break;
+        //                case "Not Available":
+        //                    row.Cells["Status"].Style.ForeColor = Color.Red;
+        //                    break;
+        //                case "Reserved":
+        //                    row.Cells["Status"].Style.ForeColor = Color.Orange;
+        //                    break;
+        //            }
+        //        }
+        //    }
+        //}
+
 
         private void txtSearch_TextChanged(object sender, EventArgs e)
         {
@@ -136,11 +222,7 @@ namespace Library_Management_System.User_Control
                     SELECT 
                         b.BookId, b.ISBN, b.Title, b.Author, b.Category, 
                         b.Quantity, b.AvailableCopies,
-                        CASE 
-                            WHEN EXISTS (SELECT 1 FROM Reservations r WHERE r.BookId = b.BookId AND r.Status = 'Active') THEN 'Reserved'
-                            WHEN b.AvailableCopies = 0 THEN 'Not Available'
-                            ELSE 'Available'
-                        END AS Status
+                        b.Status
                     FROM Books b
                     WHERE b.Title LIKE @search 
                        OR b.Author LIKE @search 
@@ -155,7 +237,11 @@ namespace Library_Management_System.User_Control
                         DataTable dt = new DataTable();
                         da.Fill(dt);
                         dgvAvailableBooks.DataSource = dt;
-                        ColorStatusColumnText();
+                        dgvAvailableBooks.ClearSelection();
+                        dgvAvailableBooks.CurrentCell = null;
+
+
+                        //ColorStatusColumnText();
                     }
                 }
             }
@@ -194,6 +280,10 @@ namespace Library_Management_System.User_Control
                         DataTable dt = new DataTable();
                         da.Fill(dt);
                         dgvAvailableBooks.DataSource = dt;
+                        dgvAvailableBooks.ClearSelection();
+                        dgvAvailableBooks.CurrentCell = null;
+
+
                     }
                 }
             }
@@ -336,13 +426,28 @@ namespace Library_Management_System.User_Control
                         cmd2.Parameters.AddWithValue("@b", bookId);
                         cmd2.ExecuteNonQuery();
                     }
+                    using (var cmd3 = new SQLiteCommand(conn))
+                    {
+                        cmd3.CommandText = "UPDATE Books SET Status = CASE WHEN AvailableCopies > 0 THEN 'Available' ELSE 'Not Available' END WHERE BookID = @b";
+                        cmd3.Parameters.AddWithValue("@b", bookId);
+                        cmd3.ExecuteNonQuery();
+                    }
+
 
                     trans.Commit();
                 }
             }
 
             lblMessage.Text = "Book issued successfully.";
+
+            // Refresh available books and reapply status colors
             LoadAvailableBooks();
+
+            // ✅ Force clear lingering selection/focus
+            dgvAvailableBooks.ClearSelection();
+            dgvAvailableBooks.CurrentCell = null;
+            dgvAvailableBooks.Focus();
+            //ColorStatusColumnText();
 
             if (this.FindForm() is MainForm parentForm)
             {
@@ -358,7 +463,8 @@ namespace Library_Management_System.User_Control
         }
 
         private void BorrowBooksControl_Load(object sender, EventArgs e) { }
-        private void dgvAvailableBooks_CellContentClick(object sender, DataGridViewCellEventArgs e) { }
+        private void dgvAvailableBooks_CellContentClick(object sender, DataGridViewCellEventArgs e) {
+        }
 
         private void txtMemberID_TextChanged(object sender, EventArgs e)
         {

@@ -21,6 +21,13 @@ namespace LibraryManagementSystem
             dgvMembers.SelectionChanged += dgvMembers_SelectionChanged;
             dgvMembers.CellDoubleClick += dgvMembers_CellDoubleClick;
 
+            dgvMembers.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvMembers.MultiSelect = false;
+            dgvMembers.ClearSelection();
+            dgvMembers.CurrentCell = null;
+            dgvMembers.SelectionChanged += (s, e) => dgvMembers.ClearSelection();
+
+
             this.Size = Screen.PrimaryScreen.Bounds.Size;
             this.Location = Screen.PrimaryScreen.Bounds.Location;
 
@@ -54,7 +61,7 @@ namespace LibraryManagementSystem
                 {
                     con.Open();
 
-                    // Get all member IDs and their borrowing status at once
+                    // Get actual borrow status of all members
                     string query = @"
                 SELECT 
                     m.MemberId,
@@ -62,7 +69,8 @@ namespace LibraryManagementSystem
                         WHEN EXISTS (
                             SELECT 1 
                             FROM Borrowings b 
-                            WHERE b.MemberId = m.MemberId AND (b.ReturnDate IS NULL OR b.ReturnDate = '')
+                            WHERE b.MemberId = m.MemberId 
+                            AND (b.ReturnDate IS NULL OR b.ReturnDate = '')
                         ) THEN 'Borrowing'
                         ELSE 'No Borrowings'
                     END AS HasPendingBorrow
@@ -71,8 +79,8 @@ namespace LibraryManagementSystem
                     using (var cmd = new SQLiteCommand(query, con))
                     using (var reader = cmd.ExecuteReader())
                     {
-                        // Create a dictionary of memberId -> HasPendingBorrow
                         var statusDict = new Dictionary<int, string>();
+
                         while (reader.Read())
                         {
                             int memberId = Convert.ToInt32(reader["MemberId"]);
@@ -80,7 +88,6 @@ namespace LibraryManagementSystem
                             statusDict[memberId] = status;
                         }
 
-                        // Update DataGridView rows
                         foreach (DataGridViewRow row in dgvMembers.Rows)
                         {
                             if (row.Cells["MemberId"].Value == null) continue;
@@ -88,18 +95,16 @@ namespace LibraryManagementSystem
                             int memberId = Convert.ToInt32(row.Cells["MemberId"].Value);
                             if (statusDict.TryGetValue(memberId, out string newStatus))
                             {
-                                var current = row.Cells["HasPendingBorrow"].Value?.ToString() ?? "";
-                                if (current != newStatus)
-                                {
-                                    row.Cells["HasPendingBorrow"].Value = newStatus;
-                                    row.Cells["HasPendingBorrow"].Style.ForeColor = newStatus == "Borrowings"
-                                        ? Color.OrangeRed
-                                        : Color.Black;
-                                }
+                                row.Cells["HasPendingBorrow"].Value = newStatus;
+                                row.Cells["HasPendingBorrow"].Style.ForeColor =
+                                    newStatus == "Borrowing" ? Color.OrangeRed : Color.Green;
                             }
                         }
                     }
                 }
+                // Prevent row selection after refresh
+                dgvMembers.ClearSelection();
+                dgvMembers.CurrentCell = null;
             }
             catch (Exception ex)
             {
@@ -144,7 +149,7 @@ namespace LibraryManagementSystem
                         SELECT 1 
                         FROM Borrowings b 
                         WHERE b.MemberId = m.MemberId AND (b.ReturnDate IS NULL OR b.ReturnDate = '')
-                    ) THEN 'Borrowings'
+                    ) THEN 'Borrowing'
                     ELSE 'No Borrowings'
                 END AS HasPendingBorrow
             FROM Members m";
@@ -171,18 +176,21 @@ namespace LibraryManagementSystem
                             row.Height = 40;
 
                             string pending = row.Cells["HasPendingBorrow"].Value.ToString();
-                            if (pending == "Borrowings")
-                                row.Cells["HasPendingBorrow"].Style.ForeColor = Color.Red;
-                            else
-                                row.Cells["HasPendingBorrow"].Style.ForeColor = Color.Green;
+                            row.Cells["HasPendingBorrow"].Style.ForeColor =
+                                pending == "Borrowing" ? Color.Red : Color.Black;
                         }
 
+                        // ✅ Ensure no row stays selected
                         dgvMembers.ClearSelection();
                         dgvMembers.CurrentCell = null;
+                        dgvMembers.SelectionChanged += (s, e) => dgvMembers.ClearSelection();
+
+
                         btnDeactivate.Enabled = false;
                         btnReactivate.Enabled = false;
 
                         lblSearchMessage.Text = dt.Rows.Count == 0 ? "No members match your search." : "";
+
                     }
                 }
             }
@@ -195,7 +203,8 @@ namespace LibraryManagementSystem
                 e.CellStyle.ForeColor = e.Value.ToString() == "Inactive" ? Color.Red : Color.Green;
 
             if (dgvMembers.Columns[e.ColumnIndex].Name == "HasPendingBorrow" && e.Value != null)
-                e.CellStyle.ForeColor = e.Value.ToString() == "Borrowings" ? Color.OrangeRed : Color.Black;
+                e.CellStyle.ForeColor = e.Value.ToString() == "Borrowing" ? Color.Red : Color.Black;
+
         }
 
         private void dgvMembers_SelectionChanged(object sender, EventArgs e)
@@ -219,15 +228,75 @@ namespace LibraryManagementSystem
             if (e.RowIndex >= 0)
             {
                 var row = dgvMembers.Rows[e.RowIndex];
+                int memberId = Convert.ToInt32(row.Cells["MemberId"].Value);
+
+                // Always recheck latest borrow status
+                string borrowStatus = "No Borrowings";
+                string borrowedBooks = "";
+
+                using (var con = Db.GetConnection())
+                {
+                    con.Open();
+
+                    // Check if the student has active borrowings
+                    string statusQuery = @"
+                SELECT COUNT(*) 
+                FROM Borrowings 
+                WHERE MemberId = @id 
+                AND (ReturnDate IS NULL OR ReturnDate = '')";
+                    using (var cmd = new SQLiteCommand(statusQuery, con))
+                    {
+                        cmd.Parameters.AddWithValue("@id", memberId);
+                        int count = Convert.ToInt32(cmd.ExecuteScalar());
+                        borrowStatus = count > 0 ? "Borrowing" : "No Borrowings";
+                    }
+
+                    // If borrowing, fetch book titles
+                    if (borrowStatus == "Borrowing")
+                    {
+                        string titleQuery = @"
+                    SELECT b.Title
+                    FROM Borrowings br
+                    JOIN Books b ON br.BookId = b.BookId
+                    WHERE br.MemberId = @id 
+                    AND (br.ReturnDate IS NULL OR br.ReturnDate = '')";
+                        using (var cmd = new SQLiteCommand(titleQuery, con))
+                        {
+                            cmd.Parameters.AddWithValue("@id", memberId);
+                            using (var reader = cmd.ExecuteReader())
+                            {
+                                while (reader.Read())
+                                    borrowedBooks += "• " + reader["Title"].ToString() + "\n";
+                            }
+                        }
+                    }
+                }
+
+                // Update grid cell immediately to stay consistent
+                row.Cells["HasPendingBorrow"].Value = borrowStatus;
+                row.Cells["HasPendingBorrow"].Style.ForeColor =
+    borrowStatus == "Borrowing" ? Color.Red : Color.Black;
+
+
+                // Show message
                 string details = $"Student No: {row.Cells["StudentNo"].Value}\n" +
                                  $"Name: {row.Cells["FirstName"].Value} {row.Cells["LastName"].Value}\n" +
                                  $"Course: {row.Cells["Course"].Value}\n" +
                                  $"Year Level: {row.Cells["YearLevel"].Value}\n" +
                                  $"Status: {row.Cells["Status"].Value}\n" +
-                                 $"Borrowings: {row.Cells["HasPendingBorrow"].Value}";
+                                 $"Borrow Status: {borrowStatus}\n\n";
+
+                if (borrowStatus == "Borrowing" && !string.IsNullOrEmpty(borrowedBooks))
+                    details += "📚 Borrowed Books:\n" + borrowedBooks;
+                else
+                    details += "📘 No borrowed books.";
+
                 MessageBox.Show(details, "Member Details", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
+
+
+
 
         private void dgvMembers_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {

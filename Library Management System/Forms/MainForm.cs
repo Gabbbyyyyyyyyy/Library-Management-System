@@ -12,6 +12,9 @@ using LibraryManagementSystem;
 using LibraryManagementSystem.Data;
 using System.Runtime.InteropServices;
 
+//cpanel password = GabrielCpanelAccount1
+//Hostinger account = GabrielHosting1
+
 namespace Library_Management_System
 {
     public partial class MainForm : Form
@@ -39,6 +42,13 @@ namespace Library_Management_System
         private Button btnAccountSettings;
         private HoverPanelWithArrow settingsHoverPanel;
 
+        private Panel sidebarIndicator;
+        private Button activeButton;
+
+        private Timer moveTimer;
+        private int targetTop;
+
+
 
 
         [DllImport("Gdi32.dll", EntryPoint = "CreateRoundRectRgn")]
@@ -64,7 +74,7 @@ namespace Library_Management_System
             this.pictureBoxLogo = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLogo)).BeginInit();
             this.SuspendLayout();
-
+            button6.Cursor = Cursors.Hand;
 
 
             // MainForm
@@ -175,14 +185,37 @@ namespace Library_Management_System
 
         private void button1_Click(object sender, EventArgs e)
         {
+            SetActiveButton(button1);
             // New way (loads UserControl into panelContainer):
             LoadControl(new ManageBooksControl());
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
+            SetActiveButton(button2);
             LoadControl(new ManageMembersControl());
         }
+        private void MoveIndicatorSmooth(object sender, EventArgs e)
+        {
+            int currentTop = sidebarIndicator.Top;
+            int diff = targetTop - currentTop;
+
+            if (Math.Abs(diff) < 1)
+            {
+                sidebarIndicator.Top = targetTop;
+                moveTimer.Stop();
+                return;
+            }
+
+            // --- Smooth easing ---
+            // The factor controls speed and smoothness
+            // 0.15 = smoother, slower ease
+            double easingFactor = 0.20;
+            int newTop = (int)(currentTop + diff * easingFactor);
+
+            sidebarIndicator.Top = newTop;
+        }
+
 
 
 
@@ -191,13 +224,42 @@ namespace Library_Management_System
             // === Load Dashboard by default ===
             LoadControl(new DashboardControl(Username));
 
+            moveTimer = new Timer { Interval = 15 };
+            moveTimer.Tick += MoveIndicatorSmooth;
+
+
+            // === Create sidebar selection indicator ===
+            sidebarIndicator = new Panel();
+            sidebarIndicator.Size = new Size(4, 40); // thin vertical bar
+            sidebarIndicator.BackColor = Color.FromArgb(205, 173, 132); // light brown
+            sidebarIndicator.Visible = false;
+            panel1.Controls.Add(sidebarIndicator);
+
+
+
+
             // === Ensure pictureBoxLogo is inside panel1 ===
             if (!panel1.Controls.Contains(pictureBoxLogo))
             {
+                // --- Create a top spacer (5% height) ---
+                Panel topSpacer = new Panel();
+                topSpacer.Dock = DockStyle.Top;
+                topSpacer.Height = (int)(panel1.Height * 0.02); // 5% of sidebar height
+                topSpacer.BackColor = Color.Transparent; // invisible spacer
+                panel1.Controls.Add(topSpacer);
+
                 pictureBoxLogo.Dock = DockStyle.Top;
                 pictureBoxLogo.SizeMode = PictureBoxSizeMode.Zoom;
-                pictureBoxLogo.Height = 80; // adjust to fit your logo
+                pictureBoxLogo.Height = 0; // adjust to fit your logo
                 panel1.Controls.Add(pictureBoxLogo);
+                // Keep logo above spacer visually
+                panel1.Controls.SetChildIndex(pictureBoxLogo, 0);
+
+                // Resize dynamically when window resizes
+                this.Resize += (s, ev) =>
+                {
+                    topSpacer.Height = (int)(panel1.Height * 0.02);
+                };
             }
 
             // === Create floating hover panel ===
@@ -236,6 +298,7 @@ namespace Library_Management_System
                 btn.Padding = new Padding(10, 0, 0, 0);
                 btn.ImageAlign = ContentAlignment.MiddleLeft;
                 btn.FlatAppearance.MouseOverBackColor = Color.Gray;
+                btn.Cursor = Cursors.Hand;
                 settingsHoverPanel.Controls.Add(btn);
             }
 
@@ -340,6 +403,44 @@ namespace Library_Management_System
             };
         }
 
+        public void OpenManageBooksFromDashboard()
+        {
+            SetActiveButton(button1); // button1 = Manage Books
+            LoadControl(new ManageBooksControl());
+        }
+
+        public void OpenManageMembersFromDashboard()
+        {
+            SetActiveButton(button2); // button2 = Manage Members
+            LoadControl(new ManageMembersControl());
+        }
+
+
+        public void SetActiveButton(Button clickedButton)
+        {
+            // Reset previous active button
+            if (activeButton != null)
+            {
+                activeButton.ForeColor = Color.Black; // default text color
+                activeButton.BackColor = Color.Transparent;
+            }
+
+            // Set new active button
+            activeButton = clickedButton;
+            activeButton.ForeColor = Color.FromArgb(205, 173, 132); // light brown
+            activeButton.BackColor = Color.White; // optional very light beige highlight
+
+            // Move and show the indicator beside it
+            sidebarIndicator.Height = activeButton.Height;
+            sidebarIndicator.Left = panel1.Width - sidebarIndicator.Width; // right edge
+            sidebarIndicator.Visible = true;
+            sidebarIndicator.BringToFront();
+
+            targetTop = activeButton.Top;
+            moveTimer.Start();
+        }
+
+
         // Custom panel with arrow pointer
         public class HoverPanelWithArrow : Panel
         {
@@ -394,6 +495,7 @@ namespace Library_Management_System
 
 
 
+
         private void button6_MouseEnter(object sender, EventArgs e)
         {
             // Show dropdown items
@@ -425,6 +527,7 @@ namespace Library_Management_System
 
         private void btnDashboard_Click(object sender, EventArgs e)
         {
+            SetActiveButton(btnDashboard);
             LoadControl(new DashboardControl());
         }
 
@@ -467,7 +570,7 @@ namespace Library_Management_System
 
         private void pictureBox1_Click(object sender, EventArgs e)
         {
-
+            LoadControl(new DashboardControl());
         }
 
         private void label6_Click(object sender, EventArgs e)
@@ -477,16 +580,35 @@ namespace Library_Management_System
 
         private void panel1_Paint(object sender, PaintEventArgs e)
         {
+            //// Keep smooth graphics
+            //e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 
+            //int shadowWidth = 8; // width of shadow (adjust if needed)
+            //Rectangle shadowRect = new Rectangle(panel1.Width - shadowWidth, 0, shadowWidth, panel1.Height);
+
+            //// Create a gradient shadow from right to left
+            //using (var brush = new System.Drawing.Drawing2D.LinearGradientBrush(
+            //    shadowRect,
+            //    Color.FromArgb(100, Color.Black), // semi-transparent black
+            //    Color.Transparent,                // fade out to transparent
+            //    0f                                // horizontal gradient
+            //))
+            //{
+            //    e.Graphics.FillRectangle(brush, shadowRect);
+            //}
         }
+
 
         private void button3_Click(object sender, EventArgs e)
         {
+            SetActiveButton(button3);
             LoadControl(new BorrowBooksControl());
         }
 
         private void button4_Click(object sender, EventArgs e)
         {
+
+            SetActiveButton(button4);
             // Clear existing controls in the panelContainer
             panelContainer.Controls.Clear();
 
@@ -501,6 +623,7 @@ namespace Library_Management_System
 
         private void button5_Click(object sender, EventArgs e)
         {
+            SetActiveButton(button5);
 
         }
 
@@ -579,9 +702,15 @@ namespace Library_Management_System
         private void button6_Click(object sender, EventArgs e)
         {
 
+
         }
 
-        
+        private void button6_Click_1(object sender, EventArgs e)
+        {
+
+        }
+
+
 
 
         //private void button1_Click(object sender, EventArgs e)
