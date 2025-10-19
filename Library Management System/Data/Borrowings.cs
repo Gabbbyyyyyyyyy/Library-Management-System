@@ -53,6 +53,52 @@ namespace LibraryManagementSystem.Data
                 }
             }
         }
+
+        public static void BorrowBook(int memberId, int bookId, string dueDate)
+        {
+            using (var con = Db.GetConnection())
+            {
+                con.Open();
+
+                // Insert new borrowing record with the current timestamp for BorrowDate
+                string query = @"
+            INSERT INTO Borrowings (MemberId, BookId, BorrowDate, DueDate, Status)
+            VALUES (@MemberId, @BookId, CURRENT_TIMESTAMP, @DueDate, 'Borrowed');
+        ";
+
+                using (var cmd = new SQLiteCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@MemberId", memberId);
+                    cmd.Parameters.AddWithValue("@BookId", bookId);
+                    cmd.Parameters.AddWithValue("@DueDate", dueDate);  // Example due date, could be calculated
+
+                    cmd.ExecuteNonQuery();
+                }
+
+            }
+        }
+
+        public static void ReturnBook(int borrowId)
+        {
+            using (var con = Db.GetConnection())
+            {
+                con.Open();
+
+                string query = @"
+                    UPDATE Borrowings
+                    SET Status = 'Returned', ReturnDate = CURRENT_TIMESTAMP
+                    WHERE BorrowId = @BorrowId";
+
+
+                using (var cmd = new SQLiteCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@BorrowId", borrowId);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+
     }
 }
 

@@ -340,6 +340,7 @@ namespace Library_Management_System.Forms
             using (SQLiteConnection con = Db.GetConnection())
             {
                 con.Open();
+
                 string checkQuery = "SELECT COUNT(1) FROM Members WHERE StudentNo=@studentNo";
                 SQLiteCommand checkCmd = new SQLiteCommand(checkQuery, con);
                 checkCmd.Parameters.AddWithValue("@studentNo", studentNo);
@@ -351,15 +352,22 @@ namespace Library_Management_System.Forms
                     return;
                 }
 
-                string insertQuery = @"INSERT INTO Members 
-                    (StudentNo, FirstName, LastName, Course, YearLevel) 
-                    VALUES (@studentNo, @firstName, @lastName, @course, @yearLevel)";
+                // ✅ Add DateJoined column to the insert query
+                string insertQuery = @"
+            INSERT INTO Members (StudentNo, FirstName, LastName, Course, YearLevel, DateJoined, IsActive)
+            VALUES (@studentNo, @firstName, @lastName, @course, @yearLevel, @dateJoined, 1);
+        ";
+
                 SQLiteCommand insertCmd = new SQLiteCommand(insertQuery, con);
                 insertCmd.Parameters.AddWithValue("@studentNo", studentNo);
                 insertCmd.Parameters.AddWithValue("@firstName", firstName);
                 insertCmd.Parameters.AddWithValue("@lastName", lastName);
                 insertCmd.Parameters.AddWithValue("@course", course);
                 insertCmd.Parameters.AddWithValue("@yearLevel", yearLevel);
+
+                // 👇 Add DateJoined value here
+                insertCmd.Parameters.AddWithValue("@dateJoined", DateTime.Now.ToString("yyyy-MM-dd"));
+
                 insertCmd.ExecuteNonQuery();
             }
 
@@ -368,6 +376,7 @@ namespace Library_Management_System.Forms
             new LoginForm().Show();
             this.Close();
         }
+
 
         private void pictureBox1_Click(object sender, EventArgs e) { }
         private void label5_Click(object sender, EventArgs e) { }

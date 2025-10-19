@@ -27,7 +27,6 @@ namespace LibraryManagementSystem.Data
                 Directory.CreateDirectory(dataFolder);
             }
 
-
             // 🛑 Do NOT overwrite if DB already exists
             if (!File.Exists(DbPath))
             {
@@ -42,10 +41,18 @@ namespace LibraryManagementSystem.Data
                 Books.EnsureCreated(con);
                 Borrowings.EnsureCreated(con);
                 Reservations.EnsureCreated(con);
-            }
 
-           
+                // ✅ Ensure indexes exist on Borrowings table
+                var cmd = con.CreateCommand();
+                cmd.CommandText = @"
+            CREATE INDEX IF NOT EXISTS idx_borrow_date ON Borrowings(BorrowDate);
+            CREATE INDEX IF NOT EXISTS idx_return_date ON Borrowings(ReturnDate);
+            CREATE INDEX IF NOT EXISTS idx_due_date ON Borrowings(DueDate);
+        ";
+                cmd.ExecuteNonQuery();
+            }
         }
+
 
         public static SQLiteConnection GetConnection()
         {

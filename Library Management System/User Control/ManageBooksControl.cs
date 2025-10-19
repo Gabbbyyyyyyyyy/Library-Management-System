@@ -23,6 +23,8 @@ namespace LibraryManagementSystem
             InitializeComponent();
             LoadBooks();
 
+            // 👇 Add this line
+            dgvBooks.CellFormatting += dgvBooks_CellFormatting;
             dgvBooks.ReadOnly = true;
             dgvBooks.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvBooks.AllowUserToAddRows = false;
@@ -130,7 +132,10 @@ namespace LibraryManagementSystem
                         dgvBooks.RowTemplate.Height = 40; // adjust the number as you like
                         dgvBooks.DataSource = dt;
                         // Color only the Status text
-                        ColorStatusColumnText();
+                        //ColorStatusColumnText();
+                        dgvBooks.ClearSelection();
+                        dgvBooks.CurrentCell = null;
+                        dgvBooks.Focus();
 
                         // Remove default selection
                         if (dgvBooks.Rows.Count > 0)
@@ -139,35 +144,35 @@ namespace LibraryManagementSystem
                 }
             }
         }
-        private void ColorStatusColumnText()
-        {
-            foreach (DataGridViewRow row in dgvBooks.Rows)
-            {
-                if (row.Cells["Status"].Value != null)
-                {
-                    string status = row.Cells["Status"].Value.ToString();
+        //private void ColorStatusColumnText()
+        //{
+        //    foreach (DataGridViewRow row in dgvBooks.Rows)
+        //    {
+        //        if (row.Cells["Status"].Value != null)
+        //        {
+        //            string status = row.Cells["Status"].Value.ToString();
 
-                    switch (status)
-                    {
-                        case "Available":
-                            row.Cells["Status"].Style.ForeColor = Color.Green;
-                            row.Cells["Status"].Style.Font = new Font(dgvBooks.Font, FontStyle.Regular);
-                            break;
+        //            switch (status)
+        //            {
+        //                case "Available":
+        //                    row.Cells["Status"].Style.ForeColor = Color.Green;
+        //                    row.Cells["Status"].Style.Font = new Font(dgvBooks.Font, FontStyle.Regular);
+        //                    break;
 
-                        case "Reserved":
-                            row.Cells["Status"].Style.ForeColor = Color.Orange;
-                            row.Cells["Status"].Style.Font = new Font(dgvBooks.Font, FontStyle.Regular);
-                            break;
+        //                case "Reserved":
+        //                    row.Cells["Status"].Style.ForeColor = Color.Orange;
+        //                    row.Cells["Status"].Style.Font = new Font(dgvBooks.Font, FontStyle.Regular);
+        //                    break;
 
-                        case "Not Available":
-                        case "Borrowed Out":
-                            row.Cells["Status"].Style.ForeColor = Color.Red;
-                            row.Cells["Status"].Style.Font = new Font(dgvBooks.Font, FontStyle.Regular);
-                            break;
-                    }
-                }
-            }
-        }
+        //                case "Not Available":
+        //                case "Borrowed Out":
+        //                    row.Cells["Status"].Style.ForeColor = Color.Red;
+        //                    row.Cells["Status"].Style.Font = new Font(dgvBooks.Font, FontStyle.Regular);
+        //                    break;
+        //            }
+        //        }
+        //    }
+        //}
 
 
         // When a row is clicked, fill only the Quantity textbox
@@ -390,7 +395,9 @@ namespace LibraryManagementSystem
 
         private void btnSearch_Click(object sender, EventArgs e)
         {
-            LoadBooks(txtSearch.Text); // Make sure you add a txtSearch TextBox in your form
+            //LoadBooks(txtSearch.Text); // Make sure you add a txtSearch TextBox in your form
+
+            PerformSearch();
         }
 
 
@@ -661,56 +668,55 @@ namespace LibraryManagementSystem
 
 
 
+        // ✅ Trigger search when typing or pressing Enter
         private void txtSearch_TextChanged(object sender, EventArgs e)
         {
-            string searchText = txtSearch.Text.Trim();
-
             using (var con = Db.GetConnection())
             {
                 con.Open();
-                string query = @"SELECT BookId, ISBN, Title, Author, Category, Quantity, AvailableCopies,
-                                CASE WHEN AvailableCopies = 0 THEN 'Borrowed Out' ELSE 'Available' END AS Status
-                         FROM Books
-                         WHERE Title LIKE @search 
-                            OR Author LIKE @search 
-                            OR Category LIKE @search 
-                            OR ISBN LIKE @search";
+                string query = @"
+            SELECT 
+                b.BookId, 
+                b.ISBN, 
+                b.Title, 
+                b.Author, 
+                b.Category, 
+                b.Quantity, 
+                b.AvailableCopies,
+                b.Status
+            FROM Books b
+            WHERE 
+                b.Title LIKE @search 
+                OR b.Author LIKE @search 
+                OR b.Category LIKE @search 
+                OR b.ISBN LIKE @search";
 
                 using (var cmd = new SQLiteCommand(query, con))
                 {
-                    cmd.Parameters.AddWithValue("@search", "%" + searchText + "%");
+                    cmd.Parameters.AddWithValue("@search", "%" + txtSearch.Text + "%");
 
                     using (var da = new SQLiteDataAdapter(cmd))
                     {
                         DataTable dt = new DataTable();
                         da.Fill(dt);
+
                         dgvBooks.DataSource = dt;
-
-                        // Apply color after binding
-                        ColorStatusColumnText();
-
-                        // Use the DataTable to check if any rows exist
-                        if (dt.Rows.Count == 0)
-                        {
-                            lblSearchMessage.Text = "No books match your search.";
-                        }
-                        else
-                        {
-                            lblSearchMessage.Text = "";
-                        }
+                        dgvBooks.ClearSelection();
+                        dgvBooks.CurrentCell = null;
                     }
                 }
             }
         }
         private void txtSearch_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Enter) // Only trigger search on Enter key
+            if (e.KeyCode == Keys.Enter)
             {
-                e.SuppressKeyPress = true; // Prevent ding sound
+                e.SuppressKeyPress = true;
                 PerformSearch();
             }
         }
 
+        // ✅ Centralized search logic (same as BorrowedBooksControl)
         private void PerformSearch()
         {
             string searchText = txtSearch.Text.Trim();
@@ -718,13 +724,23 @@ namespace LibraryManagementSystem
             using (var con = Db.GetConnection())
             {
                 con.Open();
-                string query = @"SELECT BookId, ISBN, Title, Author, Category, Quantity, AvailableCopies,
-                        CASE WHEN AvailableCopies = 0 THEN 'Borrowed Out' ELSE 'Available' END AS Status
-                        FROM Books
-                        WHERE Title LIKE @search 
-                           OR Author LIKE @search 
-                           OR Category LIKE @search 
-                           OR ISBN LIKE @search";
+
+                string query = @"
+            SELECT 
+                b.BookId, 
+                b.ISBN, 
+                b.Title, 
+                b.Author, 
+                b.Category, 
+                b.Quantity, 
+                b.AvailableCopies,
+                b.Status
+            FROM Books b
+            WHERE 
+                b.Title LIKE @search 
+                OR b.Author LIKE @search 
+                OR b.Category LIKE @search 
+                OR b.ISBN LIKE @search";
 
                 using (var cmd = new SQLiteCommand(query, con))
                 {
@@ -734,21 +750,14 @@ namespace LibraryManagementSystem
                     {
                         DataTable dt = new DataTable();
                         da.Fill(dt);
-                   
 
-                        dgvBooks.DataSource = dt; // Always update DataGridView
-                                                  // Apply color after binding
-                        ColorStatusColumnText();
-
-                        if (dt.Rows.Count == 0)
-                        {
-                            //MessageBox.Show("No books found matching your search.", "Search Result", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        }
+                        dgvBooks.DataSource = dt;
+                        dgvBooks.ClearSelection();
+                        dgvBooks.CurrentCell = null;
                     }
                 }
             }
         }
-
 
         private void label1_Click(object sender, EventArgs e)
         {
@@ -894,24 +903,32 @@ namespace LibraryManagementSystem
 
 
 
-        //private void dgvBooks_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
-        //{
-        //    if (dgvBooks.Columns[e.ColumnIndex].Name == "Status" && e.Value != null)
-        //    {
-        //        string status = e.Value.ToString();
+        // ✅ Same color formatting logic as BorrowBooksControl
+        private void dgvBooks_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (dgvBooks.Columns[e.ColumnIndex].Name == "Status" && e.Value != null)
+            {
+                string status = e.Value.ToString().Trim();
 
-        //        if (status == "Borrowed Out")
-        //        {
-        //            e.CellStyle.ForeColor = Color.Red;
-        //            e.CellStyle.Font = new Font(dgvBooks.Font, FontStyle.Bold);
-        //        }
-        //        else if (status == "Available")
-        //        {
-        //            e.CellStyle.ForeColor = Color.Green;
-        //            e.CellStyle.Font = new Font(dgvBooks.Font, FontStyle.Bold);
-        //        }
-        //    }
-        //}
+                switch (status)
+                {
+                    case "Available":
+                        e.CellStyle.ForeColor = Color.Green;
+                        break;
+                    case "Not Available":
+                        e.CellStyle.ForeColor = Color.Red;
+                        break;
+                    case "Reserved":
+                        e.CellStyle.ForeColor = Color.Orange;
+                        break;
+                    default:
+                        e.CellStyle.ForeColor = Color.Black;
+                        break;
+                }
+
+                e.FormattingApplied = true;
+            }
+        }
 
 
         private void txtTitle_TextChanged(object sender, EventArgs e)

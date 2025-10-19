@@ -462,9 +462,12 @@ namespace Library_Management_System.User_Control
             }
         }
 
+
         private void BorrowBooksControl_Load(object sender, EventArgs e) { }
         private void dgvAvailableBooks_CellContentClick(object sender, DataGridViewCellEventArgs e) {
         }
+
+
 
         private void txtMemberID_TextChanged(object sender, EventArgs e)
         {

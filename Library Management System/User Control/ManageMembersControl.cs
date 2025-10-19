@@ -25,7 +25,7 @@ namespace LibraryManagementSystem
             dgvMembers.MultiSelect = false;
             dgvMembers.ClearSelection();
             dgvMembers.CurrentCell = null;
-            dgvMembers.SelectionChanged += (s, e) => dgvMembers.ClearSelection();
+          
 
 
             this.Size = Screen.PrimaryScreen.Bounds.Size;
@@ -183,7 +183,7 @@ namespace LibraryManagementSystem
                         // ✅ Ensure no row stays selected
                         dgvMembers.ClearSelection();
                         dgvMembers.CurrentCell = null;
-                        dgvMembers.SelectionChanged += (s, e) => dgvMembers.ClearSelection();
+                       
 
 
                         btnDeactivate.Enabled = false;

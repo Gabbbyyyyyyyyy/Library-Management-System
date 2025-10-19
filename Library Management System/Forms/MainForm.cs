@@ -210,7 +210,7 @@ namespace Library_Management_System
             // --- Smooth easing ---
             // The factor controls speed and smoothness
             // 0.15 = smoother, slower ease
-            double easingFactor = 0.20;
+            double easingFactor = 0.15;
             int newTop = (int)(currentTop + diff * easingFactor);
 
             sidebarIndicator.Top = newTop;
@@ -244,7 +244,7 @@ namespace Library_Management_System
                 // --- Create a top spacer (5% height) ---
                 Panel topSpacer = new Panel();
                 topSpacer.Dock = DockStyle.Top;
-                topSpacer.Height = (int)(panel1.Height * 0.02); // 5% of sidebar height
+                topSpacer.Height = (int)(panel1.Height * 0); // 5% of sidebar height
                 topSpacer.BackColor = Color.Transparent; // invisible spacer
                 panel1.Controls.Add(topSpacer);
 
@@ -258,7 +258,7 @@ namespace Library_Management_System
                 // Resize dynamically when window resizes
                 this.Resize += (s, ev) =>
                 {
-                    topSpacer.Height = (int)(panel1.Height * 0.02);
+                    topSpacer.Height = (int)(panel1.Height * 0);
                 };
             }
 
@@ -531,25 +531,7 @@ namespace Library_Management_System
             LoadControl(new DashboardControl());
         }
 
-        //private void btnLogout_Click(object sender, EventArgs e)
-        //{
-        //    //// Ask user for confirmation
-        //    //DialogResult result = MessageBox.Show(
-        //    //    "Are you sure you want to logout?",
-        //    //    "Confirm Logout",
-        //    //    MessageBoxButtons.YesNo,
-        //    //    MessageBoxIcon.Question
-        //    //);
-
-
-        //    //if (result == DialogResult.Yes)
-        //    //{
-        //    //    // Only logout if user clicks Yes
-        //    //    MessageBox.Show("Logout successful!", "Logout", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        //    //    this.Close();
-        //    //}
-        //    //// If user clicks No, nothing happens
-        //}
+    
 
 
         private void panelContainer_Paint(object sender, PaintEventArgs e)
@@ -580,22 +562,7 @@ namespace Library_Management_System
 
         private void panel1_Paint(object sender, PaintEventArgs e)
         {
-            //// Keep smooth graphics
-            //e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-
-            //int shadowWidth = 8; // width of shadow (adjust if needed)
-            //Rectangle shadowRect = new Rectangle(panel1.Width - shadowWidth, 0, shadowWidth, panel1.Height);
-
-            //// Create a gradient shadow from right to left
-            //using (var brush = new System.Drawing.Drawing2D.LinearGradientBrush(
-            //    shadowRect,
-            //    Color.FromArgb(100, Color.Black), // semi-transparent black
-            //    Color.Transparent,                // fade out to transparent
-            //    0f                                // horizontal gradient
-            //))
-            //{
-            //    e.Graphics.FillRectangle(brush, shadowRect);
-            //}
+           
         }
 
 
@@ -658,6 +625,12 @@ namespace Library_Management_System
                 button7.Text = "    Light UI";
                 isDarkMode = true;
             }
+
+            // ✅ Force proper sidebar alignment after theme switch
+            if (isCollapsed)
+                ApplyCollapsedState();
+            else
+                ApplyExpandedState();
         }
 
         private void ApplyTheme(Control parent, Color backColor, Color foreColor, bool dark)

@@ -82,7 +82,7 @@
             this.dgvAvailableBooks.ReadOnly = true;
             this.dgvAvailableBooks.RowHeadersWidth = 51;
             this.dgvAvailableBooks.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvAvailableBooks.Size = new System.Drawing.Size(1728, 782);
+            this.dgvAvailableBooks.Size = new System.Drawing.Size(1728, 724);
             this.dgvAvailableBooks.TabIndex = 3;
             this.dgvAvailableBooks.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvAvailableBooks_CellContentClick);
             // 
@@ -122,7 +122,7 @@
             // 
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 16.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(281, 77);
+            this.label6.Location = new System.Drawing.Point(288, 61);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(103, 32);
             this.label6.TabIndex = 7;
@@ -141,6 +141,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.Color.WhiteSmoke;
             this.Controls.Add(this.txtSearch);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.lblMessage);

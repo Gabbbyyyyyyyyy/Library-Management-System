@@ -72,7 +72,7 @@ namespace LibraryManagementSystem
             this.dgvMembers.Name = "dgvMembers";
             this.dgvMembers.RowHeadersWidth = 51;
             this.dgvMembers.RowTemplate.Height = 24;
-            this.dgvMembers.Size = new System.Drawing.Size(1728, 782);
+            this.dgvMembers.Size = new System.Drawing.Size(1728, 724);
             this.dgvMembers.TabIndex = 8;
             this.dgvMembers.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvMembers_CellClick);
             this.dgvMembers.SelectionChanged += new System.EventHandler(this.dgvMembers_SelectionChanged);
@@ -111,18 +111,18 @@ namespace LibraryManagementSystem
             // 
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 16.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(281, 77);
+            this.label6.Location = new System.Drawing.Point(288, 61);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(131, 32);
             this.label6.TabIndex = 0;
             this.label6.Text = "Members";
             this.label6.TextAlign = System.Drawing.ContentAlignment.TopCenter;
-            //this.label6.Click += new System.EventHandler(this.label6_Click);
             // 
             // ManageMembersControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.Color.WhiteSmoke;
             this.Controls.Add(this.label6);
             this.Controls.Add(this.lblSearchMessage);
             this.Controls.Add(this.btnReactivate);
