@@ -16,6 +16,7 @@ namespace LibraryManagementSystem.Data
                 Course     TEXT,
                 YearLevel  TEXT,
                 DateJoined TEXT,
+                CreatedAt   DATETIME DEFAULT CURRENT_TIMESTAMP,
                 IsActive   INTEGER DEFAULT 1
             );";
 

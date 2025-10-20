@@ -109,16 +109,12 @@ namespace Library_Management_System.User_Control
                 con.Open();
 
                 string query = @"
-                    SELECT 
-                        b.BookId, 
-                        b.ISBN, 
-                        b.Title, 
-                        b.Author, 
-                        b.Category, 
-                        b.Quantity, 
-                        b.AvailableCopies,
-                        b.Status
-                    FROM Books b";
+                   SELECT 
+                     b.BookId, b.ISBN, b.Title, b.Author, b.Category, 
+                     b.Quantity, b.AvailableCopies,
+                     CASE WHEN b.AvailableCopies = 0 THEN 'Not Available' ELSE 'Available' END AS Status
+                    FROM Books b;
+";
 
                 using (var cmd = new SQLiteCommand(query, con))
                 using (var da = new SQLiteDataAdapter(cmd))
@@ -185,32 +181,7 @@ namespace Library_Management_System.User_Control
         }
 
 
-        //private void ColorStatusColumnText()
-        //{
-        //    foreach (DataGridViewRow row in dgvAvailableBooks.Rows)
-        //    {
-        //        if (row.Cells["Status"].Value != null)
-        //        {
-        //            string status = row.Cells["Status"].Value.ToString().Trim();
 
-        //            // Default black text
-        //            row.Cells["Status"].Style.ForeColor = Color.Black;
-
-        //            switch (status)
-        //            {
-        //                case "Available":
-        //                    row.Cells["Status"].Style.ForeColor = Color.Green;
-        //                    break;
-        //                case "Not Available":
-        //                    row.Cells["Status"].Style.ForeColor = Color.Red;
-        //                    break;
-        //                case "Reserved":
-        //                    row.Cells["Status"].Style.ForeColor = Color.Orange;
-        //                    break;
-        //            }
-        //        }
-        //    }
-        //}
 
 
         private void txtSearch_TextChanged(object sender, EventArgs e)
@@ -222,12 +193,16 @@ namespace Library_Management_System.User_Control
                     SELECT 
                         b.BookId, b.ISBN, b.Title, b.Author, b.Category, 
                         b.Quantity, b.AvailableCopies,
-                        b.Status
+                        CASE 
+                            WHEN b.AvailableCopies = 0 THEN 'Not Available' 
+                            ELSE 'Available' 
+                        END AS Status
                     FROM Books b
                     WHERE b.Title LIKE @search 
                        OR b.Author LIKE @search 
                        OR b.Category LIKE @search 
                        OR b.ISBN LIKE @search";
+
 
                 using (var cmd = new SQLiteCommand(query, con))
                 {
@@ -263,13 +238,20 @@ namespace Library_Management_System.User_Control
             using (var con = Db.GetConnection())
             {
                 con.Open();
-                string query = @"SELECT BookId, ISBN, Title, Author, Category, Quantity, AvailableCopies,
-                        CASE WHEN AvailableCopies = 0 THEN 'Borrowed Out' ELSE 'Available' END AS Status
-                        FROM Books
-                        WHERE Title LIKE @search 
-                           OR Author LIKE @search 
-                           OR Category LIKE @search 
-                           OR ISBN LIKE @search";
+                string query = @"
+                    SELECT 
+                        b.BookId, b.ISBN, b.Title, b.Author, b.Category, 
+                        b.Quantity, b.AvailableCopies,
+                        CASE 
+                            WHEN b.AvailableCopies = 0 THEN 'Not Available' 
+                            ELSE 'Available' 
+                        END AS Status
+                    FROM Books b
+                    WHERE b.Title LIKE @search 
+                       OR b.Author LIKE @search 
+                       OR b.Category LIKE @search 
+                       OR b.ISBN LIKE @search";
+
 
                 using (var cmd = new SQLiteCommand(query, con))
                 {
@@ -402,6 +384,14 @@ namespace Library_Management_System.User_Control
             var sel = dgvAvailableBooks.SelectedRows[0];
             int bookId = Convert.ToInt32(sel.Cells["BookID"].Value);
 
+            // Check available copies
+            int availableCopies = Convert.ToInt32(sel.Cells["AvailableCopies"].Value);
+            if (availableCopies <= 0)
+            {
+                lblMessage.Text = "Cannot issue this book. No copies available.";
+                return;
+            }
+
             DateTime borrowDate = DateTime.Now.Date;
             DateTime dueDate = borrowDate.AddDays(DefaultLoanDays);
 
@@ -422,7 +412,7 @@ namespace Library_Management_System.User_Control
 
                     using (var cmd2 = new SQLiteCommand(conn))
                     {
-                        cmd2.CommandText = "UPDATE Books SET AvailableCopies = AvailableCopies - 1 WHERE BookID = @b";
+                        cmd2.CommandText = "UPDATE Books\r\nSET AvailableCopies = CASE WHEN AvailableCopies > 0 THEN AvailableCopies - 1 ELSE 0 END\r\nWHERE BookID = @b;\r\n";
                         cmd2.Parameters.AddWithValue("@b", bookId);
                         cmd2.ExecuteNonQuery();
                     }
@@ -439,6 +429,7 @@ namespace Library_Management_System.User_Control
             }
 
             lblMessage.Text = "Book issued successfully.";
+
 
             // Refresh available books and reapply status colors
             LoadAvailableBooks();

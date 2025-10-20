@@ -7,6 +7,8 @@ using LibraryManagementSystem;
 using LibraryManagementSystem.Data;
 using System.Windows.Forms.DataVisualization.Charting;
 using System.Drawing.Printing;
+using System.Collections.Generic;
+using System.Data;
 
 
 namespace Library_Management_System.User_Control
@@ -21,11 +23,14 @@ namespace Library_Management_System.User_Control
         private Button btnToday;
         private Button btnLastWeek;
         private Button btnLastMonth;
-        private string _currentTrendType = "borrowed";
         private Panel pnlUnderline; // Add this at the top with your fields
-        private Panel pnlTrendUnderline;
-        private Timer _chartRefreshTimer;
         private string _currentTimeRange = "today";
+        private string currentTrend = "Borrowings";
+        private Button activeTrendButton;
+        private Button btnBorrowings, btnReturns, btnOverdue;
+        private Label lblRecentBorrowings;
+        private DataGridView dgvRecentBorrowings;
+        private Panel pnlRecentBorrowings;
 
 
 
@@ -33,6 +38,8 @@ namespace Library_Management_System.User_Control
         public DashboardControl(string userDisplayName)
         {
             InitializeComponent();
+            InitializeRecentBorrowingsSection();
+            LoadRecentBorrowings();
             _userDisplayName = string.IsNullOrWhiteSpace(userDisplayName) ? "ADMIN" : userDisplayName;
 
             // Initialize greeting
@@ -48,439 +55,24 @@ namespace Library_Management_System.User_Control
 
             // Auto-refresh stats every 10 seconds
             _statsTimer = new Timer { Interval = 10 * 1000 };
-            _statsTimer.Tick += (s, e) => LoadDashboardStats();
+            _statsTimer.Tick += (s, e) =>
+            {
+                LoadDashboardStats();
+                LoadChartData(_currentTimeRange);
+            };
+
             _statsTimer.Start();
 
             // Wire label clicks
             lblTotalBooks.Click += pnlTotalBooks_Click;
             lblActiveMembers.Click += pnlActiveMembers_Click;
             lblBorrowedBooks.Click += (s, e) => LoadDashboardStats();
+           
+
 
 
 
         }
-
-        private void SetupDashboardChart()
-        {
-            // --- Chart Container Panel ---
-            pnlChartContainer = new Panel
-            {
-                Size = new Size(1280, 352),
-                BackColor = Color.White,
-                Location = new Point(225, 230),
-            };
-            ApplyCardStyle(pnlChartContainer, 12);
-
-
-            // --- Reports Label ---
-            Label lblReports = new Label
-            {
-                Text = "Reports",
-                Font = new Font("Microsoft Sans Serif", 14, FontStyle.Regular),
-                ForeColor = Color.Black,
-                AutoSize = true,
-                Location = new Point(20, 5) // small top margin
-            };
-            pnlChartContainer.Controls.Add(lblReports);
-            lblReports.BringToFront();
-
-
-
-            // 🔹 Report Type Buttons (Borrowed / Returned / Overdue)
-            Button btnBorrowedTrend = new Button
-            {
-                Text = "Borrowed",
-                Font = new Font("Microsoft Sans Serif", 9, FontStyle.Regular),
-                FlatStyle = FlatStyle.Flat,
-                BackColor = Color.White,  // remove blue
-                ForeColor = Color.Black,
-                Size = new Size(90, 28),
-                Location = new Point(350, 5),
-                Cursor = Cursors.Hand
-            };
-            btnBorrowedTrend.FlatAppearance.BorderSize = 0;
-
-            Button btnReturnedTrend = new Button
-            {
-                Text = "Returned",
-                Font = new Font("Microsoft Sans Serif", 9, FontStyle.Regular),
-                FlatStyle = FlatStyle.Flat,
-                BackColor = Color.White,  // remove blue
-                ForeColor = Color.Black,        // normal text
-                Size = new Size(90, 28),
-                Location = new Point(450, 5),
-                Cursor = Cursors.Hand
-            };
-            btnReturnedTrend.FlatAppearance.BorderSize = 0;
-
-            Button btnOverdueTrend = new Button
-            {
-                Text = "Overdue",
-                Font = new Font("Microsoft Sans Serif", 9, FontStyle.Regular),
-                FlatStyle = FlatStyle.Flat,
-                BackColor = Color.White,  // remove blue
-                ForeColor = Color.Black,        // normal text
-                Size = new Size(90, 28),
-                Location = new Point(550, 5),
-                Cursor = Cursors.Hand
-            };
-            btnOverdueTrend.FlatAppearance.BorderSize = 0;
-
-            // Add them to panel
-            pnlChartContainer.Controls.Add(btnBorrowedTrend);
-            pnlChartContainer.Controls.Add(btnReturnedTrend);
-            pnlChartContainer.Controls.Add(btnOverdueTrend);
-
-
-
-            // --- Tabs (Buttons) ---
-            btnToday = new Button
-            {
-                Text = "Today",
-                Font = new Font("Microsoft Sans Serif", 9, FontStyle.Regular),
-                FlatStyle = FlatStyle.Flat,
-                BackColor = Color.White,  // remove blue
-                ForeColor = Color.Black,        // normal text
-                Size = new Size(80, 28),
-                Location = new Point(20, 5),
-                Cursor = Cursors.Hand
-            };
-            btnToday.FlatAppearance.BorderSize = 0;
-
-            btnLastWeek = new Button
-            {
-                Text = "Last Week",
-                Font = new Font("Microsoft Sans Serif", 9, FontStyle.Regular),
-                FlatStyle = FlatStyle.Flat,
-                BackColor = Color.White,  // remove blue
-                ForeColor = Color.Black,        // normal text
-                Size = new Size(100, 28),
-                Location = new Point(110, 5),
-                Cursor = Cursors.Hand
-            };
-            btnLastWeek.FlatAppearance.BorderSize = 0;
-
-            btnLastMonth = new Button
-            {
-                Text = "Last Month",
-                Font = new Font("Microsoft Sans Serif", 9, FontStyle.Regular),
-                FlatStyle = FlatStyle.Flat,
-                BackColor = Color.White,  // remove blue
-                ForeColor = Color.Black,        // normal text
-                Size = new Size(110, 28),
-                Location = new Point(220, 5),
-                Cursor = Cursors.Hand
-            };
-            btnLastMonth.FlatAppearance.BorderSize = 0;
-
-            // Trend buttons (Borrowed / Returned / Overdue)
-            btnBorrowedTrend.Location = new Point(20, lblReports.Bottom + 5);
-            btnReturnedTrend.Location = new Point(btnBorrowedTrend.Right + 5, lblReports.Bottom + 5);
-            btnOverdueTrend.Location = new Point(btnReturnedTrend.Right + 5, lblReports.Bottom + 5);
-
-
-            btnBorrowedTrend.Click += (s, e) => {
-                _currentTrendType = "borrowed";
-                HighlightTrendButton(btnBorrowedTrend, btnReturnedTrend, btnOverdueTrend);
-                LoadChartData(_currentTimeRange); // Use currently selected time range
-            };
-
-            btnReturnedTrend.Click += (s, e) => {
-                _currentTrendType = "returned";
-                HighlightTrendButton(btnReturnedTrend, btnBorrowedTrend, btnOverdueTrend);
-                LoadChartData(_currentTimeRange); // Use currently selected time range
-            };
-
-            btnOverdueTrend.Click += (s, e) => {
-                _currentTrendType = "overdue";
-                HighlightTrendButton(btnOverdueTrend, btnBorrowedTrend, btnReturnedTrend);
-                LoadChartData(_currentTimeRange);
-            };
-
-            // Top padding below the label
-            int topOffset = lblReports.Bottom + 5;
-            int rightPadding = 20; // distance from the right edge
-            int spacing = 10;      // space between buttons
-
-            // Position buttons from right to left
-            btnLastMonth.Location = new Point(pnlChartContainer.Width - rightPadding - btnLastMonth.Width, topOffset);
-            btnLastWeek.Location = new Point(btnLastMonth.Left - spacing - btnLastWeek.Width, topOffset);
-            btnToday.Location = new Point(btnLastWeek.Left - spacing - btnToday.Width, topOffset);
-
-
-            // --- Chart ---
-            chartReports = new Chart
-            {
-                Dock = DockStyle.Bottom,
-                Height = 240,
-                BackColor = Color.White,
-                BorderlineColor = Color.Transparent
-            };
-
-            ChartArea area = new ChartArea("MainArea");
-            chartReports.ChartAreas.Add(area);
-
-            area.BackColor = Color.White;
-            area.AxisX.MajorGrid.Enabled = false;
-            area.AxisY.MajorGrid.LineColor = Color.FromArgb(230, 230, 230);
-            area.AxisX.LineWidth = 0;
-            area.AxisY.LineWidth = 0;
-            area.AxisX.LabelStyle.ForeColor = Color.Black;
-            area.AxisY.LabelStyle.ForeColor = Color.Black;
-            area.AxisY.Minimum = 0;
-
-            Series series = new Series("Reports")
-            {
-                ChartType = SeriesChartType.SplineArea,
-                Color = Color.FromArgb(120, 210, 180, 140),   // light brown fill with transparency 
-                BorderWidth = 3,
-                BorderColor = Color.SandyBrown,               // solid light brown line
-                MarkerStyle = MarkerStyle.Circle,
-                MarkerSize = 8,
-                MarkerColor = Color.White,
-                MarkerBorderColor = Color.SandyBrown,  // border color same as line
-                MarkerBorderWidth = 2
-            };
-            chartReports.Series.Add(series);
-
-            LoadChartData("today");
-
-            // --- Button Clicks ---
-            btnToday.Click += (s, e) => {
-                _currentTimeRange = "today";
-                MoveUnderline(btnToday);
-                HighlightButton(btnToday);
-                LoadChartData(_currentTimeRange);
-            };
-
-            btnLastWeek.Click += (s, e) => {
-                _currentTimeRange = "week";
-                MoveUnderline(btnLastWeek);
-                HighlightButton(btnLastWeek);
-                LoadChartData(_currentTimeRange);
-            };
-
-            btnLastMonth.Click += (s, e) => {
-                _currentTimeRange = "month";
-                MoveUnderline(btnLastMonth);
-                HighlightButton(btnLastMonth);
-                LoadChartData(_currentTimeRange);
-            };
-
-
-            // --- Add to Container ---
-            pnlChartContainer.Controls.Add(btnToday);
-            pnlChartContainer.Controls.Add(btnLastWeek);
-            pnlChartContainer.Controls.Add(btnLastMonth);
-            pnlChartContainer.Controls.Add(chartReports);
-
-            // Create underline panel
-            pnlUnderline = new Panel
-            {
-                Size = new Size(btnToday.Width, 3), // height of the underline
-                BackColor = Color.SandyBrown, // light brown
-                Location = new Point(btnToday.Left, btnToday.Bottom) // under the selected tab
-            };
-            pnlChartContainer.Controls.Add(pnlUnderline);
-            pnlUnderline.BringToFront(); // make sure it appears above other controls
-
-            // --- button click events ---
-            btnToday.Click += (s, e) => { MoveUnderline(btnToday); HighlightButton(btnToday); LoadChartData("today"); };
-            btnLastWeek.Click += (s, e) => { MoveUnderline(btnLastWeek); HighlightButton(btnLastWeek); LoadChartData("week"); };
-            btnLastMonth.Click += (s, e) => { MoveUnderline(btnLastMonth); HighlightButton(btnLastMonth); LoadChartData("month"); };
-
-            // Set initial underline position
-            MoveUnderline(btnToday);
-
-            // Create trend underline panel
-            pnlTrendUnderline = new Panel
-            {
-                Size = new Size(btnBorrowedTrend.Width, 3), // height of the underline
-                BackColor = Color.SandyBrown,
-                Location = new Point(btnBorrowedTrend.Left, btnBorrowedTrend.Bottom) // under the selected trend
-            };
-            pnlChartContainer.Controls.Add(pnlTrendUnderline);
-            pnlTrendUnderline.BringToFront(); // make sure it appears above other controls
-
-            // 🔁 Auto-refresh chart every 30 seconds
-            _chartRefreshTimer = new Timer { Interval = 30 * 1000 };
-            _chartRefreshTimer.Tick += (s, m) => LoadChartData(_currentTimeRange);
-            _chartRefreshTimer.Start();
-
-
-            this.Controls.Add(pnlChartContainer);
-
-            Button btnExport = new Button
-            {
-                Text = "Export",
-                Location = new Point(20, chartReports.Top - 30),
-                Size = new Size(100, 30)
-            };
-            btnExport.Click += (s, e) => ExportChartAsImage();
-            pnlChartContainer.Controls.Add(btnExport);
-
-            Button btnPrint = new Button
-            {
-                Text = "Print",
-                Location = new Point(130, chartReports.Top - 30),
-                Size = new Size(100, 30)
-            };
-            btnPrint.Click += (s, e) => PrintChart();
-            pnlChartContainer.Controls.Add(btnPrint);
-        }
-
-        private void LoadChartData(string mode)
-        {
-            Series series = chartReports.Series["Reports"];
-            series.Points.Clear();
-
-            using (var con = Db.GetConnection())
-            {
-                con.Open();
-                string dateField = "BorrowDate";
-                string chartTitle = "📚 Borrowing Activity Over Time";
-
-                switch (_currentTrendType)
-                {
-                    case "returned":
-                        dateField = "ReturnDate";
-                        chartTitle = "🔁 Returns Over Time";
-                        break;
-                    case "overdue":
-                        dateField = "DueDate";
-                        chartTitle = "⚠ Overdue Count Trend";
-                        break;
-                }
-
-
-                string query = "";
-
-                // --- Construct query based on mode ---
-                if (mode == "today")
-                {
-
-                    if (_currentTrendType == "returned")
-                    {
-                        // Query for returns in the current day (7 AM to 5 PM)
-                        query = @"
-                        SELECT strftime('%H', ReturnDate) AS Label, COUNT(*) AS Count
-                        FROM Borrowings
-                        WHERE ReturnDate IS NOT NULL
-                        AND strftime('%H', ReturnDate) BETWEEN '07' AND '17'  -- Filter for library open hours (7 AM to 5 PM)
-                        GROUP BY Label
-                        ORDER BY Label;
-                        ";
-                    }
-                    else if (_currentTrendType == "overdue")
-                    {
-                        query = @"
-                        SELECT strftime('%H', DueDate) AS Label, COUNT(*) AS Count
-                        FROM Borrowings
-                        WHERE ReturnDate IS NULL AND DATE(DueDate) <= DATE('now')
-                        AND strftime('%H', DueDate) BETWEEN '07' AND '17'  -- Filter for overdue books within library working hours
-                        GROUP BY Label
-                        ORDER BY Label;
-                        ";
-                    }
-                    else if (_currentTrendType == "borrowed")
-                    {
-                        query = $@"
-                        SELECT strftime('%H', {dateField}) AS Label, COUNT(*) AS Count
-                        FROM Borrowings
-                        WHERE DATE({dateField}) = DATE('now')
-                        AND strftime('%H', {dateField}) BETWEEN '07' AND '17'  -- Filter for library open hours (7 AM to 5 PM)
-                        GROUP BY Label ORDER BY Label;
-                        ";
-                    }
-                }
-                else if (mode == "week")
-                {
-                        query = $@"
-                        SELECT strftime('%w', {dateField}) AS Label, COUNT(*) AS Count
-                        FROM Borrowings
-                        WHERE DATE({dateField}) >= DATE('now', '-6 day')
-                        {(_currentTrendType == "overdue" ? "AND ReturnDate IS NULL AND DueDate <= DATE('now')" : "")}
-                        GROUP BY Label
-                        ORDER BY Label;
-                    ";
-                }
-                else if (mode == "month")
-                {
-                        query = $@"
-                        SELECT strftime('%d', {dateField}) AS Label, COUNT(*) AS Count
-                        FROM Borrowings
-                        WHERE strftime('%Y-%m', {dateField}) = strftime('%Y-%m', 'now')
-                        {(_currentTrendType == "overdue" ? "AND ReturnDate IS NULL AND DueDate <= DATE('now')" : "")}
-                        GROUP BY Label
-                        ORDER BY Label;
-                    ";
-                }
-
-                Console.WriteLine(query);
-
-
-                using (var cmd = new SQLiteCommand(query, con))
-                using (var reader = cmd.ExecuteReader())
-                {
-                    if (mode == "week")
-                    {
-                        string[] days = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
-                        int[] values = new int[7]; // prefill with 0
-
-                        while (reader.Read())
-                        {
-                            int dayIndex = int.Parse(reader["Label"].ToString());
-                            if (dayIndex >= 0 && dayIndex < 7)
-                                values[dayIndex] = Convert.ToInt32(reader["Count"]);
-                        }
-
-                        for (int i = 0; i < 7; i++)
-                            series.Points.AddXY(days[i], values[i]);
-                    }
-                    else if (mode == "month")
-                    {
-                        int daysInMonth = DateTime.Now.Day; // show until today
-                        int[] values = new int[daysInMonth];
-
-                        while (reader.Read())
-                        {
-                            int day = int.Parse(reader["Label"].ToString()) - 1; // 1-based to 0-based
-                            if (day >= 0 && day < daysInMonth)
-                                values[day] = Convert.ToInt32(reader["Count"]);
-                        }
-
-                        for (int i = 0; i < daysInMonth; i++)
-                            series.Points.AddXY((i + 1).ToString(), values[i]);
-                    }
-                    else
-                    {
-                        while (reader.Read())
-                        {
-                            string label = reader["Label"].ToString();
-                            double value = Convert.ToDouble(reader["Count"]);
-                            series.Points.AddXY(label, value);
-                        }
-                    }
-                }
-
-                chartReports.Titles.Clear();
-                chartReports.Titles.Add(chartTitle);
-                chartReports.Titles[0].Font = new Font("Segoe UI Emoji", 12, FontStyle.Bold);
-                chartReports.Titles[0].ForeColor = Color.Black;
-            }
-
-            foreach (DataPoint point in series.Points)
-                point.ToolTip = $"{point.AxisLabel}: {point.YValues[0]}";
-
-            chartReports.Invalidate();
-        }
-
-
-
-
-
-
-
 
 
         // Method to move underline under the active button
@@ -488,19 +80,6 @@ namespace Library_Management_System.User_Control
         {
             pnlUnderline.Left = activeButton.Left;
             pnlUnderline.Width = activeButton.Width;
-        }
-
-        private void HighlightTrendButton(Button active, Button b1, Button b2)
-        {
-            // Reset all text color to black
-            foreach (var btn in new[] { active, b1, b2 })
-            {
-                btn.ForeColor = Color.Black;
-            }
-
-            // Move underline to active
-            pnlTrendUnderline.Left = active.Left;
-            pnlTrendUnderline.Width = active.Width;
         }
 
         private void HighlightButton(Button activeButton)
@@ -515,6 +94,382 @@ namespace Library_Management_System.User_Control
 
             activeButton.ForeColor = Color.Black; // optional: active text slightly darker
         }
+
+        private void ToggleTrendButton(Button activeButton)
+        {
+            // Reset all
+            btnBorrowings.ForeColor = Color.Black;
+            btnReturns.ForeColor = Color.Black;
+            btnOverdue.ForeColor = Color.Black;
+
+            // Highlight active
+            activeButton.ForeColor = Color.FromArgb(205, 133, 63); // Peru highlight color
+        }
+
+
+
+        private void SetupDashboardChart()
+        {
+            // --- Chart Container ---
+            pnlChartContainer = new Panel
+            {
+                Size = new Size(1280, 325),
+                BackColor = Color.White,
+                Location = new Point(226, 215)
+            };
+            ApplyCardStyle(pnlChartContainer, 12);
+
+            // --- Reports Label ---
+            Label lblReports = new Label
+            {
+                Text = "Borrowing Activity",
+                Font = new Font("Microsoft Sans Serif", 14, FontStyle.Regular),
+                ForeColor = Color.Black,
+                AutoSize = true,
+                Location = new Point(20, 15)
+            };
+            pnlChartContainer.Controls.Add(lblReports);
+
+            // --- Time Range Tabs ---
+            btnToday = new Button
+            {
+                Text = "Today",
+                Font = new Font("Microsoft Sans Serif", 9),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.White,
+                ForeColor = Color.Black,
+                Size = new Size(80, 28),
+                Cursor = Cursors.Hand
+            };
+            btnToday.FlatAppearance.BorderSize = 0;
+
+            btnLastWeek = new Button
+            {
+                Text = "Last Week",
+                Font = new Font("Microsoft Sans Serif", 9),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.White,
+                ForeColor = Color.Black,
+                Size = new Size(100, 28),
+                Cursor = Cursors.Hand
+            };
+            btnLastWeek.FlatAppearance.BorderSize = 0;
+
+            btnLastMonth = new Button
+            {
+                Text = "Last Month",
+                Font = new Font("Microsoft Sans Serif", 9),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.White,
+                ForeColor = Color.Black,
+                Size = new Size(110, 28),
+                Cursor = Cursors.Hand
+            };
+            btnLastMonth.FlatAppearance.BorderSize = 0;
+
+            int topOffset = lblReports.Bottom - 20;
+            int rightPadding = 200;
+            int spacing = 10;
+
+            btnLastMonth.Location = new Point(pnlChartContainer.Width - rightPadding - btnLastMonth.Width, topOffset);
+            btnLastWeek.Location = new Point(btnLastMonth.Left - spacing - btnLastWeek.Width, topOffset);
+            btnToday.Location = new Point(btnLastWeek.Left - spacing - btnToday.Width, topOffset);
+
+            pnlChartContainer.Controls.Add(btnToday);
+            pnlChartContainer.Controls.Add(btnLastWeek);
+            pnlChartContainer.Controls.Add(btnLastMonth);
+
+            // --- Trend Toggle Buttons (Borrowing / Returns / Overdue) ---
+            btnBorrowings = new Button
+            {
+                Text = "Borrowings",
+                Font = new Font("Microsoft Sans Serif", 9, FontStyle.Regular),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(165, 105, 79), // Coffee brown - active by default
+                ForeColor = Color.White,
+                Size = new Size(100, 28),
+                Cursor = Cursors.Hand
+            };
+            btnBorrowings.FlatAppearance.BorderSize = 0;
+
+            btnReturns = new Button
+            {
+                Text = "Returns",
+                Font = new Font("Microsoft Sans Serif", 9, FontStyle.Regular),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.White,
+                ForeColor = Color.Black,
+                Size = new Size(100, 28),
+                Cursor = Cursors.Hand
+            };
+            btnReturns.FlatAppearance.BorderSize = 0;
+
+            btnOverdue = new Button
+            {
+                Text = "Overdue",
+                Font = new Font("Microsoft Sans Serif", 9, FontStyle.Regular),
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.White,
+                ForeColor = Color.Black,
+                Size = new Size(100, 28),
+                Cursor = Cursors.Hand
+            };
+            btnOverdue.FlatAppearance.BorderSize = 0;
+
+            // Position trend buttons under the time range
+            int trendTop = btnToday.Bottom + 10;
+            btnBorrowings.Location = new Point(20, trendTop);
+            btnReturns.Location = new Point(btnBorrowings.Right + 10, trendTop);
+            btnOverdue.Location = new Point(btnReturns.Right + 10, trendTop);
+
+            pnlChartContainer.Controls.Add(btnBorrowings);
+            pnlChartContainer.Controls.Add(btnReturns);
+            pnlChartContainer.Controls.Add(btnOverdue);
+
+            // --- Trend Toggle Events ---
+            btnBorrowings.Click += (s, e) =>
+            {
+                ToggleTrendButton(btnBorrowings);
+                chartReports.Series["Borrowing Activity"].Enabled = btnBorrowings.BackColor != Color.White;
+            };
+
+            btnReturns.Click += (s, e) =>
+            {
+                ToggleTrendButton(btnReturns);
+                chartReports.Series["Returns"].Enabled = btnReturns.BackColor != Color.White;
+            };
+
+            btnOverdue.Click += (s, e) =>
+            {
+                ToggleTrendButton(btnOverdue);
+                chartReports.Series["Overdue"].Enabled = btnOverdue.BackColor != Color.White;
+            };
+
+
+
+            // --- Chart ---
+            chartReports = new Chart
+            {
+                Dock = DockStyle.Bottom,
+                Height = 240,
+                BackColor = Color.White
+            };
+
+            ChartArea area = new ChartArea("MainArea");
+            chartReports.ChartAreas.Add(area);
+
+            area.BackColor = Color.White;
+            area.AxisX.MajorGrid.Enabled = false;
+            area.AxisY.MajorGrid.LineColor = Color.FromArgb(230, 230, 230);
+            area.AxisX.LineWidth = 1;
+            area.AxisY.LineWidth = 1;
+            area.AxisX.LabelStyle.ForeColor = Color.Black;
+            area.AxisY.LabelStyle.ForeColor = Color.Black;
+            area.AxisY.Minimum = 0;
+
+            pnlChartContainer.Controls.Add(chartReports);
+            this.Controls.Add(pnlChartContainer);
+
+            // --- Underline (for time range) ---
+            pnlUnderline = new Panel
+            {
+                Size = new Size(btnToday.Width, 3),
+                BackColor = Color.FromArgb(205, 133, 63),
+                Location = new Point(btnToday.Left, btnToday.Bottom)
+            };
+            pnlChartContainer.Controls.Add(pnlUnderline);
+            pnlUnderline.BringToFront();
+
+            // --- Events ---
+            btnToday.Click += (s, e) => { _currentTimeRange = "today"; MoveUnderline(btnToday); HighlightButton(btnToday); LoadChartData(_currentTimeRange, currentTrend); };
+            btnLastWeek.Click += (s, e) => { _currentTimeRange = "week"; MoveUnderline(btnLastWeek); HighlightButton(btnLastWeek); LoadChartData(_currentTimeRange, currentTrend); };
+            btnLastMonth.Click += (s, e) => { _currentTimeRange = "month"; MoveUnderline(btnLastMonth); HighlightButton(btnLastMonth); LoadChartData(_currentTimeRange, currentTrend); };
+
+            btnBorrowings.Click += (s, e) => { currentTrend = "Borrowings"; HighlightTrendButton(btnBorrowings); LoadChartData(_currentTimeRange, currentTrend); };
+            btnReturns.Click += (s, e) => { currentTrend = "Returns"; HighlightTrendButton(btnReturns); LoadChartData(_currentTimeRange, currentTrend); };
+            btnOverdue.Click += (s, e) => { currentTrend = "Overdue"; HighlightTrendButton(btnOverdue); LoadChartData(_currentTimeRange, currentTrend); };
+
+            // --- Load initial ---
+            _currentTimeRange = "today";
+            currentTrend = "Borrowings";
+            HighlightButton(btnToday);
+            HighlightTrendButton(btnBorrowings);
+            LoadChartData(_currentTimeRange, currentTrend);
+        }
+
+
+        private void HighlightTrendButton(Button selected)
+        {
+            if (activeTrendButton != null)
+            {
+                activeTrendButton.BackColor = Color.White;
+                activeTrendButton.ForeColor = Color.Black;
+            }
+
+            selected.BackColor = Color.FromArgb(205, 133, 63);
+            selected.ForeColor = Color.White;
+            activeTrendButton = selected;
+        }
+
+
+
+
+
+        private void LoadChartData(string mode, string trend = "Borrowings")
+        {
+            if (chartReports == null)
+                return;
+
+            // Determine the time range
+            string dateFormat = "%Y-%m-%d"; // daily by default
+            string rangeCondition = "";
+
+            if (mode == "today")
+                rangeCondition = "DATE(BorrowDate) = DATE('now')";
+            else if (mode == "week")
+                rangeCondition = "DATE(BorrowDate) >= DATE('now','-6 day')";
+            else if (mode == "month")
+                rangeCondition = "strftime('%Y-%m', BorrowDate) = strftime('%Y-%m','now')";
+
+            using (var con = Db.GetConnection())
+            {
+                con.Open();
+
+                // Borrowings over time
+                string borrowQuery = $@"
+            SELECT DATE(BorrowDate) AS BorrowDay, COUNT(*) AS Count
+            FROM Borrowings
+            WHERE {rangeCondition}
+            GROUP BY DATE(BorrowDate)
+            ORDER BY DATE(BorrowDate);
+        ";
+
+                // Returns over time
+                string returnQuery = $@"
+            SELECT DATE(ReturnDate) AS ReturnDay, COUNT(*) AS Count
+            FROM Borrowings
+            WHERE ReturnDate IS NOT NULL 
+              AND ReturnDate <> '' 
+              AND (
+                    {(mode == "today" ? "DATE(ReturnDate)=DATE('now')" :
+                                mode == "week" ? "DATE(ReturnDate)>=DATE('now','-6 day')" :
+                                "strftime('%Y-%m', ReturnDate)=strftime('%Y-%m','now')")}
+                  )
+            GROUP BY DATE(ReturnDate)
+            ORDER BY DATE(ReturnDate);
+        ";
+
+                // Overdue trend
+                string overdueQuery = $@"
+            SELECT DATE(DueDate) AS DueDay, COUNT(*) AS Count
+            FROM Borrowings
+            WHERE ReturnDate IS NULL
+              AND DATE(DueDate) <= DATE('now')
+              AND (
+                    {(mode == "today" ? "DATE(DueDate)=DATE('now')" :
+                                mode == "week" ? "DATE(DueDate)>=DATE('now','-6 day')" :
+                                "strftime('%Y-%m', DueDate)=strftime('%Y-%m','now')")}
+                  )
+            GROUP BY DATE(DueDate)
+            ORDER BY DATE(DueDate);
+        ";
+
+                // --- Data storage ---
+                var borrowData = new Dictionary<string, int>();
+                var returnData = new Dictionary<string, int>();
+                var overdueData = new Dictionary<string, int>();
+
+                // Borrowings
+                using (var cmd = new SQLiteCommand(borrowQuery, con))
+                using (var reader = cmd.ExecuteReader())
+                    while (reader.Read())
+                        borrowData[reader["BorrowDay"].ToString()] = Convert.ToInt32(reader["Count"]);
+
+                // Returns
+                using (var cmd = new SQLiteCommand(returnQuery, con))
+                using (var reader = cmd.ExecuteReader())
+                    while (reader.Read())
+                        returnData[reader["ReturnDay"].ToString()] = Convert.ToInt32(reader["Count"]);
+
+                // Overdue
+                using (var cmd = new SQLiteCommand(overdueQuery, con))
+                using (var reader = cmd.ExecuteReader())
+                    while (reader.Read())
+                        overdueData[reader["DueDay"].ToString()] = Convert.ToInt32(reader["Count"]);
+
+                // --- Clear old series ---
+                chartReports.Series.Clear();
+
+                // Borrowing series
+                Series borrowSeries = new Series("Borrowing Activity")
+                {
+                    ChartType = SeriesChartType.Spline,
+                    BorderWidth = 3,
+                    Color = Color.FromArgb(165, 105, 79), // Coffee Brown
+                    MarkerStyle = MarkerStyle.Circle,
+                    MarkerSize = 8,
+                    MarkerColor = Color.White,
+                    MarkerBorderColor = Color.FromArgb(165, 105, 79)
+                };
+                foreach (var kv in borrowData)
+                    borrowSeries.Points.AddXY(kv.Key, kv.Value);
+
+                // Return series
+                Series returnSeries = new Series("Returns")
+                {
+                    ChartType = SeriesChartType.Spline,
+                    BorderWidth = 3,
+                    Color = Color.FromArgb(205, 133, 63), // Peru
+                    MarkerStyle = MarkerStyle.Circle,
+                    MarkerSize = 8,
+                    MarkerColor = Color.White,
+                    MarkerBorderColor = Color.FromArgb(205, 133, 63)
+                };
+                foreach (var kv in returnData)
+                    returnSeries.Points.AddXY(kv.Key, kv.Value);
+
+                // Overdue series
+                Series overdueSeries = new Series("Overdue")
+                {
+                    ChartType = SeriesChartType.Spline,
+                    BorderWidth = 3,
+                    Color = Color.FromArgb(128, 64, 0), // Dark Brown
+                    MarkerStyle = MarkerStyle.Diamond,
+                    MarkerSize = 8,
+                    MarkerColor = Color.White,
+                    MarkerBorderColor = Color.FromArgb(128, 64, 0)
+                };
+                foreach (var kv in overdueData)
+                    overdueSeries.Points.AddXY(kv.Key, kv.Value);
+
+                // Add series to chart
+                chartReports.Series.Add(borrowSeries);
+                chartReports.Series.Add(returnSeries);
+                chartReports.Series.Add(overdueSeries);
+
+                // Chart title (C# 7.3 style)
+                string title = "📈 Borrowing Activity";
+                if (mode == "today")
+                    title = "📈 Borrowing Activity Today";
+                else if (mode == "week")
+                    title = "📈 Borrowing Activity This Week";
+                else if (mode == "month")
+                    title = "📈 Borrowing Activity This Month";
+
+                chartReports.Titles.Clear();
+                chartReports.Titles.Add(title);
+                chartReports.Titles[0].Font = new Font("Segoe UI Emoji", 12, FontStyle.Bold);
+                chartReports.Titles[0].ForeColor = Color.Black;
+            }
+
+            chartReports.Invalidate();
+        }
+
+
+
+
+
+
         public DashboardControl() : this("ADMIN") { }
 
         private void DashboardControl_Load(object sender, EventArgs e)
@@ -545,6 +500,8 @@ namespace Library_Management_System.User_Control
             ApplyPictureBoxStyle(picActiveMembers, 2);
             ApplyPictureBoxStyle(picOverdueBooks, 2);
 
+           
+
 
 
 
@@ -555,41 +512,227 @@ namespace Library_Management_System.User_Control
             }
         }
 
-
-
-        private void ExportChartAsImage()
+        private void InitializeRecentBorrowingsSection()
         {
-            SaveFileDialog sfd = new SaveFileDialog
+            // Container panel
+            pnlRecentBorrowings = new Panel
             {
-                Filter = "PNG Image|*.png",
-                Title = "Save Chart as Image"
+                Width = 600,
+                Height = 285,
+                BackColor = Color.White,
+                Padding = new Padding(10),
+                Location = new Point(226, 560)
             };
 
-            if (sfd.ShowDialog() == DialogResult.OK)
+            // Apply border radius
+            int borderRadius = 10; // change to 2 or whatever you want
+            pnlRecentBorrowings.Paint += (s, e) =>
             {
-                chartReports.SaveImage(sfd.FileName, ChartImageFormat.Png);
-                MessageBox.Show("Chart exported successfully!", "Export", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                using (GraphicsPath path = new GraphicsPath())
+                {
+                    Rectangle rect = new Rectangle(0, 0, pnlRecentBorrowings.Width, pnlRecentBorrowings.Height);
+                    int radius = borderRadius * 2;
+
+                    path.AddArc(rect.X, rect.Y, radius, radius, 180, 90); // Top-left
+                    path.AddArc(rect.Right - radius, rect.Y, radius, radius, 270, 90); // Top-right
+                    path.AddArc(rect.Right - radius, rect.Bottom - radius, radius, radius, 0, 90); // Bottom-right
+                    path.AddArc(rect.X, rect.Bottom - radius, radius, radius, 90, 90); // Bottom-left
+                    path.CloseAllFigures();
+
+                    pnlRecentBorrowings.Region = new Region(path);
+                }
+            };
+            this.Controls.Add(pnlRecentBorrowings);
+
+            // Title label
+            lblRecentBorrowings = new Label
+            {
+                Text = "🕑 Recent Borrowings",
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                ForeColor = Color.FromArgb(90, 50, 20),
+                Height = 30,
+                Width = pnlRecentBorrowings.Width - 20 // respect panel padding
+            };
+
+            // Add a top margin of 5% of panel height
+            lblRecentBorrowings.Location = new Point(10, (int)(pnlRecentBorrowings.Height * 0.05));
+
+            pnlRecentBorrowings.Controls.Add(lblRecentBorrowings);
+            // DataGridView setup
+            dgvRecentBorrowings = new DataGridView
+            {
+                BackgroundColor = Color.White,
+                BorderStyle = BorderStyle.None,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                ReadOnly = true,
+                RowHeadersVisible = false,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                EnableHeadersVisualStyles = false,
+                RowTemplate = { Height = 40 }
+            };
+
+            // Place DataGridView below the label with some spacing
+            dgvRecentBorrowings.Location = new Point(0, lblRecentBorrowings.Bottom + 5);
+            dgvRecentBorrowings.Size = new Size(pnlRecentBorrowings.Width, pnlRecentBorrowings.Height - lblRecentBorrowings.Bottom - 10);
+
+            dgvRecentBorrowings.RowPostPaint += dgvRecentBorrowings_RowPostPaint;
+            dgvRecentBorrowings.RowHeadersVisible = true;
+            dgvRecentBorrowings.RowHeadersWidth = 50; // enough space for numbers
+
+            // Attach DataBindingComplete only once
+            dgvRecentBorrowings.DataBindingComplete += DgvRecentBorrowings_DataBindingComplete;
+            dgvRecentBorrowings.SelectionChanged += DgvRecentBorrowings_SelectionChanged;
+
+
+
+            // Styling
+            dgvRecentBorrowings.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(205, 133, 63); // Peru highlight color
+            dgvRecentBorrowings.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
+            dgvRecentBorrowings.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+            dgvRecentBorrowings.DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
+            dgvRecentBorrowings.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(245, 245, 245);
+
+            pnlRecentBorrowings.Controls.Add(dgvRecentBorrowings);
+        }
+
+        private void DgvRecentBorrowings_SelectionChanged(object sender, EventArgs e)
+        {
+            dgvRecentBorrowings.ClearSelection();
+            dgvRecentBorrowings.CurrentCell = null;
+        }
+
+
+        private void DgvRecentBorrowings_DataBindingComplete(object sender, DataGridViewBindingCompleteEventArgs e)
+        {
+            dgvRecentBorrowings.ClearSelection();  // remove pre-selected row
+            dgvRecentBorrowings.CurrentCell = null; // no active cell
+        }
+
+        private void dgvRecentBorrowings_RowPostPaint(object sender, DataGridViewRowPostPaintEventArgs e)
+        {
+            // draw row number in row header
+            using (SolidBrush b = new SolidBrush(dgvRecentBorrowings.RowHeadersDefaultCellStyle.ForeColor))
+            {
+                string rowNumber = (e.RowIndex + 1).ToString();
+                e.Graphics.DrawString(
+                    rowNumber,
+                    dgvRecentBorrowings.DefaultCellStyle.Font,
+                    b,
+                    e.RowBounds.Location.X + 15,
+                    e.RowBounds.Location.Y + 10
+                );
             }
         }
 
-        private void PrintChart()
-        {
-            PrintDocument pd = new PrintDocument();
-            pd.PrintPage += (s, e) =>
-            {
-                Bitmap bmp = new Bitmap(chartReports.Width, chartReports.Height);
-                chartReports.DrawToBitmap(bmp, new Rectangle(0, 0, bmp.Width, bmp.Height));
-                e.Graphics.DrawImage(bmp, new Point(50, 50));
-            };
 
-            PrintPreviewDialog dlg = new PrintPreviewDialog
+
+        private void LoadRecentBorrowings()
+        {
+            try
             {
-                Document = pd,
-                Width = 1000,
-                Height = 800
-            };
-            dlg.ShowDialog();
+                using (var connection = new SQLiteConnection(Db.ConnectionString))
+                {
+                    connection.Open();
+
+                    string query = @"
+                SELECT 
+                    (m.FirstName || ' ' || m.LastName) AS MemberName,
+                    bk.title AS BookTitle,
+                    b.borrowDate AS BorrowDate,
+                    b.dueDate AS DueDate,
+                    b.status AS Status
+                FROM borrowings b
+                JOIN members m ON b.MemberId = m.MemberId
+                JOIN books bk ON b.BookId = bk.BookId
+                ORDER BY b.BorrowDate DESC
+                LIMIT 10;
+            ";
+
+                    using (var command = new SQLiteCommand(query, connection))
+                    using (var reader = command.ExecuteReader())
+                    {
+                        DataTable table = new DataTable();
+                        table.Load(reader);
+
+                        dgvRecentBorrowings.DataSource = table;
+                        dgvRecentBorrowings.ClearSelection();
+                        dgvRecentBorrowings.CurrentCell = null;
+
+
+
+                        // Rename columns
+                        dgvRecentBorrowings.Columns["MemberName"].HeaderText = "Member";
+                        dgvRecentBorrowings.Columns["BookTitle"].HeaderText = "Book";
+                        dgvRecentBorrowings.Columns["BorrowDate"].HeaderText = "Borrowed On";
+                        dgvRecentBorrowings.Columns["DueDate"].HeaderText = "Due Date";
+                        dgvRecentBorrowings.Columns["Status"].HeaderText = "Status";
+
+                        // Format dates
+                        dgvRecentBorrowings.Columns["BorrowDate"].DefaultCellStyle.Format = "MMM dd, yyyy";
+                        dgvRecentBorrowings.Columns["DueDate"].DefaultCellStyle.Format = "MMM dd, yyyy";
+
+                        // Row color by status
+                        foreach (DataGridViewRow row in dgvRecentBorrowings.Rows)
+                        {
+                            string status = row.Cells["Status"].Value?.ToString();
+
+                            if (status == "Borrowed")
+                                row.DefaultCellStyle.ForeColor = Color.FromArgb(30, 144, 255); // DodgerBlue
+                            else if (status == "Returned")
+                                row.DefaultCellStyle.ForeColor = Color.FromArgb(34, 139, 34); // ForestGreen
+                            else if (status == "Overdue")
+                                row.DefaultCellStyle.ForeColor = Color.FromArgb(205, 92, 92); // IndianRed
+                        }
+
+                        // Auto-size columns to fit content
+                        dgvRecentBorrowings.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Failed to load recent borrowings: " + ex.Message);
+            }
         }
+
+
+
+
+        //private void ExportChartAsImage()
+        //{
+        //    SaveFileDialog sfd = new SaveFileDialog
+        //    {
+        //        Filter = "PNG Image|*.png",
+        //        Title = "Save Chart as Image"
+        //    };
+
+        //    if (sfd.ShowDialog() == DialogResult.OK)
+        //    {
+        //        chartReports.SaveImage(sfd.FileName, ChartImageFormat.Png);
+        //        MessageBox.Show("Chart exported successfully!", "Export", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        //    }
+        //}
+
+        //private void PrintChart()
+        //{
+        //    PrintDocument pd = new PrintDocument();
+        //    pd.PrintPage += (s, e) =>
+        //    {
+        //        Bitmap bmp = new Bitmap(chartReports.Width, chartReports.Height);
+        //        chartReports.DrawToBitmap(bmp, new Rectangle(0, 0, bmp.Width, bmp.Height));
+        //        e.Graphics.DrawImage(bmp, new Point(50, 50));
+        //    };
+
+        //    PrintPreviewDialog dlg = new PrintPreviewDialog
+        //    {
+        //        Document = pd,
+        //        Width = 1000,
+        //        Height = 800
+        //    };
+        //    dlg.ShowDialog();
+        //}
 
 
         private void StyleCard(Panel panel, Color bgColor)

@@ -157,6 +157,7 @@ namespace Library_Management_System
             button2.Text = "  Manage Members";
             button3.Text = "  Borrow Books";
             button4.Text = "  Return Books";
+            button9.Text = "  Overdue Books";
             button5.Text = "  Reports";
             button6.Text = "  Settings";
             button7.Text = isDarkMode ? "  Light UI" : "  Dark UI";
@@ -231,7 +232,7 @@ namespace Library_Management_System
             // === Create sidebar selection indicator ===
             sidebarIndicator = new Panel();
             sidebarIndicator.Size = new Size(4, 40); // thin vertical bar
-            sidebarIndicator.BackColor = Color.FromArgb(205, 173, 132); // light brown
+            sidebarIndicator.BackColor = Color.FromArgb(165, 105, 79); // Coffee brown
             sidebarIndicator.Visible = false;
             panel1.Controls.Add(sidebarIndicator);
 
@@ -383,18 +384,19 @@ namespace Library_Management_System
             if (panel1.Controls.Contains(button7)) panel1.Controls.SetChildIndex(button7, 1);
             if (panel1.Controls.Contains(button6)) panel1.Controls.SetChildIndex(button6, 2);
             if (panel1.Controls.Contains(button5)) panel1.Controls.SetChildIndex(button5, 3);
-            if (panel1.Controls.Contains(button4)) panel1.Controls.SetChildIndex(button4, 4);
-            if (panel1.Controls.Contains(button3)) panel1.Controls.SetChildIndex(button3, 5);
-            if (panel1.Controls.Contains(button2)) panel1.Controls.SetChildIndex(button2, 6);
-            if (panel1.Controls.Contains(button1)) panel1.Controls.SetChildIndex(button1, 7);
-            if (panel1.Controls.Contains(btnDashboard)) panel1.Controls.SetChildIndex(btnDashboard, 8);
-            if (panel1.Controls.Contains(pictureBoxLogo)) panel1.Controls.SetChildIndex(pictureBoxLogo, 9);
+            if (panel1.Controls.Contains(button4)) panel1.Controls.SetChildIndex(button9, 4);
+            if (panel1.Controls.Contains(button4)) panel1.Controls.SetChildIndex(button4, 5);
+            if (panel1.Controls.Contains(button3)) panel1.Controls.SetChildIndex(button3, 6);
+            if (panel1.Controls.Contains(button2)) panel1.Controls.SetChildIndex(button2, 7);
+            if (panel1.Controls.Contains(button1)) panel1.Controls.SetChildIndex(button1, 8);
+            if (panel1.Controls.Contains(btnDashboard)) panel1.Controls.SetChildIndex(btnDashboard, 9);
+            if (panel1.Controls.Contains(pictureBoxLogo)) panel1.Controls.SetChildIndex(pictureBoxLogo, 10);
 
             // === Add bottom spacer ===
             bottomSpacer = new Panel();
             bottomSpacer.Dock = DockStyle.Bottom;
             bottomSpacer.Height = (int)(this.ClientSize.Height * 0.05);
-            bottomSpacer.BackColor = Color.White;
+            bottomSpacer.BackColor = Color.Purple;
             this.Controls.Add(bottomSpacer);
 
             this.Resize += (s, ev) =>
@@ -427,7 +429,7 @@ namespace Library_Management_System
 
             // Set new active button
             activeButton = clickedButton;
-            activeButton.ForeColor = Color.FromArgb(205, 173, 132); // light brown
+            activeButton.ForeColor = Color.FromArgb(205, 133, 63); // Peru
             activeButton.BackColor = Color.White; // optional very light beige highlight
 
             // Move and show the indicator beside it
@@ -681,6 +683,21 @@ namespace Library_Management_System
         private void button6_Click_1(object sender, EventArgs e)
         {
 
+        }
+
+        private void button9_Click(object sender, EventArgs e)
+        {
+
+            SetActiveButton(button9);
+            // Clear existing controls in the panelContainer
+            panelContainer.Controls.Clear();
+
+            // Create instance of ReturnBooksControl
+            OverdueReportControl overdueBooks = new OverdueReportControl();
+            overdueBooks.Dock = DockStyle.Fill;
+
+            // Add it to the container
+            panelContainer.Controls.Add(overdueBooks);
         }
 
 

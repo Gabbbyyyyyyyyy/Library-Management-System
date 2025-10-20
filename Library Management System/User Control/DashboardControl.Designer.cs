@@ -23,34 +23,34 @@ namespace Library_Management_System.User_Control
             this.pnlTotalBooks = new System.Windows.Forms.Panel();
             this.lblTotalBooksValue = new System.Windows.Forms.Label();
             this.lblTotalBooks = new System.Windows.Forms.Label();
+            this.picTotalBooks = new System.Windows.Forms.PictureBox();
             this.pnlBorrowedBooks = new System.Windows.Forms.Panel();
             this.lblBorrowedBooksValue = new System.Windows.Forms.Label();
             this.lblBorrowedBooks = new System.Windows.Forms.Label();
+            this.picBorrowedBooks = new System.Windows.Forms.PictureBox();
             this.pnlAvailableBooks = new System.Windows.Forms.Panel();
             this.lblAvailableBooksValue = new System.Windows.Forms.Label();
             this.lblAvailableBooks = new System.Windows.Forms.Label();
+            this.picAvailableBooks = new System.Windows.Forms.PictureBox();
             this.pnlActiveMembers = new System.Windows.Forms.Panel();
             this.lblActiveMembersValue = new System.Windows.Forms.Label();
             this.lblActiveMembers = new System.Windows.Forms.Label();
+            this.picActiveMembers = new System.Windows.Forms.PictureBox();
             this.pnlOverdueBooks = new System.Windows.Forms.Panel();
             this.lblOverdueBooksValue = new System.Windows.Forms.Label();
             this.lblOverdueBooks = new System.Windows.Forms.Label();
             this.picOverdueBooks = new System.Windows.Forms.PictureBox();
-            this.picActiveMembers = new System.Windows.Forms.PictureBox();
-            this.picAvailableBooks = new System.Windows.Forms.PictureBox();
-            this.picBorrowedBooks = new System.Windows.Forms.PictureBox();
-            this.picTotalBooks = new System.Windows.Forms.PictureBox();
             this.label2 = new System.Windows.Forms.Label();
             this.pnlTotalBooks.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.picTotalBooks)).BeginInit();
             this.pnlBorrowedBooks.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.picBorrowedBooks)).BeginInit();
             this.pnlAvailableBooks.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.picAvailableBooks)).BeginInit();
             this.pnlActiveMembers.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.picActiveMembers)).BeginInit();
             this.pnlOverdueBooks.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.picOverdueBooks)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.picActiveMembers)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.picAvailableBooks)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.picBorrowedBooks)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.picTotalBooks)).BeginInit();
             this.SuspendLayout();
             // 
             // lblGreeting
@@ -68,7 +68,7 @@ namespace Library_Management_System.User_Control
             // 
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 16.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(220, 54);
+            this.label1.Location = new System.Drawing.Point(221, 44);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(309, 32);
             this.label1.TabIndex = 1;
@@ -81,9 +81,9 @@ namespace Library_Management_System.User_Control
             this.pnlTotalBooks.Controls.Add(this.lblTotalBooks);
             this.pnlTotalBooks.Controls.Add(this.picTotalBooks);
             this.pnlTotalBooks.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.pnlTotalBooks.Location = new System.Drawing.Point(226, 117);
+            this.pnlTotalBooks.Location = new System.Drawing.Point(227, 107);
             this.pnlTotalBooks.Name = "pnlTotalBooks";
-            this.pnlTotalBooks.Size = new System.Drawing.Size(204, 100);
+            this.pnlTotalBooks.Size = new System.Drawing.Size(225, 91);
             this.pnlTotalBooks.TabIndex = 7;
             this.pnlTotalBooks.Paint += new System.Windows.Forms.PaintEventHandler(this.pnlTotalBooks_Paint_1);
             // 
@@ -111,6 +111,17 @@ namespace Library_Management_System.User_Control
             this.lblTotalBooks.Text = "Total Books\r\n";
             this.lblTotalBooks.Click += new System.EventHandler(this.label2_Click);
             // 
+            // picTotalBooks
+            // 
+            this.picTotalBooks.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
+            this.picTotalBooks.Image = global::Library_Management_System.Properties.Resources.tb1;
+            this.picTotalBooks.Location = new System.Drawing.Point(29, 27);
+            this.picTotalBooks.Name = "picTotalBooks";
+            this.picTotalBooks.Size = new System.Drawing.Size(48, 47);
+            this.picTotalBooks.TabIndex = 6;
+            this.picTotalBooks.TabStop = false;
+            this.picTotalBooks.Click += new System.EventHandler(this.pictureBox1_Click);
+            // 
             // pnlBorrowedBooks
             // 
             this.pnlBorrowedBooks.BackColor = System.Drawing.Color.White;
@@ -118,9 +129,9 @@ namespace Library_Management_System.User_Control
             this.pnlBorrowedBooks.Controls.Add(this.lblBorrowedBooks);
             this.pnlBorrowedBooks.Controls.Add(this.picBorrowedBooks);
             this.pnlBorrowedBooks.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.pnlBorrowedBooks.Location = new System.Drawing.Point(495, 117);
+            this.pnlBorrowedBooks.Location = new System.Drawing.Point(490, 107);
             this.pnlBorrowedBooks.Name = "pnlBorrowedBooks";
-            this.pnlBorrowedBooks.Size = new System.Drawing.Size(204, 100);
+            this.pnlBorrowedBooks.Size = new System.Drawing.Size(225, 91);
             this.pnlBorrowedBooks.TabIndex = 10;
             // 
             // lblBorrowedBooksValue
@@ -145,6 +156,18 @@ namespace Library_Management_System.User_Control
             this.lblBorrowedBooks.TabIndex = 9;
             this.lblBorrowedBooks.Text = "Borrowed\r\n";
             // 
+            // picBorrowedBooks
+            // 
+            this.picBorrowedBooks.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
+            this.picBorrowedBooks.Image = global::Library_Management_System.Properties.Resources.b1;
+            this.picBorrowedBooks.Location = new System.Drawing.Point(26, 27);
+            this.picBorrowedBooks.Name = "picBorrowedBooks";
+            this.picBorrowedBooks.Size = new System.Drawing.Size(48, 47);
+            this.picBorrowedBooks.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
+            this.picBorrowedBooks.TabIndex = 6;
+            this.picBorrowedBooks.TabStop = false;
+            this.picBorrowedBooks.Click += new System.EventHandler(this.pictureBox6_Click);
+            // 
             // pnlAvailableBooks
             // 
             this.pnlAvailableBooks.BackColor = System.Drawing.Color.White;
@@ -152,9 +175,9 @@ namespace Library_Management_System.User_Control
             this.pnlAvailableBooks.Controls.Add(this.lblAvailableBooks);
             this.pnlAvailableBooks.Controls.Add(this.picAvailableBooks);
             this.pnlAvailableBooks.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.pnlAvailableBooks.Location = new System.Drawing.Point(764, 117);
+            this.pnlAvailableBooks.Location = new System.Drawing.Point(748, 107);
             this.pnlAvailableBooks.Name = "pnlAvailableBooks";
-            this.pnlAvailableBooks.Size = new System.Drawing.Size(204, 100);
+            this.pnlAvailableBooks.Size = new System.Drawing.Size(230, 91);
             this.pnlAvailableBooks.TabIndex = 12;
             // 
             // lblAvailableBooksValue
@@ -179,15 +202,27 @@ namespace Library_Management_System.User_Control
             this.lblAvailableBooks.TabIndex = 9;
             this.lblAvailableBooks.Text = "Available\r\n";
             // 
+            // picAvailableBooks
+            // 
+            this.picAvailableBooks.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(255)))), ((int)(((byte)(128)))));
+            this.picAvailableBooks.Image = global::Library_Management_System.Properties.Resources.av1;
+            this.picAvailableBooks.Location = new System.Drawing.Point(30, 27);
+            this.picAvailableBooks.Name = "picAvailableBooks";
+            this.picAvailableBooks.Size = new System.Drawing.Size(48, 47);
+            this.picAvailableBooks.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
+            this.picAvailableBooks.TabIndex = 6;
+            this.picAvailableBooks.TabStop = false;
+            this.picAvailableBooks.Click += new System.EventHandler(this.picAvailableBooks_Click);
+            // 
             // pnlActiveMembers
             // 
             this.pnlActiveMembers.BackColor = System.Drawing.Color.White;
             this.pnlActiveMembers.Controls.Add(this.lblActiveMembersValue);
             this.pnlActiveMembers.Controls.Add(this.lblActiveMembers);
             this.pnlActiveMembers.Controls.Add(this.picActiveMembers);
-            this.pnlActiveMembers.Location = new System.Drawing.Point(1033, 117);
+            this.pnlActiveMembers.Location = new System.Drawing.Point(1017, 107);
             this.pnlActiveMembers.Name = "pnlActiveMembers";
-            this.pnlActiveMembers.Size = new System.Drawing.Size(204, 100);
+            this.pnlActiveMembers.Size = new System.Drawing.Size(225, 91);
             this.pnlActiveMembers.TabIndex = 13;
             // 
             // lblActiveMembersValue
@@ -195,7 +230,7 @@ namespace Library_Management_System.User_Control
             this.lblActiveMembersValue.AutoSize = true;
             this.lblActiveMembersValue.Cursor = System.Windows.Forms.Cursors.Default;
             this.lblActiveMembersValue.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblActiveMembersValue.Location = new System.Drawing.Point(145, 33);
+            this.lblActiveMembersValue.Location = new System.Drawing.Point(159, 33);
             this.lblActiveMembersValue.Name = "lblActiveMembersValue";
             this.lblActiveMembersValue.Size = new System.Drawing.Size(18, 20);
             this.lblActiveMembersValue.TabIndex = 15;
@@ -208,11 +243,23 @@ namespace Library_Management_System.User_Control
             this.lblActiveMembers.BackColor = System.Drawing.Color.Transparent;
             this.lblActiveMembers.Cursor = System.Windows.Forms.Cursors.Hand;
             this.lblActiveMembers.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblActiveMembers.Location = new System.Drawing.Point(71, 10);
+            this.lblActiveMembers.Location = new System.Drawing.Point(81, 10);
             this.lblActiveMembers.Name = "lblActiveMembers";
             this.lblActiveMembers.Size = new System.Drawing.Size(130, 20);
             this.lblActiveMembers.TabIndex = 9;
             this.lblActiveMembers.Text = "Active Members";
+            // 
+            // picActiveMembers
+            // 
+            this.picActiveMembers.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(128)))));
+            this.picActiveMembers.Image = global::Library_Management_System.Properties.Resources.ac1;
+            this.picActiveMembers.Location = new System.Drawing.Point(27, 27);
+            this.picActiveMembers.Name = "picActiveMembers";
+            this.picActiveMembers.Size = new System.Drawing.Size(48, 47);
+            this.picActiveMembers.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
+            this.picActiveMembers.TabIndex = 6;
+            this.picActiveMembers.TabStop = false;
+            this.picActiveMembers.Click += new System.EventHandler(this.picActiveMembers_Click);
             // 
             // pnlOverdueBooks
             // 
@@ -220,9 +267,9 @@ namespace Library_Management_System.User_Control
             this.pnlOverdueBooks.Controls.Add(this.lblOverdueBooksValue);
             this.pnlOverdueBooks.Controls.Add(this.lblOverdueBooks);
             this.pnlOverdueBooks.Controls.Add(this.picOverdueBooks);
-            this.pnlOverdueBooks.Location = new System.Drawing.Point(1302, 117);
+            this.pnlOverdueBooks.Location = new System.Drawing.Point(1282, 107);
             this.pnlOverdueBooks.Name = "pnlOverdueBooks";
-            this.pnlOverdueBooks.Size = new System.Drawing.Size(204, 100);
+            this.pnlOverdueBooks.Size = new System.Drawing.Size(225, 91);
             this.pnlOverdueBooks.TabIndex = 10;
             // 
             // lblOverdueBooksValue
@@ -251,7 +298,7 @@ namespace Library_Management_System.User_Control
             // 
             this.picOverdueBooks.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(128)))));
             this.picOverdueBooks.Image = global::Library_Management_System.Properties.Resources.ov1;
-            this.picOverdueBooks.Location = new System.Drawing.Point(12, 27);
+            this.picOverdueBooks.Location = new System.Drawing.Point(30, 27);
             this.picOverdueBooks.Name = "picOverdueBooks";
             this.picOverdueBooks.Size = new System.Drawing.Size(48, 47);
             this.picOverdueBooks.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
@@ -259,60 +306,13 @@ namespace Library_Management_System.User_Control
             this.picOverdueBooks.TabStop = false;
             this.picOverdueBooks.Click += new System.EventHandler(this.picOverdueBooks_Click);
             // 
-            // picActiveMembers
-            // 
-            this.picActiveMembers.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(128)))));
-            this.picActiveMembers.Image = global::Library_Management_System.Properties.Resources.ac1;
-            this.picActiveMembers.Location = new System.Drawing.Point(12, 27);
-            this.picActiveMembers.Name = "picActiveMembers";
-            this.picActiveMembers.Size = new System.Drawing.Size(48, 47);
-            this.picActiveMembers.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
-            this.picActiveMembers.TabIndex = 6;
-            this.picActiveMembers.TabStop = false;
-            this.picActiveMembers.Click += new System.EventHandler(this.picActiveMembers_Click);
-            // 
-            // picAvailableBooks
-            // 
-            this.picAvailableBooks.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(255)))), ((int)(((byte)(128)))));
-            this.picAvailableBooks.Image = global::Library_Management_System.Properties.Resources.av1;
-            this.picAvailableBooks.Location = new System.Drawing.Point(12, 27);
-            this.picAvailableBooks.Name = "picAvailableBooks";
-            this.picAvailableBooks.Size = new System.Drawing.Size(48, 47);
-            this.picAvailableBooks.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
-            this.picAvailableBooks.TabIndex = 6;
-            this.picAvailableBooks.TabStop = false;
-            this.picAvailableBooks.Click += new System.EventHandler(this.picAvailableBooks_Click);
-            // 
-            // picBorrowedBooks
-            // 
-            this.picBorrowedBooks.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
-            this.picBorrowedBooks.Image = global::Library_Management_System.Properties.Resources.b1;
-            this.picBorrowedBooks.Location = new System.Drawing.Point(12, 27);
-            this.picBorrowedBooks.Name = "picBorrowedBooks";
-            this.picBorrowedBooks.Size = new System.Drawing.Size(48, 47);
-            this.picBorrowedBooks.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
-            this.picBorrowedBooks.TabIndex = 6;
-            this.picBorrowedBooks.TabStop = false;
-            this.picBorrowedBooks.Click += new System.EventHandler(this.pictureBox6_Click);
-            // 
-            // picTotalBooks
-            // 
-            this.picTotalBooks.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
-            this.picTotalBooks.Image = global::Library_Management_System.Properties.Resources.tb1;
-            this.picTotalBooks.Location = new System.Drawing.Point(12, 27);
-            this.picTotalBooks.Name = "picTotalBooks";
-            this.picTotalBooks.Size = new System.Drawing.Size(48, 47);
-            this.picTotalBooks.TabIndex = 6;
-            this.picTotalBooks.TabStop = false;
-            this.picTotalBooks.Click += new System.EventHandler(this.pictureBox1_Click);
-            // 
             // label2
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.Location = new System.Drawing.Point(223, 86);
+            this.label2.Location = new System.Drawing.Point(224, 76);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(117, 16);
+            this.label2.Size = new System.Drawing.Size(106, 15);
             this.label2.TabIndex = 14;
             this.label2.Text = "Admin/Dashboard";
             // 
@@ -328,23 +328,23 @@ namespace Library_Management_System.User_Control
             this.Controls.Add(this.pnlTotalBooks);
             this.Controls.Add(this.label1);
             this.Name = "DashboardControl";
-            this.Size = new System.Drawing.Size(1814, 702);
+            this.Size = new System.Drawing.Size(1814, 995);
             this.Load += new System.EventHandler(this.DashboardControl_Load);
             this.pnlTotalBooks.ResumeLayout(false);
             this.pnlTotalBooks.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.picTotalBooks)).EndInit();
             this.pnlBorrowedBooks.ResumeLayout(false);
             this.pnlBorrowedBooks.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.picBorrowedBooks)).EndInit();
             this.pnlAvailableBooks.ResumeLayout(false);
             this.pnlAvailableBooks.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.picAvailableBooks)).EndInit();
             this.pnlActiveMembers.ResumeLayout(false);
             this.pnlActiveMembers.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.picActiveMembers)).EndInit();
             this.pnlOverdueBooks.ResumeLayout(false);
             this.pnlOverdueBooks.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.picOverdueBooks)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.picActiveMembers)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.picAvailableBooks)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.picBorrowedBooks)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.picTotalBooks)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 

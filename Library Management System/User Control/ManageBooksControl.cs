@@ -675,21 +675,18 @@ namespace LibraryManagementSystem
             {
                 con.Open();
                 string query = @"
-            SELECT 
-                b.BookId, 
-                b.ISBN, 
-                b.Title, 
-                b.Author, 
-                b.Category, 
-                b.Quantity, 
-                b.AvailableCopies,
-                b.Status
-            FROM Books b
-            WHERE 
-                b.Title LIKE @search 
-                OR b.Author LIKE @search 
-                OR b.Category LIKE @search 
-                OR b.ISBN LIKE @search";
+                    SELECT 
+                        b.BookId, b.ISBN, b.Title, b.Author, b.Category, 
+                        b.Quantity, b.AvailableCopies,
+                        CASE 
+                            WHEN b.AvailableCopies = 0 THEN 'Not Available' 
+                            ELSE 'Available' 
+                        END AS Status
+                    FROM Books b
+                    WHERE b.Title LIKE @search 
+                       OR b.Author LIKE @search 
+                       OR b.Category LIKE @search 
+                       OR b.ISBN LIKE @search";
 
                 using (var cmd = new SQLiteCommand(query, con))
                 {
@@ -726,21 +723,18 @@ namespace LibraryManagementSystem
                 con.Open();
 
                 string query = @"
-            SELECT 
-                b.BookId, 
-                b.ISBN, 
-                b.Title, 
-                b.Author, 
-                b.Category, 
-                b.Quantity, 
-                b.AvailableCopies,
-                b.Status
-            FROM Books b
-            WHERE 
-                b.Title LIKE @search 
-                OR b.Author LIKE @search 
-                OR b.Category LIKE @search 
-                OR b.ISBN LIKE @search";
+                    SELECT 
+                        b.BookId, b.ISBN, b.Title, b.Author, b.Category, 
+                        b.Quantity, b.AvailableCopies,
+                        CASE 
+                            WHEN b.AvailableCopies = 0 THEN 'Not Available' 
+                            ELSE 'Available' 
+                        END AS Status
+                    FROM Books b
+                    WHERE b.Title LIKE @search 
+                       OR b.Author LIKE @search 
+                       OR b.Category LIKE @search 
+                       OR b.ISBN LIKE @search";
 
                 using (var cmd = new SQLiteCommand(query, con))
                 {
@@ -824,8 +818,8 @@ namespace LibraryManagementSystem
                             reader.Close();
 
                             // Insert new book
-                            string insertQuery = "INSERT INTO Books (ISBN, Title, Author, Category, Quantity, AvailableCopies) " +
-                                                 "VALUES (@isbn, @title, @author, @category, @qty, @qty)";
+                            string insertQuery = "INSERT INTO Books (ISBN, Title, Author, Category, Quantity, AvailableCopies, CreatedAt) " +
+                                                 "VALUES (@isbn, @title, @author, @category, @qty, @available, @createdAt)";
                             using (var insertCmd = new SQLiteCommand(insertQuery, con))
                             {
                                 insertCmd.Parameters.AddWithValue("@isbn", txtISBN.Text);
@@ -833,6 +827,8 @@ namespace LibraryManagementSystem
                                 insertCmd.Parameters.AddWithValue("@author", txtAuthor.Text);
                                 insertCmd.Parameters.AddWithValue("@category", txtCategory.Text);
                                 insertCmd.Parameters.AddWithValue("@qty", qty);
+                                insertCmd.Parameters.AddWithValue("@available", qty);
+                                insertCmd.Parameters.AddWithValue("@createdAt", DateTime.Now);
                                 insertCmd.ExecuteNonQuery();
                             }
                             MessageBox.Show("Book added from API successfully!");

@@ -32,20 +32,19 @@
             this.dgvBorrowedBooks.AllowUserToDeleteRows = false;
             this.dgvBorrowedBooks.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvBorrowedBooks.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvBorrowedBooks.Location = new System.Drawing.Point(409, 181);
+            this.dgvBorrowedBooks.Location = new System.Drawing.Point(277, 350);
             this.dgvBorrowedBooks.Margin = new System.Windows.Forms.Padding(4);
             this.dgvBorrowedBooks.MultiSelect = false;
             this.dgvBorrowedBooks.Name = "dgvBorrowedBooks";
             this.dgvBorrowedBooks.ReadOnly = true;
             this.dgvBorrowedBooks.RowHeadersWidth = 51;
             this.dgvBorrowedBooks.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvBorrowedBooks.Size = new System.Drawing.Size(855, 399);
+            this.dgvBorrowedBooks.Size = new System.Drawing.Size(1728, 724);
             this.dgvBorrowedBooks.TabIndex = 0;
-            this.dgvBorrowedBooks.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvBorrowedBooks_CellContentClick);
             // 
             // btnReturn
             // 
-            this.btnReturn.Location = new System.Drawing.Point(1104, 79);
+            this.btnReturn.Location = new System.Drawing.Point(277, 278);
             this.btnReturn.Margin = new System.Windows.Forms.Padding(4);
             this.btnReturn.Name = "btnReturn";
             this.btnReturn.Size = new System.Drawing.Size(160, 37);
@@ -58,7 +57,7 @@
             // 
             this.lblMessage.AutoSize = true;
             this.lblMessage.ForeColor = System.Drawing.Color.Red;
-            this.lblMessage.Location = new System.Drawing.Point(1104, 128);
+            this.lblMessage.Location = new System.Drawing.Point(366, 319);
             this.lblMessage.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblMessage.Name = "lblMessage";
             this.lblMessage.Size = new System.Drawing.Size(71, 16);
@@ -69,12 +68,13 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.Color.WhiteSmoke;
             this.Controls.Add(this.lblMessage);
             this.Controls.Add(this.btnReturn);
             this.Controls.Add(this.dgvBorrowedBooks);
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "ReturnBooksControl";
-            this.Size = new System.Drawing.Size(1395, 684);
+            this.Size = new System.Drawing.Size(1855, 811);
             ((System.ComponentModel.ISupportInitialize)(this.dgvBorrowedBooks)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();

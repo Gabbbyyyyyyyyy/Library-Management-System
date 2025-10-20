@@ -13,35 +13,69 @@ namespace Library_Management_System.User_Control
             InitializeComponent();
             LoadBorrowedBooks();
 
-            // Subscribe to student event
+            this.Dock = DockStyle.Fill;
+            this.Size = Screen.PrimaryScreen.Bounds.Size;
+            this.Location = Screen.PrimaryScreen.Bounds.Location;
+
             Library_Management_System.User_Control_Student.Borrowing.BookReturned += LoadBorrowedBooks;
         }
 
         private void LoadBorrowedBooks()
         {
-
             var dt = DatabaseHelper.Query(@"
-        SELECT br.BorrowId, 
-               m.FirstName || ' ' || m.LastName AS FullName, 
-               b.Title, 
-               br.BorrowDate, 
-               br.DueDate,
-               br.ReturnDate,
-               br.Penalty,
-               br.Status
-        FROM Borrowings br
-        INNER JOIN Members m ON br.MemberId = m.MemberId
-        INNER JOIN Books b ON br.BookId = b.BookId
-        WHERE br.ReturnDate IS NOT NULL AND br.Status = 'Pending'
-        ORDER BY br.ReturnDate DESC;
-    ");
+                SELECT br.BorrowId, 
+                       m.FirstName || ' ' || m.LastName AS FullName, 
+                       b.Title, 
+                       br.BorrowDate, 
+                       br.DueDate,
+                       br.ReturnDate,
+                       br.Penalty,
+                       br.Status
+                FROM Borrowings br
+                INNER JOIN Members m ON br.MemberId = m.MemberId
+                INNER JOIN Books b ON br.BookId = b.BookId
+                WHERE br.Status = 'Pending'
+                ORDER BY br.DueDate ASC;
+            ");
 
-            dgvBorrowedBooks.DataSource = null;
+            // Compute penalties dynamically
+            foreach (DataRow row in dt.Rows)
+            {
+                if (row["DueDate"] != DBNull.Value)
+                {
+                    DateTime dueDate = Convert.ToDateTime(row["DueDate"]);
+                    DateTime returnDate = row["ReturnDate"] == DBNull.Value ? DateTime.Now : Convert.ToDateTime(row["ReturnDate"]);
+
+                    // Fine starts 1 hour after due date
+                    DateTime fineStart = dueDate.AddHours(1);
+
+                    double totalPenalty = 0;
+
+                    if (returnDate > fineStart)
+                    {
+                        TimeSpan diff = returnDate - fineStart;
+
+                        int totalHours = (int)Math.Floor(diff.TotalHours);
+                        int totalDays = (int)Math.Floor(diff.TotalDays);
+
+                        totalPenalty = (totalHours * 2) + (totalDays * 10);
+                    }
+
+                    row["Penalty"] = totalPenalty;
+                }
+            }
+
             dgvBorrowedBooks.DataSource = dt;
 
-           
-        }
+            // Optional: Auto-format Penalty column
+            if (dgvBorrowedBooks.Columns.Contains("Penalty"))
+            {
+                dgvBorrowedBooks.Columns["Penalty"].DefaultCellStyle.Format = "₱0.00";
+                dgvBorrowedBooks.Columns["Penalty"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            }
 
+            dgvBorrowedBooks.ClearSelection();
+        }
 
         private int GetBookIdFromBorrowing(int borrowId)
         {
@@ -58,21 +92,23 @@ namespace Library_Management_System.User_Control
             var sel = dgvBorrowedBooks.SelectedRows[0];
             int borrowId = Convert.ToInt32(sel.Cells["BorrowId"].Value);
             int bookId = GetBookIdFromBorrowing(borrowId);
+            double penalty = Convert.ToDouble(sel.Cells["Penalty"].Value);
 
             using (var conn = Db.GetConnection())
             {
                 conn.Open();
                 using (var trans = conn.BeginTransaction())
                 {
-                    // Update Borrowings status to Accepted
+                    // Update Borrowings status and penalty
                     using (var cmd = new SQLiteCommand(conn))
                     {
-                        cmd.CommandText = "UPDATE Borrowings SET Status='Accepted' WHERE BorrowId=@id";
+                        cmd.CommandText = "UPDATE Borrowings SET Status='Accepted', Penalty=@penalty WHERE BorrowId=@id";
                         cmd.Parameters.AddWithValue("@id", borrowId);
+                        cmd.Parameters.AddWithValue("@penalty", penalty);
                         cmd.ExecuteNonQuery();
                     }
 
-                    // Increment AvailableCopies
+                    // Increment available copies
                     using (var cmd2 = new SQLiteCommand(conn))
                     {
                         cmd2.CommandText = "UPDATE Books SET AvailableCopies = AvailableCopies + 1 WHERE BookId=@b";
@@ -80,31 +116,12 @@ namespace Library_Management_System.User_Control
                         cmd2.ExecuteNonQuery();
                     }
 
-                    // Update student HasPendingBorrow if tracked
-                    using (var cmd3 = new SQLiteCommand(conn))
-                    {
-                        cmd3.CommandText = @"
-                            UPDATE Members
-                            SET HasPendingBorrow = (
-                                SELECT COUNT(*) 
-                                FROM Borrowings 
-                                WHERE MemberId = Members.MemberId AND ReturnDate IS NULL
-                            )
-                            WHERE MemberId = (SELECT MemberId FROM Borrowings WHERE BorrowId=@id)";
-                        cmd3.Parameters.AddWithValue("@id", borrowId);
-                        cmd3.ExecuteNonQuery();
-                    }
-
                     trans.Commit();
                 }
             }
 
-            LoadBorrowedBooks(); // Refresh grid
-        }
-
-        private void dgvBorrowedBooks_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-
+            MessageBox.Show("✅ Book return accepted! Penalty recorded: ₱" + penalty);
+            LoadBorrowedBooks();
         }
 
         private void btnReturn_Click(object sender, EventArgs e)
@@ -117,14 +134,7 @@ namespace Library_Management_System.User_Control
 
             var selectedRow = dgvBorrowedBooks.SelectedRows[0];
             int borrowId = Convert.ToInt32(selectedRow.Cells["BorrowId"].Value);
-
-            // Get BookId of the selected borrow
             int bookId = GetBookIdFromBorrowing(borrowId);
-            if (bookId == -1)
-            {
-                MessageBox.Show("❌ Unable to find the book record for this borrowing.");
-                return;
-            }
 
             using (var conn = Db.GetConnection())
             {
@@ -133,27 +143,23 @@ namespace Library_Management_System.User_Control
                 {
                     try
                     {
-                        // Step 1: Update Borrowing status to 'Returned'
-                        using (var cmd = new SQLiteCommand("UPDATE Borrowings SET Status = 'Returned' WHERE BorrowId = @id", conn))
+                        using (var cmd = new SQLiteCommand("UPDATE Borrowings SET Status = 'Returned', ReturnDate = @r WHERE BorrowId = @id", conn))
                         {
+                            cmd.Parameters.AddWithValue("@r", DateTime.Now);
                             cmd.Parameters.AddWithValue("@id", borrowId);
                             cmd.ExecuteNonQuery();
                         }
 
-                        // Step 2: Update Book's AvailableCopies
                         using (var cmd2 = new SQLiteCommand("UPDATE Books SET AvailableCopies = AvailableCopies + 1 WHERE BookId = @b", conn))
                         {
                             cmd2.Parameters.AddWithValue("@b", bookId);
                             cmd2.ExecuteNonQuery();
                         }
 
-                        // Step 3: Commit changes
                         trans.Commit();
-
-                        // Step 4: Remove the book from DataGridView
                         dgvBorrowedBooks.Rows.Remove(selectedRow);
 
-                        MessageBox.Show("✅ Book successfully returned and stock updated!");
+                        MessageBox.Show("✅ Book successfully marked as returned!");
                     }
                     catch (Exception ex)
                     {
@@ -163,6 +169,5 @@ namespace Library_Management_System.User_Control
                 }
             }
         }
-
     }
 }
