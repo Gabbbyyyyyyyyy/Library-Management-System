@@ -2,7 +2,7 @@
 
 namespace LibraryManagementSystem.Data
 {
-    //DROP TABLE IF EXISTS Books; - to resest all the data of books
+    // DROP TABLE IF EXISTS Books;  // (optional) use this if you want to reset data
     public static class Books
     {
         public static void EnsureCreated(SQLiteConnection con)
@@ -16,6 +16,7 @@ namespace LibraryManagementSystem.Data
                     Category        TEXT,
                     Quantity        INTEGER NOT NULL DEFAULT 1,
                     AvailableCopies INTEGER NOT NULL DEFAULT 1,
+                    CoverUrl        TEXT, -- ✅ Added column for storing cover image link
                     CreatedAt       DATETIME DEFAULT CURRENT_TIMESTAMP
                 );";
 

@@ -41,11 +41,11 @@
             this.label4 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            this.label6 = new System.Windows.Forms.Label();
-            this.label7 = new System.Windows.Forms.Label();
-            this.panel2 = new System.Windows.Forms.Panel();
             this.panel3 = new System.Windows.Forms.Panel();
+            this.panel2 = new System.Windows.Forms.Panel();
+            this.label7 = new System.Windows.Forms.Label();
+            this.label6 = new System.Windows.Forms.Label();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
@@ -178,34 +178,28 @@
             this.panel1.Controls.Add(this.txtCourse);
             this.panel1.Controls.Add(this.label1);
             this.panel1.Controls.Add(this.textYearLevel);
-            this.panel1.Location = new System.Drawing.Point(613, 139);
+            this.panel1.Location = new System.Drawing.Point(624, 138);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(519, 600);
             this.panel1.TabIndex = 12;
             this.panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.panel1_Paint);
             // 
-            // pictureBox1
+            // panel3
             // 
-            this.pictureBox1.BackColor = System.Drawing.Color.Transparent;
-            this.pictureBox1.Image = global::Library_Management_System.Properties.Resources.logo2;
-            this.pictureBox1.Location = new System.Drawing.Point(39, 157);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(264, 118);
-            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
-            this.pictureBox1.TabIndex = 13;
-            this.pictureBox1.TabStop = false;
-            this.pictureBox1.Click += new System.EventHandler(this.pictureBox1_Click);
+            this.panel3.BackColor = System.Drawing.SystemColors.ActiveBorder;
+            this.panel3.Location = new System.Drawing.Point(353, 81);
+            this.panel3.Name = "panel3";
+            this.panel3.Size = new System.Drawing.Size(135, 2);
+            this.panel3.TabIndex = 15;
             // 
-            // label6
+            // panel2
             // 
-            this.label6.AutoSize = true;
-            this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(195, 61);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(134, 36);
-            this.label6.TabIndex = 12;
-            this.label6.Text = "Register";
-            this.label6.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            this.panel2.BackColor = System.Drawing.SystemColors.ActiveBorder;
+            this.panel2.Location = new System.Drawing.Point(54, 81);
+            this.panel2.Name = "panel2";
+            this.panel2.Size = new System.Drawing.Size(135, 2);
+            this.panel2.TabIndex = 14;
+            this.panel2.Paint += new System.Windows.Forms.PaintEventHandler(this.panel2_Paint);
             // 
             // label7
             // 
@@ -218,22 +212,28 @@
             this.label7.Text = "It\'s fast and simple.";
             this.label7.Click += new System.EventHandler(this.label7_Click);
             // 
-            // panel2
+            // label6
             // 
-            this.panel2.BackColor = System.Drawing.SystemColors.ActiveBorder;
-            this.panel2.Location = new System.Drawing.Point(54, 81);
-            this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(135, 2);
-            this.panel2.TabIndex = 14;
-            this.panel2.Paint += new System.Windows.Forms.PaintEventHandler(this.panel2_Paint);
+            this.label6.AutoSize = true;
+            this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label6.Location = new System.Drawing.Point(195, 61);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(134, 36);
+            this.label6.TabIndex = 12;
+            this.label6.Text = "Register";
+            this.label6.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
-            // panel3
+            // pictureBox1
             // 
-            this.panel3.BackColor = System.Drawing.SystemColors.ActiveBorder;
-            this.panel3.Location = new System.Drawing.Point(353, 81);
-            this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(135, 2);
-            this.panel3.TabIndex = 15;
+            this.pictureBox1.BackColor = System.Drawing.Color.Transparent;
+            this.pictureBox1.Image = global::Library_Management_System.Properties.Resources.logo2;
+            this.pictureBox1.Location = new System.Drawing.Point(39, 157);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(264, 118);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
+            this.pictureBox1.TabIndex = 13;
+            this.pictureBox1.TabStop = false;
+            this.pictureBox1.Click += new System.EventHandler(this.pictureBox1_Click);
             // 
             // RegisterForm
             // 

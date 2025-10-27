@@ -396,7 +396,7 @@ namespace Library_Management_System
             bottomSpacer = new Panel();
             bottomSpacer.Dock = DockStyle.Bottom;
             bottomSpacer.Height = (int)(this.ClientSize.Height * 0.05);
-            bottomSpacer.BackColor = Color.Purple;
+            bottomSpacer.BackColor = Color.WhiteSmoke;
             this.Controls.Add(bottomSpacer);
 
             this.Resize += (s, ev) =>

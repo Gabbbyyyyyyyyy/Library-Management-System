@@ -1,4 +1,5 @@
-﻿using System.Windows.Forms;
+﻿using System.Drawing;
+using System.Windows.Forms;
 
 namespace Library_Management_System.Models
 {
@@ -15,9 +16,11 @@ namespace Library_Management_System.Models
 
             // ✅ Optional styling (can be removed if you want plain look)
             dgv.AlternatingRowsDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(245, 245, 245); // Light gray alternate rows
-            dgv.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(40, 40, 40);      // Dark header
+            dgv.EnableHeadersVisualStyles = true; // allow system theme colors
+            dgv.ColumnHeadersDefaultCellStyle.BackColor = SystemColors.Control; // optional fallback
+
             dgv.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.White;
-            dgv.EnableHeadersVisualStyles = false;
+        
         }
     }
 }

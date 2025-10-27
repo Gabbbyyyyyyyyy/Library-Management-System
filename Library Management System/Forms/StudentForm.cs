@@ -112,5 +112,37 @@ namespace Library_Management_System.Forms
                 }
             }
         }
+
+        private void pictureBox1_Click(object sender, EventArgs e)
+        {
+            LoadControl(new AvailbleCopies { StudentNo = _studentNo });
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            // Confirm logout
+            DialogResult result = MessageBox.Show(
+                "Are you sure you want to log out?",
+                "Logout",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question
+            );
+
+            if (result == DialogResult.Yes)
+            {
+                // Find and close the main form
+                Form mainForm = this.FindForm();
+                if (mainForm != null)
+                {
+                    // Open the login form
+                    LoginForm login = new LoginForm();
+                    login.Show();
+
+                    // Close the current form (the dashboard or main window)
+                    mainForm.Close();
+                }
+            }
+        }
+
     }
 }

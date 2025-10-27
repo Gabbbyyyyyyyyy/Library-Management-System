@@ -20,10 +20,10 @@ namespace Library_Management_System
         private int targetHeight = 290;
         // animation helpers (add near other private fields)
         private int animationStep = 0;
-        private readonly int animationMaxSteps = 30; // how many ticks the animation runs for (larger = slower)
-        private int startWidth = 0;
-        private int startHeight = 0;
-        private int targetWidth = 300;
+        //private readonly int animationMaxSteps = 30; // how many ticks the animation runs for (larger = slower)
+        //private int startWidth = 0;
+        //private int startHeight = 0;
+        //private int targetWidth = 300;
 
 
 

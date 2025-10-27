@@ -167,6 +167,7 @@
     </Compile>
     <Compile Include="Models\DatabaseHelper.cs" />
     <Compile Include="Models\DataGridViewHelper.cs" />
+    <Compile Include="Models\GoogleBooksHelper.cs" />
     <Compile Include="Models\RoundedButton.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -384,6 +385,7 @@
     <None Include="Resources\av1.png" />
     <None Include="Resources\ac1.png" />
     <None Include="Resources\ov1.png" />
+    <None Include="Resources\Bc.png" />
     <Content Include="schema.sql" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
