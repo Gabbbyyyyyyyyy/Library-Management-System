@@ -190,12 +190,6 @@
     <Compile Include="User Control Student\Borrowing.Designer.cs">
       <DependentUpon>Borrowing.cs</DependentUpon>
     </Compile>
-    <Compile Include="User Control Student\RecordOfBorrowings.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="User Control Student\RecordOfBorrowings.Designer.cs">
-      <DependentUpon>RecordOfBorrowings.cs</DependentUpon>
-    </Compile>
     <Compile Include="User Control\BorrowedBooksControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -298,9 +292,6 @@
     <EmbeddedResource Include="User Control Student\Borrowing.resx">
       <DependentUpon>Borrowing.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="User Control Student\RecordOfBorrowings.resx">
-      <DependentUpon>RecordOfBorrowings.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="User Control\BorrowedBooksControl.resx">
       <DependentUpon>BorrowedBooksControl.cs</DependentUpon>
     </EmbeddedResource>
@@ -321,6 +312,7 @@
     <EmbeddedResource Include="User Control\ReturnBooksControl.resx">
       <DependentUpon>ReturnBooksControl.cs</DependentUpon>
     </EmbeddedResource>
+    <None Include="BookCovers\.editorconfig" />
     <None Include="Data\library.db" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
@@ -386,6 +378,7 @@
     <None Include="Resources\ac1.png" />
     <None Include="Resources\ov1.png" />
     <None Include="Resources\Bc.png" />
+    <None Include="Resources\NoBooksIcon.png" />
     <Content Include="schema.sql" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

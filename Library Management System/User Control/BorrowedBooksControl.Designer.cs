@@ -36,6 +36,7 @@
             this.lblMessage = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.txtSearch = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dgvAvailableBooks)).BeginInit();
             this.SuspendLayout();
             // 
@@ -137,11 +138,21 @@
             this.txtSearch.TabIndex = 0;
             this.txtSearch.TextChanged += new System.EventHandler(this.txtSearch_TextChanged);
             // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(328, 222);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(76, 16);
+            this.label1.TabIndex = 8;
+            this.label1.Text = "Student No.";
+            // 
             // BorrowBooksControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.Controls.Add(this.label1);
             this.Controls.Add(this.txtSearch);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.lblMessage);
@@ -165,5 +176,6 @@
 
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.TextBox txtSearch;
+        private System.Windows.Forms.Label label1;
     }
 }

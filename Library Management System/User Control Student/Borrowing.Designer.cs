@@ -42,6 +42,7 @@
             // btnReturnBook
             // 
             this.btnReturnBook.BackColor = System.Drawing.Color.LightBlue;
+            this.btnReturnBook.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnReturnBook.Location = new System.Drawing.Point(878, 102);
             this.btnReturnBook.Name = "btnReturnBook";
             this.btnReturnBook.Size = new System.Drawing.Size(180, 63);

@@ -169,5 +169,10 @@ namespace Library_Management_System.User_Control
                 }
             }
         }
+
+        private void lblMessage_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

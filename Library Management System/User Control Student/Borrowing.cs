@@ -1,6 +1,8 @@
-﻿using System;
+﻿
+using System;
 using System.Data;
 using System.Drawing;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using LibraryManagementSystem.Data;
 
@@ -122,7 +124,16 @@ namespace Library_Management_System.User_Control_Student
             }
 
             MessageBox.Show("✅ Book returned successfully!");
-            LoadBorrowedBooks();
+
+            // Give SQLite a moment to unlock before reloading
+            Task.Delay(100).ContinueWith(_ =>
+            {
+                if (InvokeRequired)
+                    Invoke(new Action(LoadBorrowedBooks));
+                else
+                    LoadBorrowedBooks();
+            });
+
 
             // Trigger event so other controls can refresh
             BookReturned?.Invoke();

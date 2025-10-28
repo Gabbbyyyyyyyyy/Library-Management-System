@@ -101,29 +101,32 @@ namespace Library_Management_System.User_Control_Student
 
         private void RunSearchNow()
         {
-            string searchText = textBox1.Text.Trim().ToLower();
+            string searchText = textBox1.Text.Trim();
+
+            flowBooks.Controls.Clear();
+            flowBooks.SuspendLayout();
 
             if (string.IsNullOrEmpty(searchText))
             {
-                flowBooks.Controls.Clear();
                 flowBooks.Controls.AddRange(_cachedBookCards.ToArray());
+                flowBooks.ResumeLayout();
                 return;
             }
 
-            flowBooks.Controls.Clear();
+            bool foundAny = false;
 
             using (var con = Db.GetConnection())
             {
                 con.Open();
 
                 string query = @"
-                SELECT ISBN, Title, Author, AvailableCopies,
-                CASE WHEN AvailableCopies > 0 THEN 'Available' ELSE 'Not Available' END AS Status
-                FROM Books
-                WHERE LOWER(Title) LIKE @search
-                   OR LOWER(Author) LIKE @search
-                   OR LOWER(Category) LIKE @search
-                   OR LOWER(ISBN) LIKE @search";
+            SELECT ISBN, Title, Author, AvailableCopies,
+                   CASE WHEN AvailableCopies > 0 THEN 'Available' ELSE 'Not Available' END AS Status
+            FROM Books
+            WHERE Title LIKE @search COLLATE NOCASE
+               OR Author LIKE @search COLLATE NOCASE
+               OR Category LIKE @search COLLATE NOCASE
+               OR ISBN LIKE @search COLLATE NOCASE";
 
                 using (var cmd = new SQLiteCommand(query, con))
                 {
@@ -131,36 +134,96 @@ namespace Library_Management_System.User_Control_Student
 
                     using (var reader = cmd.ExecuteReader())
                     {
-                        bool found = false;
-
                         while (reader.Read())
                         {
-                            found = true;
+                            foundAny = true;
                             string title = reader["Title"].ToString();
                             string author = reader["Author"].ToString();
                             string isbn = reader["ISBN"].ToString();
                             string status = reader["Status"].ToString();
 
                             Image cover = LoadLocalCover(isbn) ?? Properties.Resources.Bc;
-                            var card = AddBookCard(title, author, status, cover, isbn);
-                            flowBooks.Controls.Add(card);
-                        }
-
-                        if (!found)
-                        {
-                            Label noResult = new Label
-                            {
-                                Text = "No books found.",
-                                Dock = DockStyle.Fill,
-                                Font = new Font("Segoe UI", 12, FontStyle.Italic),
-                                ForeColor = Color.Gray,
-                                TextAlign = ContentAlignment.MiddleCenter
-                            };
-                            flowBooks.Controls.Add(noResult);
+                            flowBooks.Controls.Add(AddBookCard(title, author, status, cover, isbn));
                         }
                     }
                 }
             }
+
+            if (!foundAny)
+            {
+                Panel noResultPanel = new Panel
+                {
+                    Size = new Size(flowBooks.ClientSize.Width - 40, 250),
+                    Margin = new Padding(10),
+                    BackColor = Color.Transparent
+                };
+
+                PictureBox pic = new PictureBox
+                {
+                    Image = Properties.Resources.NoBooksIcon,
+                    SizeMode = PictureBoxSizeMode.Zoom,
+                    Size = new Size(100, 100),
+                    Location = new Point((noResultPanel.Width - 100) / 2, 20)
+                };
+                noResultPanel.Controls.Add(pic);
+
+                Label msg = new Label
+                {
+                    Text = "No books showing",
+                    Font = new Font("Segoe UI", 28, FontStyle.Bold | FontStyle.Italic),
+                    ForeColor = Color.Gray,
+                    AutoSize = true,
+                    TextAlign = ContentAlignment.MiddleCenter
+                };
+
+                // Temporarily add it to panel to calculate size
+                noResultPanel.Controls.Add(msg);
+                msg.Location = new Point(
+                    pic.Left + (pic.Width - msg.Width) / 2, // center under the PictureBox
+                    pic.Bottom + 20                          // 20px spacing below image
+                );
+
+                flowBooks.Controls.Add(noResultPanel);
+            }
+
+
+            flowBooks.ResumeLayout();
+        }
+
+
+        // Handles displaying books from the reader
+        private void DisplayBooks(SQLiteDataReader reader)
+        {
+            bool found = false;
+
+            while (reader.Read())
+            {
+                found = true;
+                string title = reader["Title"].ToString();
+                string author = reader["Author"].ToString();
+                string isbn = reader["ISBN"].ToString();
+                string status = reader["Status"].ToString();
+
+                Image cover = LoadLocalCover(isbn) ?? Properties.Resources.Bc;
+                flowBooks.Controls.Add(AddBookCard(title, author, status, cover, isbn));
+            }
+
+            if (!found)
+                ShowNoBooksMessage();
+        }
+
+        // Shows a centered "No books found" message
+        private void ShowNoBooksMessage()
+        {
+            flowBooks.Controls.Add(new Label
+            {
+                Text = "No books found.",
+                Font = new Font("Segoe UI", 12, FontStyle.Italic),
+                ForeColor = Color.Gray,
+                AutoSize = false,
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleCenter
+            });
         }
 
 
@@ -184,41 +247,7 @@ namespace Library_Management_System.User_Control_Student
         {
             try
             {
-                // ✅ STEP 1 — Load from JSON cache instantly
-                if (File.Exists(cacheFile))
-                {
-                    string json = File.ReadAllText(cacheFile);
-                    var cachedBooks = JsonConvert.DeserializeObject<List<BookCache>>(json);
-
-                    if (cachedBooks != null && cachedBooks.Count > 0)
-                    {
-                        flowBooks.Controls.Clear();
-                        _cachedBookCards.Clear();
-
-                        foreach (var b in cachedBooks)
-                        {
-                            Image cover = LoadLocalCover(b.ISBN) ?? Properties.Resources.Bc;
-                            var card = AddBookCard(b.Title, b.Author, b.Status, cover, b.ISBN);
-                            flowBooks.Controls.Add(card);
-                            _cachedBookCards.Add(card);
-                        }
-
-                        // Background refresh
-                        _ = Task.Run(() => BackgroundRefreshAsync());
-                        _booksLoaded = true;
-                        return;
-                    }
-                }
-
-                // ✅ STEP 2 — Load from DB if no cache
-                if (_booksLoaded)
-                {
-                    flowBooks.Controls.Clear();
-                    flowBooks.Controls.AddRange(_cachedBookCards.ToArray());
-                    return;
-                }
-
-                _booksLoaded = true;
+                // 🧩 Always check DB for up-to-date availability
                 flowBooks.Controls.Clear();
                 _cachedBookCards.Clear();
 
@@ -230,13 +259,13 @@ namespace Library_Management_System.User_Control_Student
                     EnsureLastCoverUpdateColumn(con);
 
                     string query = @"
-                    SELECT 
-                        ISBN, Title, Author, AvailableCopies,
-                        IFNULL(CoverUrl, '') AS CoverUrl,
-                        IFNULL(LastCoverUpdate, '') AS LastCoverUpdate,
-                        CASE WHEN AvailableCopies > 0 THEN 'Available'
-                             ELSE 'Not Available' END AS Status
-                    FROM Books;";
+            SELECT 
+                ISBN, Title, Author, AvailableCopies,
+                IFNULL(CoverUrl, '') AS CoverUrl,
+                IFNULL(LastCoverUpdate, '') AS LastCoverUpdate,
+                CASE WHEN AvailableCopies > 0 THEN 'Available'
+                     ELSE 'Not Available' END AS Status
+            FROM Books;";
 
                     using (var cmd = new SQLiteCommand(query, con))
                     using (var reader = cmd.ExecuteReader())
@@ -246,29 +275,28 @@ namespace Library_Management_System.User_Control_Student
                             string title = reader["Title"].ToString();
                             string author = reader["Author"].ToString();
                             string isbn = reader["ISBN"].ToString();
-                            string status = reader["Status"].ToString();
+                            string status = reader["Status"].ToString(); // ✅ always computed live
                             string coverUrl = reader["CoverUrl"].ToString();
                             string lastUpdateStr = reader["LastCoverUpdate"].ToString();
 
                             DateTime? lastUpdate = null;
-                            DateTime parsed;
-                            if (DateTime.TryParse(lastUpdateStr, out parsed))
+                            if (DateTime.TryParse(lastUpdateStr, out DateTime parsed))
                                 lastUpdate = parsed;
-
 
                             Image cover = LoadLocalCover(isbn);
                             var card = AddBookCard(title, author, status, cover ?? Properties.Resources.Bc, isbn);
                             flowBooks.Controls.Add(card);
                             _cachedBookCards.Add(card);
 
+                            // cache minimal info (exclude status)
                             bookList.Add(new BookCache
                             {
                                 ISBN = isbn,
                                 Title = title,
-                                Author = author,
-                                Status = status
+                                Author = author
                             });
 
+                            // background cover refresh
                             _ = Task.Run(async () =>
                             {
                                 bool shouldUpdate = cover == null ||
@@ -277,24 +305,28 @@ namespace Library_Management_System.User_Control_Student
 
                                 if (shouldUpdate)
                                 {
-                                    Image newCover = await TryUpdateCoverAsync(isbn, coverUrl, con);
-                                    if (newCover != null)
+                                    using (var bgCon = Db.GetConnection())
                                     {
-                                        if (card.InvokeRequired)
+                                        bgCon.Open();
+                                        Image newCover = await TryUpdateCoverAsync(isbn, coverUrl, bgCon);
+                                        if (newCover != null)
                                         {
-                                            card.Invoke(new Action(() =>
+                                            if (card.InvokeRequired)
                                             {
-                                                var pic = card.Controls[0] as PictureBox;
-                                                if (pic != null) pic.Image = newCover;
-                                            }));
-                                        }
+                                                card.Invoke(new Action(() =>
+                                                {
+                                                    var pic = card.Controls[0] as PictureBox;
+                                                    if (pic != null) pic.Image = newCover;
+                                                }));
+                                            }
 
-                                        string updateDateQuery = "UPDATE Books SET LastCoverUpdate = @date WHERE ISBN = @isbn";
-                                        using (var cmdDate = new SQLiteCommand(updateDateQuery, con))
-                                        {
-                                            cmdDate.Parameters.AddWithValue("@date", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-                                            cmdDate.Parameters.AddWithValue("@isbn", isbn);
-                                            cmdDate.ExecuteNonQuery();
+                                            using (var cmdDate = new SQLiteCommand(
+                                                "UPDATE Books SET LastCoverUpdate = @date WHERE ISBN = @isbn", bgCon))
+                                            {
+                                                cmdDate.Parameters.AddWithValue("@date", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                                                cmdDate.Parameters.AddWithValue("@isbn", isbn);
+                                                cmdDate.ExecuteNonQuery();
+                                            }
                                         }
                                     }
                                 }
@@ -303,7 +335,7 @@ namespace Library_Management_System.User_Control_Student
                     }
                 }
 
-                // ✅ STEP 3 — Save to cache for next run
+                // ✅ Save updated book list (without status)
                 File.WriteAllText(cacheFile, JsonConvert.SerializeObject(bookList));
             }
             catch (Exception ex)
@@ -311,6 +343,7 @@ namespace Library_Management_System.User_Control_Student
                 MessageBox.Show("Error loading available books: " + ex.Message);
             }
         }
+
 
         private void EnsureLastCoverUpdateColumn(SQLiteConnection con)
         {

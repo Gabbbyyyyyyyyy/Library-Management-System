@@ -50,7 +50,7 @@ namespace Library_Management_System.Forms
 
         private void btnBorrowing_Click(object sender, EventArgs e)
         {
-            LoadControl(new Borrowing { StudentNo = _studentNo });
+            LoadControl(new User_Control_Student.Borrowing { StudentNo = _studentNo });
         }
 
         private void btnRecords_Click(object sender, EventArgs e)
