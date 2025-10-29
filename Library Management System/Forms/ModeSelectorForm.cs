@@ -527,7 +527,8 @@ private void btnStudent_Click_1(object sender, EventArgs e)
             // --- Admin Login ---
             if (username == "admin" && password == "admin")
             {
-                MessageBox.Show("Login successful!", "Welcome", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                // ✅ Hide the PreLogin form (so it won’t show behind MainForm)
+                preLoginForm.Hide();
 
                 this.Hide(); // hide ModeSelectorForm
 
@@ -559,7 +560,16 @@ private void btnStudent_Click_1(object sender, EventArgs e)
             preLoginForm.Hide();
 
             RegisterForm registerForm = new RegisterForm();
-            registerForm.FormClosed += (s, args) => preLoginForm.Show();
+
+            // 🔹 If the user closes RegisterForm manually (clicks X)
+            registerForm.FormClosed += (s, args) =>
+            {
+                // Only show PreLoginButtons if registration was NOT successful
+                if (!RegisterForm.RegistrationSuccess && !preLoginForm.IsDisposed)
+                {
+                    preLoginForm.Show();
+                }
+            };
 
             registerForm.Show();
 

@@ -11,6 +11,7 @@ using Library_Management_System.User_Control;
 using LibraryManagementSystem;
 using LibraryManagementSystem.Data;
 using System.Runtime.InteropServices;
+using Library_Management_System.Forms;
 
 //cpanel password = GabrielCpanelAccount1
 //Hostinger account = GabrielHosting1
@@ -375,6 +376,11 @@ namespace Library_Management_System
                 );
                 if (result == DialogResult.Yes)
                 {
+                    // ✅ Open PreLoginForm again after logout
+                    this.Hide();
+                    PreLoginButtons preLogin = new PreLoginButtons();
+                    preLogin.Show();
+
                     this.Close();
                 }
             };

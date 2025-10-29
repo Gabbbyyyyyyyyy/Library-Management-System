@@ -10,6 +10,8 @@ namespace Library_Management_System.Forms
 {
     public partial class RegisterForm : Form
     {
+        public static bool RegistrationSuccess = false;
+
         public RegisterForm()
         {
             InitializeComponent();
@@ -373,7 +375,26 @@ namespace Library_Management_System.Forms
 
             MessageBox.Show("Registration successful! Please login.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-            new LoginForm().Show();
+            // ✅ Mark registration as successful
+            RegistrationSuccess = true;
+
+            // ✅ Find the PreLoginButtons form
+            Form preLoginForm = Application.OpenForms["PreLoginButtons"];
+
+            // ✅ Hide this RegisterForm first
+            this.Hide();
+
+            // ✅ Show the LoginForm
+            LoginForm login = new LoginForm();
+            login.Show();
+
+            // ✅ Hide PreLoginButtons (if open)
+            if (preLoginForm != null && !preLoginForm.IsDisposed)
+            {
+                preLoginForm.Hide();
+            }
+
+            // ✅ Then close the RegisterForm completely
             this.Close();
         }
 

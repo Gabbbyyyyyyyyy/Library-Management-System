@@ -50,6 +50,8 @@ namespace LibraryManagementSystem.Data
                 Books.EnsureCreated(con);
                 Borrowings.EnsureCreated(con);
                 Reservations.EnsureCreated(con);
+                Penalties.EnsureCreated(con);
+
 
                 // ✅ Ensure indexes exist on Borrowings table
                 var cmd = con.CreateCommand();

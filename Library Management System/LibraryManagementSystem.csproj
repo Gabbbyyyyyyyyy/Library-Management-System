@@ -128,6 +128,7 @@
     <Compile Include="Data\Books.cs" />
     <Compile Include="Data\Borrowings.cs" />
     <Compile Include="Data\Members.cs" />
+    <Compile Include="Data\Penalties.cs" />
     <Compile Include="Data\Reservations.cs" />
     <Compile Include="Forms\AdminForm.cs">
       <SubType>Form</SubType>
@@ -168,6 +169,7 @@
     <Compile Include="Models\DatabaseHelper.cs" />
     <Compile Include="Models\DataGridViewHelper.cs" />
     <Compile Include="Models\GoogleBooksHelper.cs" />
+    <Compile Include="Models\PenaltyHelper.cs" />
     <Compile Include="Models\RoundedButton.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -308,6 +310,9 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <SubType>Designer</SubType>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="User Control\OverdueReportControl.resx">
+      <DependentUpon>OverdueReportControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="User Control\ReturnBooksControl.resx">
       <DependentUpon>ReturnBooksControl.cs</DependentUpon>

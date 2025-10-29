@@ -21,6 +21,8 @@ namespace LibraryManagementSystem
         public ManageBooksControl()
         {
             InitializeComponent();
+            dgvBooks.EnableHeadersVisualStyles = false;
+            dgvBooks.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
             LoadBooks();
 
             // 👇 Add this line
@@ -34,7 +36,10 @@ namespace LibraryManagementSystem
             // Prevent auto-selection after loading data
             dgvBooks.DataBindingComplete += (s, e) => dgvBooks.ClearSelection();
 
+
+
             SendMessage(txtSearch.Handle, EM_SETCUEBANNER, 0, "Search books...");
+            txtSearch.ForeColor = Color.Black;
             txtSearch.KeyDown += txtSearch_KeyDown;
             this.Dock = DockStyle.Fill;
             this.Size = Screen.PrimaryScreen.Bounds.Size;

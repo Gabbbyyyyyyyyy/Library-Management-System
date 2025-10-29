@@ -24,6 +24,9 @@ namespace Library_Management_System.User_Control
 
             dgvAvailableBooks.CellFormatting += dgvAvailableBooks_CellFormatting;
             dgvAvailableBooks.EnableHeadersVisualStyles = false;
+            dgvAvailableBooks.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
+            dgvAvailableBooks.ColumnHeadersDefaultCellStyle.BackColor = Color.White;
+
 
             dgvAvailableBooks.DataBindingComplete += (s, e) =>
             {
@@ -31,9 +34,13 @@ namespace Library_Management_System.User_Control
                 dgvAvailableBooks.CurrentCell = null;
             };
 
+            // Set search box style
+            
+            txtSearch.Font = new Font(txtSearch.Font.FontFamily, 10, txtSearch.Font.Style);
 
             LoadAvailableBooks();
             SendMessage(txtSearch.Handle, EM_SETCUEBANNER, 0, "Search books...");
+            txtSearch.ForeColor = Color.Black;
             txtSearch.KeyDown += txtSearch_KeyDown;
         }
 

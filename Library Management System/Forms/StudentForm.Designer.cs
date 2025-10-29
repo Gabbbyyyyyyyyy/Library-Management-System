@@ -174,6 +174,7 @@ namespace Library_Management_System.Forms
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(215, 878);
             this.panel1.TabIndex = 12;
+            this.panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.panel1_Paint);
             // 
             // panelContent
             // 

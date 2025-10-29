@@ -28,22 +28,23 @@
             this.dgvBorrowedBooks.AllowUserToDeleteRows = false;
             this.dgvBorrowedBooks.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvBorrowedBooks.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvBorrowedBooks.Location = new System.Drawing.Point(258, 197);
+            this.dgvBorrowedBooks.Location = new System.Drawing.Point(27, 350);
             this.dgvBorrowedBooks.MultiSelect = false;
             this.dgvBorrowedBooks.Name = "dgvBorrowedBooks";
             this.dgvBorrowedBooks.ReadOnly = true;
             this.dgvBorrowedBooks.RowHeadersWidth = 51;
             this.dgvBorrowedBooks.RowTemplate.Height = 24;
             this.dgvBorrowedBooks.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvBorrowedBooks.Size = new System.Drawing.Size(800, 400);
+            this.dgvBorrowedBooks.Size = new System.Drawing.Size(1728, 724);
             this.dgvBorrowedBooks.TabIndex = 0;
             this.dgvBorrowedBooks.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvBorrowedBooks_CellContentClick);
             // 
             // btnReturnBook
             // 
-            this.btnReturnBook.BackColor = System.Drawing.Color.LightBlue;
+            this.btnReturnBook.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
             this.btnReturnBook.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btnReturnBook.Location = new System.Drawing.Point(878, 102);
+            this.btnReturnBook.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnReturnBook.Location = new System.Drawing.Point(27, 271);
             this.btnReturnBook.Name = "btnReturnBook";
             this.btnReturnBook.Size = new System.Drawing.Size(180, 63);
             this.btnReturnBook.TabIndex = 1;
@@ -58,7 +59,7 @@
             this.Controls.Add(this.btnReturnBook);
             this.Controls.Add(this.dgvBorrowedBooks);
             this.Name = "Borrowing";
-            this.Size = new System.Drawing.Size(1276, 700);
+            this.Size = new System.Drawing.Size(1755, 887);
             this.Load += new System.EventHandler(this.Borrowing_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvBorrowedBooks)).EndInit();
             this.ResumeLayout(false);

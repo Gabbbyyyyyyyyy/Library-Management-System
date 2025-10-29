@@ -23,6 +23,9 @@ namespace Library_Management_System.Forms
         {
             InitializeComponent();
 
+            this.FormClosed += LoginForm_FormClosed;
+
+
             this.Dock = DockStyle.Fill;
             this.Size = Screen.PrimaryScreen.Bounds.Size;
             this.Location = Screen.PrimaryScreen.Bounds.Location;
@@ -42,6 +45,26 @@ namespace Library_Management_System.Forms
             //// Apply rounded edges
             SetButtonRounded(btnLogin, 1); // 20 = corner radius
         }
+
+        private void LoginForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            // ✅ When LoginForm is closed, show PreLoginButtons again
+            Form preLoginForm = Application.OpenForms["PreLoginButtons"];
+
+            if (preLoginForm == null || preLoginForm.IsDisposed)
+            {
+                // If it was closed/disposed, create a new one
+                preLoginForm = new PreLoginButtons();
+                preLoginForm.Show();
+            }
+            else
+            {
+                // If still open, just bring it back
+                preLoginForm.Show();
+                preLoginForm.BringToFront();
+            }
+        }
+
 
         private void SetButtonRounded(Button btn, int radius)
         {

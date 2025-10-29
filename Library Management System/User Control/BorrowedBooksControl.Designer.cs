@@ -132,7 +132,7 @@
             // 
             // txtSearch
             // 
-            this.txtSearch.Location = new System.Drawing.Point(1763, 321);
+            this.txtSearch.Location = new System.Drawing.Point(1763, 317);
             this.txtSearch.Name = "txtSearch";
             this.txtSearch.Size = new System.Drawing.Size(242, 22);
             this.txtSearch.TabIndex = 0;

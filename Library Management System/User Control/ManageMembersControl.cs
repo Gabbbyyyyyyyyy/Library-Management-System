@@ -18,6 +18,13 @@ namespace LibraryManagementSystem
         {
             InitializeComponent();
 
+            // Set search box style
+           
+            txtSearch.Font = new Font(txtSearch.Font.FontFamily, 10, txtSearch.Font.Style);
+
+            dgvMembers.EnableHeadersVisualStyles = false;
+            dgvMembers.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
+
             dgvMembers.CellFormatting += dgvMembers_CellFormatting;
             dgvMembers.SelectionChanged += dgvMembers_SelectionChanged;
             dgvMembers.CellDoubleClick += dgvMembers_CellDoubleClick;
@@ -34,6 +41,7 @@ namespace LibraryManagementSystem
 
             DataGridViewHelper.ApplyDefaultStyle(dgvMembers);
             TextBoxHelper.ApplySearchBox(txtSearch, "Search members...", txtSearch_KeyDown);
+            txtSearch.ForeColor = Color.Black;
             txtSearch.TextChanged += txtSearch_TextChanged;
             lblSearchMessage.Text = "";
 

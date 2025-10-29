@@ -69,7 +69,7 @@ namespace LibraryManagementSystem
             this.dgvBooks.Name = "dgvBooks";
             this.dgvBooks.RowHeadersWidth = 51;
             this.dgvBooks.RowTemplate.Height = 24;
-            this.dgvBooks.Size = new System.Drawing.Size(1728, 782);
+            this.dgvBooks.Size = new System.Drawing.Size(1728, 723);
             this.dgvBooks.TabIndex = 1;
             this.dgvBooks.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvBooks_CellContentClick);
             // 

@@ -53,28 +53,9 @@ namespace Library_Management_System.Forms
             LoadControl(new User_Control_Student.Borrowing { StudentNo = _studentNo });
         }
 
-        private void btnRecords_Click(object sender, EventArgs e)
-        {
-            MessageBox.Show("📖 Records feature coming soon!",
-                "Records", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
+       
 
-        private void btnLogout_Click(object sender, EventArgs e)
-        {
-            DialogResult result = MessageBox.Show(
-                "Are you sure you want to logout?",
-                "Confirm Logout",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question
-            );
-
-            if (result == DialogResult.Yes)
-            {
-                MessageBox.Show("Logout successful!", "Logout",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                this.Close();
-            }
-        }
+       
 
         private void LoadStudentInfo()
         {
@@ -120,7 +101,6 @@ namespace Library_Management_System.Forms
 
         private void button5_Click(object sender, EventArgs e)
         {
-            // Confirm logout
             DialogResult result = MessageBox.Show(
                 "Are you sure you want to log out?",
                 "Logout",
@@ -130,19 +110,15 @@ namespace Library_Management_System.Forms
 
             if (result == DialogResult.Yes)
             {
-                // Find and close the main form
-                Form mainForm = this.FindForm();
-                if (mainForm != null)
-                {
-                    // Open the login form
-                    LoginForm login = new LoginForm();
-                    login.Show();
-
-                    // Close the current form (the dashboard or main window)
-                    mainForm.Close();
-                }
+                this.Close(); // ✅ Just close the StudentForm
             }
         }
 
+
+
+        private void panel1_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
     }
 }
