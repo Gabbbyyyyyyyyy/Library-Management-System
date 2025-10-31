@@ -41,6 +41,7 @@ namespace Library_Management_System.User_Control
             this.lblOverdueBooks = new System.Windows.Forms.Label();
             this.picOverdueBooks = new System.Windows.Forms.PictureBox();
             this.label2 = new System.Windows.Forms.Label();
+            this.panelMostBorrowed = new System.Windows.Forms.Panel();
             this.pnlTotalBooks.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.picTotalBooks)).BeginInit();
             this.pnlBorrowedBooks.SuspendLayout();
@@ -316,9 +317,20 @@ namespace Library_Management_System.User_Control
             this.label2.TabIndex = 14;
             this.label2.Text = "Admin/Dashboard";
             // 
+            // panelMostBorrowed
+            // 
+            this.panelMostBorrowed.AutoScroll = true;
+            this.panelMostBorrowed.BackColor = System.Drawing.Color.White;
+            this.panelMostBorrowed.Location = new System.Drawing.Point(833, 561);
+            this.panelMostBorrowed.Name = "panelMostBorrowed";
+            this.panelMostBorrowed.Size = new System.Drawing.Size(425, 309);
+            this.panelMostBorrowed.TabIndex = 15;
+            this.panelMostBorrowed.Paint += new System.Windows.Forms.PaintEventHandler(this.panelMostBorrowed_Paint);
+            // 
             // DashboardControl
             // 
             this.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.Controls.Add(this.panelMostBorrowed);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.lblGreeting);
             this.Controls.Add(this.pnlOverdueBooks);
@@ -373,5 +385,6 @@ namespace Library_Management_System.User_Control
         private Label lblActiveMembersValue;
         private Label lblOverdueBooksValue;
         private Label label2;
+        private Panel panelMostBorrowed;
     }
 }

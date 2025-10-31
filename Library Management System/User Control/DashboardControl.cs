@@ -9,6 +9,7 @@ using System.Windows.Forms.DataVisualization.Charting;
 using System.Drawing.Printing;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 
 
 namespace Library_Management_System.User_Control
@@ -31,15 +32,15 @@ namespace Library_Management_System.User_Control
         private Label lblRecentBorrowings;
         private DataGridView dgvRecentBorrowings;
         private Panel pnlRecentBorrowings;
-
-
-
+        private Timer penaltyTimer; // ⏱ Timer to auto-refresh penalty data
 
         public DashboardControl(string userDisplayName)
         {
             InitializeComponent();
             InitializeRecentBorrowingsSection();
             LoadRecentBorrowings();
+            LoadMostBorrowedBooks();
+
             _userDisplayName = string.IsNullOrWhiteSpace(userDisplayName) ? "ADMIN" : userDisplayName;
 
             // Initialize greeting
@@ -59,6 +60,8 @@ namespace Library_Management_System.User_Control
             {
                 LoadDashboardStats();
                 LoadChartData(_currentTimeRange);
+                //// 🟢 Add this line to refresh the penalty summary dynamically
+                //RefreshPenaltySummary();
             };
 
             _statsTimer.Start();
@@ -67,13 +70,7 @@ namespace Library_Management_System.User_Control
             lblTotalBooks.Click += pnlTotalBooks_Click;
             lblActiveMembers.Click += pnlActiveMembers_Click;
             lblBorrowedBooks.Click += (s, e) => LoadDashboardStats();
-           
-
-
-
-
         }
-
 
         // Method to move underline under the active button
         private void MoveUnderline(Button activeButton)
@@ -93,7 +90,7 @@ namespace Library_Management_System.User_Control
             }
 
             activeButton.ForeColor = Color.Black; // optional: active text slightly darker
-        }
+        } 
 
         private void ToggleTrendButton(Button activeButton)
         {
@@ -105,9 +102,6 @@ namespace Library_Management_System.User_Control
             // Highlight active
             activeButton.ForeColor = Color.FromArgb(205, 133, 63); // Peru highlight color
         }
-
-
-
         private void SetupDashboardChart()
         {
             // --- Chart Container ---
@@ -123,8 +117,8 @@ namespace Library_Management_System.User_Control
             Label lblReports = new Label
             {
                 Text = "Borrowing Activity",
-                Font = new Font("Microsoft Sans Serif", 14, FontStyle.Regular),
-                ForeColor = Color.Black,
+                Font = new Font("Segoe UI Semibold", 14, FontStyle.Bold),
+                ForeColor = Color.FromArgb(90, 50, 20),
                 AutoSize = true,
                 Location = new Point(20, 15)
             };
@@ -244,9 +238,6 @@ namespace Library_Management_System.User_Control
                 ToggleTrendButton(btnOverdue);
                 chartReports.Series["Overdue"].Enabled = btnOverdue.BackColor != Color.White;
             };
-
-
-
             // --- Chart ---
             chartReports = new Chart
             {
@@ -296,8 +287,6 @@ namespace Library_Management_System.User_Control
             HighlightTrendButton(btnBorrowings);
             LoadChartData(_currentTimeRange, currentTrend);
         }
-
-
         private void HighlightTrendButton(Button selected)
         {
             if (activeTrendButton != null)
@@ -310,11 +299,6 @@ namespace Library_Management_System.User_Control
             selected.ForeColor = Color.White;
             activeTrendButton = selected;
         }
-
-
-
-
-
         private void LoadChartData(string mode, string trend = "Borrowings")
         {
             if (chartReports == null)
@@ -373,30 +357,25 @@ namespace Library_Management_System.User_Control
             GROUP BY DATE(DueDate)
             ORDER BY DATE(DueDate);
         ";
-
                 // --- Data storage ---
                 var borrowData = new Dictionary<string, int>();
                 var returnData = new Dictionary<string, int>();
                 var overdueData = new Dictionary<string, int>();
-
                 // Borrowings
                 using (var cmd = new SQLiteCommand(borrowQuery, con))
                 using (var reader = cmd.ExecuteReader())
                     while (reader.Read())
                         borrowData[reader["BorrowDay"].ToString()] = Convert.ToInt32(reader["Count"]);
-
                 // Returns
                 using (var cmd = new SQLiteCommand(returnQuery, con))
                 using (var reader = cmd.ExecuteReader())
                     while (reader.Read())
                         returnData[reader["ReturnDay"].ToString()] = Convert.ToInt32(reader["Count"]);
-
                 // Overdue
                 using (var cmd = new SQLiteCommand(overdueQuery, con))
                 using (var reader = cmd.ExecuteReader())
                     while (reader.Read())
                         overdueData[reader["DueDay"].ToString()] = Convert.ToInt32(reader["Count"]);
-
                 // --- Clear old series ---
                 chartReports.Series.Clear();
 
@@ -413,7 +392,6 @@ namespace Library_Management_System.User_Control
                 };
                 foreach (var kv in borrowData)
                     borrowSeries.Points.AddXY(kv.Key, kv.Value);
-
                 // Return series
                 Series returnSeries = new Series("Returns")
                 {
@@ -441,12 +419,10 @@ namespace Library_Management_System.User_Control
                 };
                 foreach (var kv in overdueData)
                     overdueSeries.Points.AddXY(kv.Key, kv.Value);
-
                 // Add series to chart
                 chartReports.Series.Add(borrowSeries);
                 chartReports.Series.Add(returnSeries);
                 chartReports.Series.Add(overdueSeries);
-
                 // Chart title (C# 7.3 style)
                 string title = "📈 Borrowing Activity";
                 if (mode == "today")
@@ -455,74 +431,69 @@ namespace Library_Management_System.User_Control
                     title = "📈 Borrowing Activity This Week";
                 else if (mode == "month")
                     title = "📈 Borrowing Activity This Month";
-
                 chartReports.Titles.Clear();
                 chartReports.Titles.Add(title);
                 chartReports.Titles[0].Font = new Font("Segoe UI Emoji", 12, FontStyle.Bold);
-                chartReports.Titles[0].ForeColor = Color.Black;
+                chartReports.Titles[0].ForeColor = Color.FromArgb(90, 50, 20);
             }
-
             chartReports.Invalidate();
         }
-
-
-
-
-
-
         public DashboardControl() : this("ADMIN") { }
 
         private void DashboardControl_Load(object sender, EventArgs e)
         {
-
+            // 📊 Initialize the borrowing activity chart (upper section)
             SetupDashboardChart();
-            // Light dashboard background
-            //this.BackColor = ColorTranslator.FromHtml("#f5f6fa");
 
-            // Apply distinct colors for each card
-            StyleCard(pnlTotalBooks, Color.White);   // light blue
-            StyleCard(pnlBorrowedBooks, Color.White); // light red
-            StyleCard(pnlAvailableBooks, Color.White); // light green
-            StyleCard(pnlActiveMembers, Color.White);  // light yellow
-            StyleCard(pnlOverdueBooks, Color.White);     // orange red
+            // 🔄 Sync penalties first
+            Penalties.SyncPenaltiesFromBorrowings();
 
-            // Rounded corners
+            // 💰 Initialize the penalty summary card (bottom-right card)
+            InitializePenaltySummaryCard();
+
+            // 🎨 Apply consistent visual styles to the statistic cards
+            StyleCard(pnlTotalBooks, Color.White);
+            StyleCard(pnlBorrowedBooks, Color.White);
+            StyleCard(pnlAvailableBooks, Color.White);
+            StyleCard(pnlActiveMembers, Color.White);
+            StyleCard(pnlOverdueBooks, Color.White);
+
+            // 🟢 Add rounded corners for better UI
             ApplyCardStyle(pnlTotalBooks, 10);
             ApplyCardStyle(pnlBorrowedBooks, 10);
             ApplyCardStyle(pnlAvailableBooks, 10);
             ApplyCardStyle(pnlActiveMembers, 10);
             ApplyCardStyle(pnlOverdueBooks, 10);
 
-            // Example (assuming you have picture boxes for each panel)
+            // 🖼 Apply image style for each PictureBox
             ApplyPictureBoxStyle(picTotalBooks, 2);
             ApplyPictureBoxStyle(picBorrowedBooks, 2);
             ApplyPictureBoxStyle(picAvailableBooks, 2);
             ApplyPictureBoxStyle(picActiveMembers, 2);
             ApplyPictureBoxStyle(picOverdueBooks, 2);
 
-           
-
-
-
-
-            // Remove extra margins to save space
+            // 🧩 Tidy up margins for cleaner layout
             foreach (Panel pnl in new[] { pnlTotalBooks, pnlBorrowedBooks, pnlAvailableBooks, pnlActiveMembers, pnlOverdueBooks })
             {
                 pnl.Margin = new Padding(8);
             }
+
+            //// ✅ Start auto-refresh for Penalty Summary (updates every 5 seconds)
+            SetupPenaltyRefreshTimer();
         }
 
         private void InitializeRecentBorrowingsSection()
         {
-            // Container panel
+            // 1️⃣ Create the panel
             pnlRecentBorrowings = new Panel
             {
                 Width = 600,
-                Height = 285,
+                Height = 310,
                 BackColor = Color.White,
-                Padding = new Padding(10),
                 Location = new Point(226, 560)
             };
+            // 4️⃣ Add it to the form (or parent container)
+            this.Controls.Add(pnlRecentBorrowings);
 
             // Apply border radius
             int borderRadius = 10; // change to 2 or whatever you want
@@ -543,17 +514,15 @@ namespace Library_Management_System.User_Control
                 }
             };
             this.Controls.Add(pnlRecentBorrowings);
-
             // Title label
             lblRecentBorrowings = new Label
             {
                 Text = "🕑 Recent Borrowings",
-                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                Font = new Font("Segoe UI Semibold", 14, FontStyle.Bold),
                 ForeColor = Color.FromArgb(90, 50, 20),
                 Height = 30,
                 Width = pnlRecentBorrowings.Width - 20 // respect panel padding
             };
-
             // Add a top margin of 5% of panel height
             lblRecentBorrowings.Location = new Point(10, (int)(pnlRecentBorrowings.Height * 0.05));
 
@@ -572,21 +541,15 @@ namespace Library_Management_System.User_Control
                 EnableHeadersVisualStyles = false,
                 RowTemplate = { Height = 40 }
             };
-
             // Place DataGridView below the label with some spacing
             dgvRecentBorrowings.Location = new Point(0, lblRecentBorrowings.Bottom + 5);
             dgvRecentBorrowings.Size = new Size(pnlRecentBorrowings.Width, pnlRecentBorrowings.Height - lblRecentBorrowings.Bottom - 10);
-
             dgvRecentBorrowings.RowPostPaint += dgvRecentBorrowings_RowPostPaint;
             dgvRecentBorrowings.RowHeadersVisible = true;
             dgvRecentBorrowings.RowHeadersWidth = 50; // enough space for numbers
-
             // Attach DataBindingComplete only once
             dgvRecentBorrowings.DataBindingComplete += DgvRecentBorrowings_DataBindingComplete;
             dgvRecentBorrowings.SelectionChanged += DgvRecentBorrowings_SelectionChanged;
-
-
-
             // Styling
             dgvRecentBorrowings.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(205, 133, 63); // Peru highlight color
             dgvRecentBorrowings.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
@@ -596,6 +559,345 @@ namespace Library_Management_System.User_Control
 
             pnlRecentBorrowings.Controls.Add(dgvRecentBorrowings);
         }
+
+        private Timer penaltySummaryTimer;
+
+        private void InitializePenaltySummaryCard()
+        {
+            // Panel (card)
+            Panel pnlPenaltySummary = new Panel
+            {
+                Width = 243,
+                Height = 309,
+                BackColor = Color.White,
+                Location = new Point(1264, 561),
+                BorderStyle = BorderStyle.None,
+                Padding = new Padding(10)
+            };
+
+            ApplyCardStyles(pnlPenaltySummary, 15);
+
+            // 💰 Title
+            Label lblTitle = new Label
+            {
+                Text = "💰 Penalty Summary",
+                Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(90, 50, 20),
+                AutoSize = true,
+                Location = new Point(15, 10)
+            };
+            pnlPenaltySummary.Controls.Add(lblTitle);
+
+            // Subtext
+            Label lblSub = new Label
+            {
+                Text = "Total Penalties Collected (This month)",
+                Font = new Font("Segoe UI", 9F, FontStyle.Regular),
+                ForeColor = Color.Black,
+                AutoSize = true,
+                Location = new Point(18, 45)
+            };
+            pnlPenaltySummary.Controls.Add(lblSub);
+
+            // 💸 Total Collected
+            Label lblCollected = new Label
+            {
+                Text = "₱0.00",
+                Font = new Font("Segoe UI", 28F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(46, 204, 113),
+                AutoSize = true,
+                Location = new Point(15, 65),
+                Name = "lblCollected"
+            };
+            pnlPenaltySummary.Controls.Add(lblCollected);
+
+            // Divider
+            Panel line = new Panel
+            {
+                BackColor = Color.LightGray,
+                Size = new Size(320, 1),
+                Location = new Point(10, 120)
+            };
+            pnlPenaltySummary.Controls.Add(line);
+
+            // Period
+            Label lblPeriodText = new Label
+            {
+                Text = "Period:",
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
+                ForeColor = Color.Black,
+                AutoSize = true,
+                Location = new Point(20, 135)
+            };
+            pnlPenaltySummary.Controls.Add(lblPeriodText);
+
+            Label lblPeriod = new Label
+            {
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
+                ForeColor = Color.Black,
+                AutoSize = true,
+                Location = new Point(140, 135),
+                Name = "lblPeriod"
+            };
+            pnlPenaltySummary.Controls.Add(lblPeriod);
+
+            // 💀 Unpaid Fines
+            Label lblUnpaidText = new Label
+            {
+                Text = "Unpaid Fines:",
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
+                ForeColor = Color.Black,
+                AutoSize = true,
+                Location = new Point(20, 155)
+            };
+            pnlPenaltySummary.Controls.Add(lblUnpaidText);
+
+            Label lblUnpaid = new Label
+            {
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
+                ForeColor = Color.OrangeRed,
+                AutoSize = true,
+                Location = new Point(140, 155),
+                Name = "lblUnpaid"
+            };
+            pnlPenaltySummary.Controls.Add(lblUnpaid);
+
+            // Add to dashboard
+            this.Controls.Add(pnlPenaltySummary);
+
+            // Load data initially
+            LoadPenaltySummaryFromBorrowings(lblCollected, lblUnpaid, lblPeriod);
+
+            // ✅ Set up timer to refresh every 10 seconds
+            penaltySummaryTimer = new Timer();
+            penaltySummaryTimer.Interval = 10000; // 10,000 ms = 10 seconds
+            penaltySummaryTimer.Tick += (s, e) =>
+            {
+                LoadPenaltySummaryFromBorrowings(lblCollected, lblUnpaid, lblPeriod);
+            };
+            penaltySummaryTimer.Start();
+        }
+
+        private void SetupPenaltyRefreshTimer()
+        {
+            penaltyTimer = new Timer { Interval = 5000 };
+            penaltyTimer.Tick += (s, e) =>
+            {
+                // Sync first
+                Penalties.SyncPenaltiesFromBorrowings();
+
+                // Then refresh UI
+                RefreshPenaltySummary();
+            };
+            penaltyTimer.Start();
+        }
+
+
+
+        // ✅ Loads and updates the Penalty Summary Card dynamically
+        private void LoadPenaltySummaryFromBorrowings(Label lblCollected, Label lblUnpaid, Label lblPeriod)
+        {
+            try
+            {
+                using (SQLiteConnection con = Db.GetConnection())
+                {
+                    con.Open();
+
+                    DateTime now = DateTime.Now;
+                    string startOfMonth = new DateTime(now.Year, now.Month, 1).ToString("yyyy-MM-dd");
+                    string endOfMonth = new DateTime(now.Year, now.Month, DateTime.DaysInMonth(now.Year, now.Month)).ToString("yyyy-MM-dd");
+
+                    // Total penalties collected this month
+                    string sqlCollected = @"
+                            SELECT IFNULL(SUM(Amount), 0)
+                            FROM Penalties
+                            WHERE Status = 'Paid'
+                              AND strftime('%Y-%m', PaidDate) = strftime('%Y-%m', 'now')
+                        ";
+                    lblCollected.Text = "₱" + new SQLiteCommand(sqlCollected, con).ExecuteScalar().ToString();
+
+                    using (var cmd = new SQLiteCommand(sqlCollected, con))
+                    {
+                        cmd.Parameters.AddWithValue("@start", startOfMonth);
+                        cmd.Parameters.AddWithValue("@end", endOfMonth);
+                        decimal totalCollected = Convert.ToDecimal(cmd.ExecuteScalar());
+                        lblCollected.Text = $"₱{totalCollected:N2}";
+                    }
+
+                    // Total unpaid fines
+                    string sqlUnpaid = @"
+                            SELECT IFNULL(SUM(Amount), 0)
+                            FROM Penalties
+                            WHERE Status = 'Unpaid'
+                        ";
+                    lblUnpaid.Text = "₱" + new SQLiteCommand(sqlUnpaid, con).ExecuteScalar().ToString();
+
+                    // Period
+                    lblPeriod.Text = DateTime.Now.ToString("MMMM yyyy");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading penalty summary: " + ex.Message);
+            }
+        }
+
+
+
+        public void RefreshPenaltySummary()
+        {
+            // Find the panel by name or reference
+            var pnlPenaltySummary = this.Controls
+                .OfType<Panel>()
+                .FirstOrDefault(p => p.Controls.OfType<Label>().Any(l => l.Name == "lblCollected"));
+
+            if (pnlPenaltySummary == null) return;
+
+            // Find the dynamically created labels
+            var lblCollected = pnlPenaltySummary.Controls["lblCollected"] as Label;
+            var lblUnpaid = pnlPenaltySummary.Controls["lblUnpaid"] as Label;
+
+            if (lblCollected == null || lblUnpaid == null) return;
+
+            // ✅ Use the new method that calculates totals for THIS MONTH
+            var (totalPaidThisMonth, totalUnpaid) = Penalties.GetPenaltySummary();
+
+            // Update labels
+            lblCollected.Text = $"₱{totalPaidThisMonth:N2}";
+            lblUnpaid.Text = $"₱{totalUnpaid:N2}";
+
+            // Optional: update period dynamically
+            var lblPeriod = pnlPenaltySummary.Controls["lblPeriod"] as Label;
+            if (lblPeriod != null)
+            {
+                lblPeriod.Text = DateTime.Now.ToString("MMMM yyyy");
+            }
+        }
+
+
+
+        private void LoadMostBorrowedBooks()
+        {
+            panelMostBorrowed.Controls.Clear();
+
+            Label title = new Label
+            {
+                Text = "🏆 Most Borrowed Books",
+                Font = new Font("Segoe UI Semibold", 14, FontStyle.Bold),
+                ForeColor = Color.FromArgb(90, 50, 20),
+                Dock = DockStyle.Top,
+                Height = 50,
+                TextAlign = ContentAlignment.MiddleLeft,
+              
+            };
+            panelMostBorrowed.Controls.Add(title);
+
+            // Apply border radius
+            int borderRadius = 10; // change to 2 or whatever you want
+            panelMostBorrowed.Paint += (s, e) =>
+            {
+                using (GraphicsPath path = new GraphicsPath())
+                {
+                    Rectangle rect = new Rectangle(0, 0, panelMostBorrowed.Width, panelMostBorrowed.Height);
+                    int radius = borderRadius * 2;
+
+                    path.AddArc(rect.X, rect.Y, radius, radius, 180, 90); // Top-left
+                    path.AddArc(rect.Right - radius, rect.Y, radius, radius, 270, 90); // Top-right
+                    path.AddArc(rect.Right - radius, rect.Bottom - radius, radius, radius, 0, 90); // Bottom-right
+                    path.AddArc(rect.X, rect.Bottom - radius, radius, radius, 90, 90); // Bottom-left
+                    path.CloseAllFigures();
+
+                    panelMostBorrowed.Region = new Region(path);
+                }
+            };
+
+            var topBooks = GetMostBorrowedBooks();
+
+            if (topBooks.Count == 0)
+            {
+                Label lblNone = new Label
+                {
+                    Text = "No borrowed books yet.",
+                    Font = new Font("Segoe UI", 10, FontStyle.Italic),
+                    ForeColor = Color.Gray,
+                    Dock = DockStyle.Fill,
+                    TextAlign = ContentAlignment.MiddleCenter
+                };
+                panelMostBorrowed.Controls.Add(lblNone);
+                return;
+            }
+
+            int maxBorrows = topBooks[0].Borrows; // highest borrow count
+            int y = 60;
+
+            foreach (var (Title, Borrows) in topBooks)
+            {
+                Label lblBook = new Label
+                {
+                    Text = $"{Title} — {Borrows} borrows",
+                    Font = new Font("Segoe UI", 10, FontStyle.Regular),
+                    Location = new Point(20, y),
+                    AutoSize = true
+                };
+
+                ProgressBar progress = new ProgressBar
+                {
+                    Size = new Size(250, 10),
+                    Location = new Point(20, y + 25),
+                    Maximum = maxBorrows,
+                    Value = Borrows,
+                };
+
+                panelMostBorrowed.Controls.Add(lblBook);
+                panelMostBorrowed.Controls.Add(progress);
+                y += 45;
+            }
+        }
+
+        private List<(string Title, int Borrows)> GetMostBorrowedBooks()
+        {
+            var list = new List<(string, int)>();
+
+            using (var con = Db.GetConnection())
+            {
+                con.Open();
+                string query = @"
+                    SELECT b.Title, COUNT(*) AS BorrowCount
+                    FROM Borrowings br
+                    INNER JOIN Books b ON br.BookId = b.BookId
+                    GROUP BY b.Title
+                    ORDER BY BorrowCount DESC
+                    LIMIT 5;
+                ";
+
+                using (var cmd = new SQLiteCommand(query, con))
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        string title = reader["Title"].ToString();
+                        int count = Convert.ToInt32(reader["BorrowCount"]);
+                        list.Add((title, count));
+                    }
+                }
+            }
+
+            return list;
+        }
+    
+
+
+
+        // optional for rounded corners / shadows
+        private void ApplyCardStyles(Panel panel, int radius)
+        {
+            panel.Region = System.Drawing.Region.FromHrgn(CreateRoundRectRgn(0, 0, panel.Width, panel.Height, radius, radius));
+        }
+        [System.Runtime.InteropServices.DllImport("Gdi32.dll", EntryPoint = "CreateRoundRectRgn")]
+        private static extern IntPtr CreateRoundRectRgn(
+           int nLeftRect, int nTopRect, int nRightRect, int nBottomRect,
+           int nWidthEllipse, int nHeightEllipse);
+    
 
         private void DgvRecentBorrowings_SelectionChanged(object sender, EventArgs e)
         {
@@ -625,9 +927,6 @@ namespace Library_Management_System.User_Control
                 );
             }
         }
-
-
-
         private void LoadRecentBorrowings()
         {
             try
@@ -659,8 +958,6 @@ namespace Library_Management_System.User_Control
                         dgvRecentBorrowings.DataSource = table;
                         dgvRecentBorrowings.ClearSelection();
                         dgvRecentBorrowings.CurrentCell = null;
-
-
 
                         // Rename columns
                         dgvRecentBorrowings.Columns["MemberName"].HeaderText = "Member";
@@ -696,45 +993,6 @@ namespace Library_Management_System.User_Control
                 MessageBox.Show("Failed to load recent borrowings: " + ex.Message);
             }
         }
-
-
-
-
-        //private void ExportChartAsImage()
-        //{
-        //    SaveFileDialog sfd = new SaveFileDialog
-        //    {
-        //        Filter = "PNG Image|*.png",
-        //        Title = "Save Chart as Image"
-        //    };
-
-        //    if (sfd.ShowDialog() == DialogResult.OK)
-        //    {
-        //        chartReports.SaveImage(sfd.FileName, ChartImageFormat.Png);
-        //        MessageBox.Show("Chart exported successfully!", "Export", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        //    }
-        //}
-
-        //private void PrintChart()
-        //{
-        //    PrintDocument pd = new PrintDocument();
-        //    pd.PrintPage += (s, e) =>
-        //    {
-        //        Bitmap bmp = new Bitmap(chartReports.Width, chartReports.Height);
-        //        chartReports.DrawToBitmap(bmp, new Rectangle(0, 0, bmp.Width, bmp.Height));
-        //        e.Graphics.DrawImage(bmp, new Point(50, 50));
-        //    };
-
-        //    PrintPreviewDialog dlg = new PrintPreviewDialog
-        //    {
-        //        Document = pd,
-        //        Width = 1000,
-        //        Height = 800
-        //    };
-        //    dlg.ShowDialog();
-        //}
-
-
         private void StyleCard(Panel panel, Color bgColor)
         {
             panel.BackColor = bgColor;
@@ -744,17 +1002,8 @@ namespace Library_Management_System.User_Control
             panel.MouseEnter += (s, e) => panel.BackColor = ControlPaint.Light(bgColor, 0.2f);
             panel.MouseLeave += (s, e) => panel.BackColor = bgColor;
 
-            //foreach (Control ctrl in panel.Controls)
-            //{
-            //    if (ctrl is Label lbl)
-            //    {
-            //        lbl.ForeColor = Color.Black;
-            //        lbl.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-            //    }
-            //}
+         
         }
-
-
 
         // ---------------------- STYLING ----------------------
 
@@ -799,7 +1048,6 @@ namespace Library_Management_System.User_Control
             };
         }
 
-
         // ---------------------- GREETING ----------------------
 
         private void UpdateGreeting()
@@ -818,7 +1066,6 @@ namespace Library_Management_System.User_Control
         }
 
         // ---------------------- DASHBOARD DATA ----------------------
-
         private void LoadDashboardStats()
         {
             using (var con = Db.GetConnection())
@@ -853,37 +1100,31 @@ namespace Library_Management_System.User_Control
         {
             UpdateBorrowedBooksCount();
         }
-
         private void pnlTotalBooks_Click(object sender, EventArgs e)
         {
             MainForm parentForm = this.FindForm() as MainForm;
             parentForm?.OpenManageBooksFromDashboard();
         }
-
         private void pnlActiveMembers_Click(object sender, EventArgs e)
         {
             MainForm parentForm = this.FindForm() as MainForm;
             parentForm?.OpenManageMembersFromDashboard();
         }
-
         private void pnlBorrowedBooks_Click(object sender, EventArgs e)
         {
             MainForm parentForm = this.FindForm() as MainForm;
             parentForm?.LoadControl(new BorrowBooksControl());
         }
-
         private void pnlAvailableBooks_Click(object sender, EventArgs e)
         {
             MainForm parentForm = this.FindForm() as MainForm;
             parentForm?.LoadControl(new BooksForm());
         }
-
         private void pnlOverdueBooks_Click(object sender, EventArgs e)
         {
             MainForm parentForm = this.FindForm() as MainForm;
             parentForm?.LoadControl(new OverdueReportControl());
         }
-
         private void UpdateBorrowedBooksCount()
         {
             try
@@ -897,23 +1138,10 @@ namespace Library_Management_System.User_Control
                 lblBorrowedBooks.Text = "📖 Borrowed Books: 0";
             }
         }
-
         public void RefreshStats() => LoadDashboardStats();
-
-        private void lblTotalBooks_Click(object sender, EventArgs e)
-        {
-          
-        }
-
-        private void lblAvailableBooks_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void lblActiveMembers_Click(object sender, EventArgs e)
-        {
-        }
-
+        private void lblTotalBooks_Click(object sender, EventArgs e) { }
+        private void lblAvailableBooks_Click(object sender, EventArgs e) { }
+        private void lblActiveMembers_Click(object sender, EventArgs e) { }
         protected override void OnHandleDestroyed(EventArgs e)
         {
             _greetingTimer?.Stop();
@@ -922,9 +1150,6 @@ namespace Library_Management_System.User_Control
             _statsTimer?.Dispose();
             base.OnHandleDestroyed(e);
         }
-
-        private void panel1_Paint(object sender, PaintEventArgs e){ }
-
         private void ApplyPictureBoxStyle(PictureBox pictureBox, int radius)
         {
             pictureBox.Paint += (s, e) =>
@@ -966,6 +1191,7 @@ namespace Library_Management_System.User_Control
                 }
             };
         }
+        private void panel1_Paint(object sender, PaintEventArgs e) { }
         private void pnlActiveMembers_Paint(object sender, PaintEventArgs e){}
         private void label3_Click(object sender, EventArgs e){}
         private void pnlTotalBooks_Paint(object sender, PaintEventArgs e){}
@@ -980,6 +1206,17 @@ namespace Library_Management_System.User_Control
         private void pictureBox6_Click(object sender, EventArgs e){}
         private void picAvailableBooks_Click(object sender, EventArgs e){}
         private void picActiveMembers_Click(object sender, EventArgs e) { }
+
+        private void panelMostBorrowed_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void pnlPenaltySummary_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
         private void picOverdueBooks_Click(object sender, EventArgs e){ }
         private void lblGreeting_Click(object sender, EventArgs e){ }
     }

@@ -49,6 +49,10 @@ namespace Library_Management_System
         private Timer moveTimer;
         private int targetTop;
 
+        // ✅ Store reference to the dashboard so other controls can refresh it
+        public DashboardControl DashboardInstance;
+        private ReturnBooksControl returnBooksControl;
+
 
 
 
@@ -83,8 +87,20 @@ namespace Library_Management_System
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLogo)).EndInit();
             this.ResumeLayout(false);
 
+          
+
+
+
 
         }
+
+        private void UpdateBottomSpacer()
+        {
+            bottomSpacer.Height = (int)(panel1.Height * 0.05);
+            bottomSpacer.Width = panel1.Width;
+            bottomSpacer.Location = new Point(0, panel1.Height - bottomSpacer.Height);
+        }
+
 
         private void sidebarTimer_Tick(object sender, EventArgs e)
         {
@@ -137,6 +153,7 @@ namespace Library_Management_System
                         btn.Padding = new Padding(0);
                     }
                 }
+                UpdateBottomSpacer();
             }
 
             // Collapse button (▶)
@@ -177,6 +194,7 @@ namespace Library_Management_System
             // Collapse icon (◀)
             button8.Image = Properties.Resources.Collapse; // left arrow
             button8.ImageAlign = ContentAlignment.MiddleLeft;
+            UpdateBottomSpacer();
         }
 
 
@@ -224,7 +242,15 @@ namespace Library_Management_System
         private void MainForm_Load(object sender, EventArgs e)
         {
             // === Load Dashboard by default ===
-            LoadControl(new DashboardControl(Username));
+            // ✅ Create the dashboard once and store reference
+            DashboardInstance = new DashboardControl(Username);
+            LoadControl(DashboardInstance);
+
+            // === Connect Dashboard and ReturnBooks controls ===
+            returnBooksControl = new ReturnBooksControl();
+            //returnBooksControl.PenaltyUpdated += DashboardInstance.RefreshPenaltySummary;
+
+
 
             moveTimer = new Timer { Interval = 15 };
             moveTimer.Tick += MoveIndicatorSmooth;
@@ -399,16 +425,32 @@ namespace Library_Management_System
             if (panel1.Controls.Contains(pictureBoxLogo)) panel1.Controls.SetChildIndex(pictureBoxLogo, 10);
 
             // === Add bottom spacer ===
-            bottomSpacer = new Panel();
-            bottomSpacer.Dock = DockStyle.Bottom;
-            bottomSpacer.Height = (int)(this.ClientSize.Height * 0.05);
-            bottomSpacer.BackColor = Color.WhiteSmoke;
-            this.Controls.Add(bottomSpacer);
+            //bottomSpacer = new Panel();
+            //bottomSpacer.Dock = DockStyle.Bottom;
+            //bottomSpacer.Height = (int)(this.ClientSize.Height * 0.05);
+            //bottomSpacer.BackColor = Color.Pink;
+            //this.Controls.Add(bottomSpacer);
 
             this.Resize += (s, ev) =>
             {
                 bottomSpacer.Height = (int)(this.ClientSize.Height * 0.05);
             };
+
+            // === Create bottom spacer (inside sidebar only) ===
+            bottomSpacer = new Panel
+            {
+                BackColor = Color.White,
+                Height = Math.Max(20, (int)(panel1.Height * 0.05)), // 5% of sidebar
+                Dock = DockStyle.Bottom // <-- simpler and reliable
+            };
+            panel1.Controls.Add(bottomSpacer);
+
+            // Optional: track resize events
+            panel1.Resize += (s, m) =>
+            {
+                bottomSpacer.Height = Math.Max(20, (int)(panel1.Height * 0.05));
+            };
+
         }
 
         public void OpenManageBooksFromDashboard()
@@ -582,18 +624,14 @@ namespace Library_Management_System
 
         private void button4_Click(object sender, EventArgs e)
         {
-
             SetActiveButton(button4);
-            // Clear existing controls in the panelContainer
             panelContainer.Controls.Clear();
 
-            // Create instance of ReturnBooksControl
-            ReturnBooksControl returnBooks = new ReturnBooksControl();
-            returnBooks.Dock = DockStyle.Fill;
-
-            // Add it to the container
-            panelContainer.Controls.Add(returnBooks);
+            // ✅ Reuse the same instance so the event connection works
+            returnBooksControl.Dock = DockStyle.Fill;
+            panelContainer.Controls.Add(returnBooksControl);
         }
+
 
 
         private void button5_Click(object sender, EventArgs e)
@@ -622,58 +660,67 @@ namespace Library_Management_System
             if (isDarkMode)
             {
                 // Switch to Light Mode
-                ApplyTheme(this, Color.White, Color.Black,false);
+                ApplyTheme(this, Color.WhiteSmoke, Color.Black, false);
                 button7.Text = "    Dark UI";
                 isDarkMode = false;
             }
             else
             {
                 // Switch to Dark Mode
-                ApplyTheme(this, Color.FromArgb(30, 30, 30), Color.White, true);
+                ApplyTheme(this, Color.Black, Color.WhiteSmoke, true);  // Set form background to black, text to white
                 button7.Text = "    Light UI";
                 isDarkMode = true;
             }
 
-            // ✅ Force proper sidebar alignment after theme switch
+            // Force proper sidebar alignment after theme switch
             if (isCollapsed)
                 ApplyCollapsedState();
             else
                 ApplyExpandedState();
+            UpdateBottomSpacer();
         }
 
         private void ApplyTheme(Control parent, Color backColor, Color foreColor, bool dark)
         {
+            // Set the form's background color
             parent.BackColor = backColor;
             parent.ForeColor = foreColor;
 
+            // Iterate through all child controls of the parent
             foreach (Control ctrl in parent.Controls)
             {
                 if (ctrl is Panel)
                 {
-                    ctrl.BackColor = backColor;
-                    ApplyTheme(ctrl, backColor, foreColor, dark);
+                    // Apply a dark gray background to panels in dark mode, and white for light mode
+                    ctrl.BackColor = dark ? Color.FromArgb(50, 50, 50) : Color.WhiteSmoke;  // Dark gray for panels in dark mode
+                    ApplyTheme(ctrl, ctrl.BackColor, foreColor, dark);  // Recursively apply theme to panel's child controls
                 }
                 else if (ctrl is Button btn)
                 {
-                    btn.BackColor = backColor;
+                    // Set buttons' background and border colors
+                    btn.BackColor = dark ? Color.FromArgb(50, 50, 50) : Color.WhiteSmoke;  // Dark gray for buttons in dark mode
                     btn.ForeColor = foreColor;
-                    btn.FlatAppearance.BorderColor = dark ? Color.Gray : Color.DarkGray;
+                    btn.FlatAppearance.BorderColor = dark ? Color.Gray : Color.DarkGray;  // Dark border for dark mode
                 }
                 else if (ctrl is Label lbl)
                 {
+                    // Set the label's text color
                     lbl.ForeColor = foreColor;
                 }
                 else if (ctrl is PictureBox pic)
                 {
+                    // Set picture box's background color
                     pic.BackColor = backColor;
                 }
                 else
                 {
+                    // Apply the same color scheme to other controls
                     ctrl.BackColor = backColor;
                     ctrl.ForeColor = foreColor;
                 }
             }
         }
+
 
 
 
@@ -693,18 +740,16 @@ namespace Library_Management_System
 
         private void button9_Click(object sender, EventArgs e)
         {
-
             SetActiveButton(button9);
-            // Clear existing controls in the panelContainer
             panelContainer.Controls.Clear();
 
-            // Create instance of ReturnBooksControl
-            OverdueReportControl overdueBooks = new OverdueReportControl();
+            // ✅ Pass MainForm reference so OverdueReportControl can call back
+            OverdueReportControl overdueBooks = new OverdueReportControl(this);
             overdueBooks.Dock = DockStyle.Fill;
 
-            // Add it to the container
             panelContainer.Controls.Add(overdueBooks);
         }
+
 
 
 

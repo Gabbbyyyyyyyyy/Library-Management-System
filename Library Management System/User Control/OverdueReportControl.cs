@@ -8,8 +8,19 @@ using LibraryManagementSystem.Helpers;
 
 namespace Library_Management_System.User_Control
 {
+
     public partial class OverdueReportControl : UserControl
     {
+        private MainForm mainForm;
+
+        public OverdueReportControl(MainForm parentForm)
+        {
+            InitializeComponent();
+            mainForm = parentForm;
+            SetupDataGridView();
+            this.Load += OverdueReportControl_Load;
+        }
+        // ✅ Default constructor (for designer or other forms)
         public OverdueReportControl()
         {
             InitializeComponent();
@@ -17,8 +28,10 @@ namespace Library_Management_System.User_Control
             this.Load += OverdueReportControl_Load;
         }
 
+
         private void OverdueReportControl_Load(object sender, EventArgs e)
         {
+            Penalties.SyncPenaltiesFromBorrowings();
             LoadOverdueBooks();
         }
 
@@ -33,7 +46,7 @@ namespace Library_Management_System.User_Control
             dgvBorrowedBooks.BackgroundColor = Color.White;
 
             // Add numbering column
-            dgvBorrowedBooks.Columns.Add("No", "#");
+            dgvBorrowedBooks.Columns.Add("No", "No.");
             dgvBorrowedBooks.Columns["No"].Width = 50;
             dgvBorrowedBooks.Columns["No"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
 
@@ -65,24 +78,25 @@ namespace Library_Management_System.User_Control
                 con.Open();
 
                 string query = @"
-                    SELECT 
-                        m.StudentNo,
-                        (m.FirstName || ' ' || m.LastName) AS MemberName,
-                        bks.Title AS BookTitle,
-                        br.BorrowDate,
-                        br.DueDate,
-                        br.ReturnDate,
-                        br.Penalty,
-                        br.Status,
-                        p.Amount AS PenaltyFromTable,
-                        p.DaysOverdue AS DaysOverdueFromTable
-                    FROM Borrowings br
-                    INNER JOIN Members m ON br.MemberId = m.MemberId
-                    INNER JOIN Books bks ON br.BookId = bks.BookId
-                    LEFT JOIN Penalties p ON br.BorrowId = p.BorrowId
-                    WHERE br.Status = 'Returned' OR (br.ReturnDate IS NULL AND DATE('now') > br.DueDate)
-                    ORDER BY br.DueDate DESC;
-                ";
+            SELECT 
+                m.StudentNo,
+                (m.FirstName || ' ' || m.LastName) AS MemberName,
+                bks.Title AS BookTitle,
+                br.BorrowDate,
+                br.DueDate,
+                br.ReturnDate,
+                br.Penalty,
+                br.Status,
+                p.Amount AS PenaltyFromTable,
+                p.DaysOverdue AS DaysOverdueFromTable
+            FROM Borrowings br
+            INNER JOIN Members m ON br.MemberId = m.MemberId
+            INNER JOIN Books bks ON br.BookId = bks.BookId
+            LEFT JOIN Penalties p ON br.BorrowId = p.BorrowId
+            WHERE (br.Status = 'Returned' AND br.ReturnDate > br.DueDate) 
+               OR (br.Status = 'Borrowed' AND br.ReturnDate IS NULL AND DATE('now') > br.DueDate)
+            ORDER BY br.DueDate DESC;
+        ";
 
                 using (var cmd = new SQLiteCommand(query, con))
                 using (var reader = cmd.ExecuteReader())
@@ -101,6 +115,8 @@ namespace Library_Management_System.User_Control
                             PenaltyHelper.CalculatePenalty(dueDate, returnDate, out penalty, out daysOverdue);
                         }
 
+                        string status = returnDate.HasValue && returnDate.Value > dueDate ? "Returned (Late)" : "Borrowed"; // Determine status
+
                         dgvBorrowedBooks.Rows.Add(
                             counter++, // numbering column
                             reader["StudentNo"],
@@ -111,7 +127,7 @@ namespace Library_Management_System.User_Control
                             returnDate.HasValue ? returnDate.Value.ToString("yyyy-MM-dd") : "Not Returned",
                             daysOverdue,
                             penalty.ToString("₱0.00"),
-                            reader["Status"]
+                            status // Status (Borrowed or Returned Late)
                         );
                     }
                 }
@@ -124,14 +140,34 @@ namespace Library_Management_System.User_Control
                 dgvBorrowedBooks.CurrentCell = null; // optional: ensures no cell is focused
             }
 
+            // Refresh dashboard summary after loading overdue data
+            var dashboard = this.Parent?.Controls["DashboardControl"] as DashboardControl;
+            if (dashboard != null)
+            {
+                dashboard.RefreshPenaltySummary();
+            }
+            else
+            {
+                var mainForm = this.FindForm() as MainForm;
+                if (mainForm?.DashboardInstance != null)
+                {
+                    mainForm.DashboardInstance.RefreshPenaltySummary();
+                }
+            }
 
             if (dgvBorrowedBooks.Rows.Count == 0)
                 MessageBox.Show("No overdue books found.", "Overdue Report", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
+
         private void dgvBorrowedBooks_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             // Optional event for clicks
+        }
+
+        private void OverdueReportControl_Load_1(object sender, EventArgs e)
+        {
+
         }
     }
 }

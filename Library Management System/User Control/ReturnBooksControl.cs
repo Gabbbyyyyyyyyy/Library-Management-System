@@ -10,6 +10,8 @@ namespace Library_Management_System.User_Control
 {
     public partial class ReturnBooksControl : UserControl
     {
+        public event Action PenaltyUpdated;
+
         public ReturnBooksControl()
         {
             InitializeComponent();
@@ -161,6 +163,15 @@ namespace Library_Management_System.User_Control
                         trans.Commit();
                         MessageBox.Show("✅ Book return accepted! Penalty recorded: ₱" + totalPenalty.ToString("0.00"));
                         LoadBorrowedBooks();
+
+                        PenaltyUpdated?.Invoke(); // 🔔 Notify dashboard
+
+                        // 🔄 Update Penalties table dynamically
+                        Penalties.SyncPenaltiesFromBorrowings();
+
+                        // 🔄 Refresh dashboard immediately
+                        var dashboard = this.Parent?.Controls["DashboardControl"] as DashboardControl;
+                        dashboard?.RefreshPenaltySummary();
                     }
                     catch (Exception ex)
                     {
@@ -170,7 +181,7 @@ namespace Library_Management_System.User_Control
                 }
             }
         }
-    
+
 
         private void btnReturn_Click(object sender, EventArgs e)
         {
@@ -191,23 +202,96 @@ namespace Library_Management_System.User_Control
                 {
                     try
                     {
-                        using (var cmd = new SQLiteCommand("UPDATE Borrowings SET Status = 'Returned', ReturnDate = @r WHERE BorrowId = @id", conn))
+                        // 1️⃣ Mark Borrowing as returned
+                        using (var cmd = new SQLiteCommand(
+                            "UPDATE Borrowings SET Status = 'Returned', ReturnDate = @r WHERE BorrowId = @id", conn))
                         {
                             cmd.Parameters.AddWithValue("@r", DateTime.Now);
                             cmd.Parameters.AddWithValue("@id", borrowId);
                             cmd.ExecuteNonQuery();
                         }
 
-                        using (var cmd2 = new SQLiteCommand("UPDATE Books SET AvailableCopies = AvailableCopies + 1 WHERE BookId = @b", conn))
+                        // 2️⃣ Update Book copies
+                        using (var cmd2 = new SQLiteCommand(
+                            "UPDATE Books SET AvailableCopies = AvailableCopies + 1 WHERE BookId = @b", conn))
                         {
                             cmd2.Parameters.AddWithValue("@b", bookId);
                             cmd2.ExecuteNonQuery();
+                        }
+
+                        // 3️⃣ Fetch MemberId, DueDate, Penalty from Borrowings
+                        int memberId;
+                        double penalty;
+                        DateTime dueDate;
+
+                        using (var cmdMember = new SQLiteCommand(
+                            "SELECT MemberId, DueDate, Penalty FROM Borrowings WHERE BorrowId = @id", conn))
+                        {
+                            cmdMember.Parameters.AddWithValue("@id", borrowId);
+                            using (var reader = cmdMember.ExecuteReader())
+                            {
+                                if (!reader.Read())
+                                    throw new Exception("Borrowing not found.");
+
+                                memberId = Convert.ToInt32(reader["MemberId"]);
+                                dueDate = Convert.ToDateTime(reader["DueDate"]);
+                                penalty = Convert.ToDouble(reader["Penalty"]);
+                            }
+                        }
+
+                        // 4️⃣ Calculate overdue days and update Penalties
+                        int daysOverdue = (int)Math.Ceiling((DateTime.Now - dueDate).TotalDays);
+
+                        if (daysOverdue > 0) // Only mark Paid if overdue
+                        {
+                            using (var cmd3 = new SQLiteCommand(conn))
+                            {
+                                // Check if penalty already exists
+                                cmd3.CommandText = "SELECT COUNT(*) FROM Penalties WHERE BorrowId = @borrowId";
+                                cmd3.Parameters.AddWithValue("@borrowId", borrowId);
+                                long exists = (long)cmd3.ExecuteScalar();
+
+                                if (exists == 0)
+                                {
+                                    // Insert new penalty
+                                    cmd3.CommandText = @"
+                                INSERT INTO Penalties 
+                                (BorrowId, MemberId, Amount, DaysOverdue, Status, PaidDate)
+                                VALUES (@borrowId, @memberId, @amount, @daysOverdue, 'Paid', @paidDate)
+                            ";
+                                    cmd3.Parameters.AddWithValue("@memberId", memberId);
+                                    cmd3.Parameters.AddWithValue("@amount", penalty);
+                                    cmd3.Parameters.AddWithValue("@daysOverdue", daysOverdue);
+                                    cmd3.Parameters.AddWithValue("@paidDate", DateTime.Now);
+                                    cmd3.ExecuteNonQuery();
+                                }
+                                else
+                                {
+                                    // Update existing penalty
+                                    cmd3.CommandText = @"
+                                UPDATE Penalties
+                                SET Status = 'Paid',
+                                    PaidDate = @paidDate,
+                                    
+                                    DaysOverdue = @daysOverdue
+                                WHERE BorrowId = @borrowId
+                            ";
+                                  
+                                    cmd3.Parameters.AddWithValue("@daysOverdue", daysOverdue);
+                                    cmd3.Parameters.AddWithValue("@paidDate", DateTime.Now);
+                                    cmd3.ExecuteNonQuery();
+                                }
+                            }
                         }
 
                         trans.Commit();
                         dgvBorrowedBooks.Rows.Remove(selectedRow);
 
                         MessageBox.Show("✅ Book successfully marked as returned!");
+
+                        // 🔄 Refresh Penalties summary dynamically
+                        var dashboard = this.Parent?.Controls["DashboardControl"] as DashboardControl;
+                        dashboard?.RefreshPenaltySummary();
                     }
                     catch (Exception ex)
                     {
@@ -217,6 +301,8 @@ namespace Library_Management_System.User_Control
                 }
             }
         }
+
+
 
         private void lblMessage_Click(object sender, EventArgs e)
         {
