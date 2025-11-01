@@ -6,6 +6,7 @@ using System.Drawing;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using LibraryManagementSystem.Data;
@@ -47,6 +48,14 @@ namespace Library_Management_System.User_Control_Student
         public AvailbleCopies()
         {
             InitializeComponent();
+
+            // Load categories and sort options
+            LoadCategoryComboBox();
+            LoadSortComboBox();
+
+            // ComboBox selection changed events
+            comboBox1.SelectedIndexChanged += (s, e) => RunSearchNow();
+            comboBox2.SelectedIndexChanged += (s, e) => RunSearchNow();
 
             SendMessage(textBox1.Handle, EM_SETCUEBANNER, 0, "Search books...");
             textBox1.KeyDown += txtSearch_KeyDown;
@@ -102,16 +111,11 @@ namespace Library_Management_System.User_Control_Student
         private void RunSearchNow()
         {
             string searchText = textBox1.Text.Trim();
+            string selectedCategory = comboBox1.SelectedItem.ToString();
+            string selectedSort = comboBox2.SelectedItem.ToString();
 
             flowBooks.Controls.Clear();
             flowBooks.SuspendLayout();
-
-            if (string.IsNullOrEmpty(searchText))
-            {
-                flowBooks.Controls.AddRange(_cachedBookCards.ToArray());
-                flowBooks.ResumeLayout();
-                return;
-            }
 
             bool foundAny = false;
 
@@ -119,31 +123,67 @@ namespace Library_Management_System.User_Control_Student
             {
                 con.Open();
 
+                // Build query dynamically
                 string query = @"
-            SELECT ISBN, Title, Author, AvailableCopies,
+            SELECT ISBN, Title, Author, AvailableCopies, Category,
                    CASE WHEN AvailableCopies > 0 THEN 'Available' ELSE 'Not Available' END AS Status
             FROM Books
-            WHERE Title LIKE @search COLLATE NOCASE
+            WHERE (Title LIKE @search COLLATE NOCASE
                OR Author LIKE @search COLLATE NOCASE
-               OR Category LIKE @search COLLATE NOCASE
-               OR ISBN LIKE @search COLLATE NOCASE";
+               OR ISBN LIKE @search COLLATE NOCASE)";
+
+                // Apply category filter if not "All"
+                if (selectedCategory != "All")
+                    query += " AND Category = @category";
+
+                // Apply sorting
+                switch (selectedSort)
+                {
+                    case "Title (A-Z)":
+                        query += " ORDER BY Title ASC";
+                        break;
+                    case "Title (Z-A)":
+                        query += " ORDER BY Title DESC";
+                        break;
+                    case "Default":
+                        query += " ORDER BY ROWID ASC"; // Default order by insertion
+                        break;
+                    case "Most Borrowed":
+                        query = @"
+        SELECT b.ISBN, b.Title, b.Author, b.AvailableCopies, b.Category,
+               CASE WHEN b.AvailableCopies > 0 THEN 'Available' ELSE 'Not Available' END AS Status,
+               COUNT(br.BookId) AS BorrowCount
+        FROM Books b
+        LEFT JOIN Borrowings br ON br.BookId = b.BookId";
+
+                        if (comboBox1.SelectedItem?.ToString() != "All")
+                            query += " WHERE b.Category = @category";
+
+                        query += @"
+        GROUP BY b.BookId
+        ORDER BY BorrowCount DESC, b.Title ASC"; // secondary sort by title
+                        break;
+                }
 
                 using (var cmd = new SQLiteCommand(query, con))
                 {
                     cmd.Parameters.AddWithValue("@search", "%" + searchText + "%");
 
+                    if (comboBox1.SelectedItem?.ToString() != "All")
+                        cmd.Parameters.AddWithValue("@category", comboBox1.SelectedItem.ToString());
+
                     using (var reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())
                         {
-                            foundAny = true;
                             string title = reader["Title"].ToString();
                             string author = reader["Author"].ToString();
                             string isbn = reader["ISBN"].ToString();
                             string status = reader["Status"].ToString();
+                            string category = reader["Category"].ToString();
 
                             Image cover = LoadLocalCover(isbn) ?? Properties.Resources.Bc;
-                            flowBooks.Controls.Add(AddBookCard(title, author, status, cover, isbn));
+                            flowBooks.Controls.Add(AddBookCard(title, author, status, cover, isbn, category));
                         }
                     }
                 }
@@ -203,9 +243,10 @@ namespace Library_Management_System.User_Control_Student
                 string author = reader["Author"].ToString();
                 string isbn = reader["ISBN"].ToString();
                 string status = reader["Status"].ToString();
+                string category = reader["Category"].ToString();
 
                 Image cover = LoadLocalCover(isbn) ?? Properties.Resources.Bc;
-                flowBooks.Controls.Add(AddBookCard(title, author, status, cover, isbn));
+                flowBooks.Controls.Add(AddBookCard(title, author, status, cover, isbn, category));
             }
 
             if (!found)
@@ -260,7 +301,7 @@ namespace Library_Management_System.User_Control_Student
 
                     string query = @"
             SELECT 
-                ISBN, Title, Author, AvailableCopies,
+                ISBN, Title, Author, AvailableCopies, Category,
                 IFNULL(CoverUrl, '') AS CoverUrl,
                 IFNULL(LastCoverUpdate, '') AS LastCoverUpdate,
                 CASE WHEN AvailableCopies > 0 THEN 'Available'
@@ -278,13 +319,14 @@ namespace Library_Management_System.User_Control_Student
                             string status = reader["Status"].ToString(); // ✅ always computed live
                             string coverUrl = reader["CoverUrl"].ToString();
                             string lastUpdateStr = reader["LastCoverUpdate"].ToString();
+                            string category = reader["Category"].ToString();
 
                             DateTime? lastUpdate = null;
                             if (DateTime.TryParse(lastUpdateStr, out DateTime parsed))
                                 lastUpdate = parsed;
 
                             Image cover = LoadLocalCover(isbn);
-                            var card = AddBookCard(title, author, status, cover ?? Properties.Resources.Bc, isbn);
+                            var card = AddBookCard(title, author, status, cover ?? Properties.Resources.Bc, isbn, category);
                             flowBooks.Controls.Add(card);
                             _cachedBookCards.Add(card);
 
@@ -399,7 +441,7 @@ namespace Library_Management_System.User_Control_Student
             }
         }
 
-        private Panel AddBookCard(string title, string author, string status, Image cover, string isbn = null)
+        private Panel AddBookCard(string title, string author, string status, Image cover, string isbn = null, string category = "")
         {
             Panel card = new Panel
             {
@@ -429,7 +471,7 @@ namespace Library_Management_System.User_Control_Student
             // 👇 Add click event for the book image
             pic.Click += (s, e) =>
             {
-                ShowBookDetails(isbn, title, author, status, cover);
+                ShowBookDetails(isbn, title, author, status, cover, category);
             };
 
             Label lblTitle = new Label
@@ -439,21 +481,21 @@ namespace Library_Management_System.User_Control_Student
                 AutoSize = false,
                 Width = 150,
                 Height = 35,
-                Location = new Point(5, 200),
+                Location = new Point(5, 220),
                 TextAlign = ContentAlignment.MiddleCenter
             };
 
-            Label lblAuthor = new Label
-            {
-                Text = author,
-                Font = new Font("Segoe UI", 8),
-                ForeColor = Color.Gray,
-                AutoSize = false,
-                Width = 150,
-                Height = 20,
-                Location = new Point(5, 235),
-                TextAlign = ContentAlignment.MiddleCenter
-            };
+            //Label lblAuthor = new Label
+            //{
+            //    Text = author,
+            //    Font = new Font("Segoe UI", 8),
+            //    ForeColor = Color.Gray,
+            //    AutoSize = false,
+            //    Width = 150,
+            //    Height = 20,
+            //    Location = new Point(5, 240),
+            //    TextAlign = ContentAlignment.MiddleCenter
+            //};
 
             Label lblStatus = new Label
             {
@@ -469,13 +511,13 @@ namespace Library_Management_System.User_Control_Student
 
             card.Controls.Add(pic);
             card.Controls.Add(lblTitle);
-            card.Controls.Add(lblAuthor);
+            //card.Controls.Add(lblAuthor);
             card.Controls.Add(lblStatus);
             return card;
         }
 
 
-        private void ShowBookDetails(string isbn, string title, string author, string status, Image cover)
+        private void ShowBookDetails(string isbn, string title, string author, string status, Image cover, string category)
         {
             // Example: simple pop-up (you can replace this with a custom form later)
             Form detailsForm = new Form
@@ -527,6 +569,16 @@ namespace Library_Management_System.User_Control_Student
             };
             detailsForm.Controls.Add(lblStatus);
 
+            Label lblCategory = new Label
+            {
+                Text = $"Category: {category}",
+                Font = new Font("Segoe UI", 9, FontStyle.Italic),
+                AutoSize = false,
+                Width = 350,
+                Location = new Point(20, 380)
+            };
+            detailsForm.Controls.Add(lblCategory);
+
             Label lblISBN = new Label
             {
                 Text = $"ISBN: {isbn}",
@@ -542,7 +594,7 @@ namespace Library_Management_System.User_Control_Student
                 Text = "Close",
                 Width = 100,
                 Height = 35,
-                Location = new Point((detailsForm.ClientSize.Width - 100) / 2, 400),
+                Location = new Point((detailsForm.ClientSize.Width - 100) / 2, 410),
                 BackColor = Color.LightGray,
                 FlatStyle = FlatStyle.Flat
             };
@@ -640,5 +692,49 @@ namespace Library_Management_System.User_Control_Student
         {
 
         }
+
+        private void LoadCategoryComboBox()
+        {
+            // Clear existing items first
+            comboBox1.Items.Clear();
+
+            // Add categories
+            string[] categories = new string[]
+            {
+        "All",
+        "Computers",
+        "Mathematics",
+        "Science",
+        "History",
+        "Fiction",
+        "Romance"
+            };
+
+            comboBox1.Items.AddRange(categories);
+
+            // Set default selected item
+            comboBox1.SelectedIndex = 0; // "All"
+        }
+
+        private void LoadSortComboBox()
+        {
+            // Clear existing items first
+            comboBox2.Items.Clear();
+
+            // Add sort options
+            string[] sortOptions = new string[]
+            {
+         "Default",
+        "Title (A-Z)",
+        "Title (Z-A)",
+        "Most Borrowed"
+            };
+
+            comboBox2.Items.AddRange(sortOptions);
+
+            // Set default selected item
+            comboBox2.SelectedIndex = 0; // "Title (A-Z)"
+        }
+
     }
 }
