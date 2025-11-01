@@ -97,7 +97,7 @@ namespace Library_Management_System.Forms
             this.btnAvailableCopies.Name = "btnAvailableCopies";
             this.btnAvailableCopies.Size = new System.Drawing.Size(177, 48);
             this.btnAvailableCopies.TabIndex = 5;
-            this.btnAvailableCopies.Text = "Available Copies";
+            this.btnAvailableCopies.Text = "Book Hub";
             this.btnAvailableCopies.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.btnAvailableCopies.UseVisualStyleBackColor = false;
             this.btnAvailableCopies.Click += new System.EventHandler(this.btnAvailableCopies_Click);
@@ -178,6 +178,7 @@ namespace Library_Management_System.Forms
             // 
             // panelContent
             // 
+            this.panelContent.BackColor = System.Drawing.Color.WhiteSmoke;
             this.panelContent.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelContent.Location = new System.Drawing.Point(215, 0);
             this.panelContent.Name = "panelContent";

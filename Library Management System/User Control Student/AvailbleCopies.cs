@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.InteropServices;
@@ -12,6 +13,7 @@ using System.Windows.Forms;
 using LibraryManagementSystem.Data;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Drawing.Drawing2D;
 
 namespace Library_Management_System.User_Control_Student
 {
@@ -42,10 +44,42 @@ namespace Library_Management_System.User_Control_Student
             {
                 _studentNo = value;
                 LoadAvailableCopies();
+
+                // 🧾 Load student full name
+                string fullName = GetFullNameFromDatabase(_studentNo);
+                foreach (Control ctrl in Controls)
+                {
+                    if (ctrl is Label lbl && lbl.Font.Bold && lbl.Font.Size == 10)
+                    {
+                        lbl.Text = fullName;
+                        break;
+                    }
+                }
+
             }
         }
+       
 
-        public AvailbleCopies()
+private void MakeButtonRounded(Button btn, float radiusPercent = 0.02f)
+    {
+        if (btn.Width <= 0 || btn.Height <= 0)
+            return; // avoid invalid size
+
+        int minDimension = Math.Min(btn.Width, btn.Height);
+        int radius = Math.Max(2, (int)(minDimension * radiusPercent)); // minimum 2px radius
+
+        GraphicsPath path = new GraphicsPath();
+        path.AddArc(0, 0, radius * 2, radius * 2, 180, 90); // Top-left
+        path.AddArc(btn.Width - radius * 2, 0, radius * 2, radius * 2, 270, 90); // Top-right
+        path.AddArc(btn.Width - radius * 2, btn.Height - radius * 2, radius * 2, radius * 2, 0, 90); // Bottom-right
+        path.AddArc(0, btn.Height - radius * 2, radius * 2, radius * 2, 90, 90); // Bottom-left
+        path.CloseAllFigures();
+
+        btn.Region = new Region(path);
+    }
+
+
+    public AvailbleCopies()
         {
             InitializeComponent();
 
@@ -57,7 +91,7 @@ namespace Library_Management_System.User_Control_Student
             comboBox1.SelectedIndexChanged += (s, e) => RunSearchNow();
             comboBox2.SelectedIndexChanged += (s, e) => RunSearchNow();
 
-            SendMessage(textBox1.Handle, EM_SETCUEBANNER, 0, "Search books...");
+            SendMessage(textBox1.Handle, EM_SETCUEBANNER, 0, "  Search books...");
             textBox1.KeyDown += txtSearch_KeyDown;
             textBox1.TextChanged += (s, e) => PerformSearch();
 
@@ -72,7 +106,7 @@ namespace Library_Management_System.User_Control_Student
             {
                 Dock = DockStyle.Fill,
                 Padding = new Padding(0, 150, 0, 0), // 👈 adds 100px top space
-                BackColor = Color.Gainsboro
+                BackColor = Color.WhiteSmoke
             };
 
             flowBooks = new FlowLayoutPanel
@@ -81,12 +115,86 @@ namespace Library_Management_System.User_Control_Student
                 AutoScroll = true,
                 WrapContents = true,
                 Padding = new Padding(20),
-                BackColor = Color.Gainsboro
+                BackColor = Color.WhiteSmoke
             };
 
             container.Controls.Add(flowBooks);
             Controls.Add(container);
+
+            // 👤 User profile icon
+            PictureBox picProfile = new PictureBox
+            {
+                Image = Properties.Resources.profile1, // add this image to your resources
+                SizeMode = PictureBoxSizeMode.Zoom,
+                Size = new Size(32, 32),
+                Location = new Point(this.Width - 60, 12), // top right corner
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                Cursor = Cursors.Hand,
+                BackColor = Color.Transparent
+            };
+            Controls.Add(picProfile);
+            picProfile.BringToFront();
+
+            // 🏷️ Label for full name
+            Label lblFullName = new Label
+            {
+                AutoSize = true,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                ForeColor = Color.Black,
+                Location = new Point(picProfile.Left - 115, 19), // adjust spacing beside the icon
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                BackColor = Color.Transparent
+            };
+            Controls.Add(lblFullName);
+            lblFullName.BringToFront();
+
+
+            // 🔔 Notification (bell) icon
+            PictureBox picBell = new PictureBox
+            {
+                Image = Properties.Resources.notif1,
+                SizeMode = PictureBoxSizeMode.Zoom,
+                Size = new Size(26, 26),
+                Cursor = Cursors.Hand,
+                BackColor = Color.Transparent
+            };
+            Controls.Add(picBell);
+            picBell.BringToFront();
+
+            // Reposition when form resizes
+            this.Resize += (s, e) =>
+            {
+                int profileX = this.Width - 50; // assume profile icon is 50px from right edge
+                int bellX = profileX - (int)(0.12 * this.Width); // 10% of form width to the left
+                picBell.Location = new Point(bellX, 12);
+                picProfile.Location = new Point(this.Width - 60, 10);
+            };
         }
+
+        private string GetFullNameFromDatabase(string studentNo)
+        {
+            try
+            {
+                using (var con = Db.GetConnection())
+                {
+                    con.Open();
+                    string query = "SELECT FirstName || ' ' || LastName AS FullName FROM Members WHERE StudentNo = @studentNo";
+                    using (var cmd = new SQLiteCommand(query, con))
+                    {
+                        cmd.Parameters.AddWithValue("@studentNo", studentNo);
+                        var result = cmd.ExecuteScalar();
+                        return result?.ToString() ?? "Unknown User";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading full name: " + ex.Message);
+                return "Error";
+            }
+        }
+
+
 
         // 🧠 Real-time search with debounce
         private void PerformSearch()
@@ -441,25 +549,26 @@ namespace Library_Management_System.User_Control_Student
             }
         }
 
-        private Panel AddBookCard(string title, string author, string status, Image cover, string isbn = null, string category = "")
+        private Panel AddBookCard(string title, string author, string status, Image cover, string isbn = null, string category = "", Image profileIcon = null)
         {
             Panel card = new Panel
             {
-                Width = 160,
-                Height = 280,
+                Width = 230,
+                Height = 360, // a little taller to fit buttons
                 Margin = new Padding(10),
                 BorderStyle = BorderStyle.FixedSingle,
                 BackColor = Color.WhiteSmoke
             };
 
+            // Book cover
             PictureBox pic = new PictureBox
             {
-                Width = 150,
-                Height = 200,
-                Image = Properties.Resources.admin, // smoother scroll
+                Width = 220,
+                Height = 220,
+                Image = Properties.Resources.admin, // placeholder
                 SizeMode = PictureBoxSizeMode.Zoom,
                 Location = new Point(5, 5),
-                Cursor = Cursors.Hand // 👈 makes it look clickable
+                Cursor = Cursors.Hand
             };
 
             Task.Run(() =>
@@ -468,53 +577,83 @@ namespace Library_Management_System.User_Control_Student
                     SafeInvoke(card, () => pic.Image = cover);
             });
 
-            // 👇 Add click event for the book image
             pic.Click += (s, e) =>
             {
                 ShowBookDetails(isbn, title, author, status, cover, category);
             };
 
+            // Title label
             Label lblTitle = new Label
             {
                 Text = title,
                 Font = new Font("Segoe UI", 9, FontStyle.Bold),
                 AutoSize = false,
-                Width = 150,
+                Width = 200,
                 Height = 35,
-                Location = new Point(5, 220),
+                Location = new Point(15, 230),
                 TextAlign = ContentAlignment.MiddleCenter
             };
 
-            //Label lblAuthor = new Label
-            //{
-            //    Text = author,
-            //    Font = new Font("Segoe UI", 8),
-            //    ForeColor = Color.Gray,
-            //    AutoSize = false,
-            //    Width = 150,
-            //    Height = 20,
-            //    Location = new Point(5, 240),
-            //    TextAlign = ContentAlignment.MiddleCenter
-            //};
-
+            // Status label
             Label lblStatus = new Label
             {
                 Text = status,
                 Font = new Font("Segoe UI", 8, FontStyle.Bold),
                 ForeColor = status == "Available" ? Color.Green : Color.Red,
                 AutoSize = false,
-                Width = 150,
+                Width = 200,
                 Height = 20,
-                Location = new Point(5, 255),
+                Location = new Point(15, 265),
                 TextAlign = ContentAlignment.MiddleCenter
             };
 
+            // View Details button
+            Button btnView = new Button
+            {
+                Text = "View Details",
+                Width = 90,
+                Height = 28,
+                Location = new Point(20, 290),
+                BackColor = Color.LightBlue,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand
+            };
+            btnView.FlatAppearance.BorderColor = Color.FromArgb(64, 64, 64); // light black
+            btnView.FlatAppearance.BorderSize = 0;
+            btnView.Click += (s, e) => ShowBookDetails(isbn, title, author, status, cover, category);
+
+            // Reserve button
+            Button btnReserve = new Button
+            {
+                Text = "Reserve",
+                Width = 90,
+                Height = 28,
+                Location = new Point(120, 290),
+                BackColor = Color.LightGreen,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand
+            };
+            btnReserve.FlatAppearance.BorderColor = Color.FromArgb(64, 64, 64); // light black
+            btnReserve.FlatAppearance.BorderSize = 0;
+            btnReserve.Click += (s, e) =>
+            {
+                if (status == "Available")
+                    MessageBox.Show($"You have reserved {title}!", "Reserved", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                else
+                    MessageBox.Show($"Sorry, {title} is currently unavailable.", "Cannot Reserve", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            };
+
+            // Apply rounded corners AFTER button has a valid size
+            MakeButtonRounded(btnView);
+            MakeButtonRounded(btnReserve);
             card.Controls.Add(pic);
             card.Controls.Add(lblTitle);
-            //card.Controls.Add(lblAuthor);
             card.Controls.Add(lblStatus);
+            card.Controls.Add(btnView);
+            card.Controls.Add(btnReserve);
             return card;
         }
+
 
 
         private void ShowBookDetails(string isbn, string title, string author, string status, Image cover, string category)
@@ -596,10 +735,13 @@ namespace Library_Management_System.User_Control_Student
                 Height = 35,
                 Location = new Point((detailsForm.ClientSize.Width - 100) / 2, 410),
                 BackColor = Color.LightGray,
-                FlatStyle = FlatStyle.Flat
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand
             };
+            btnClose.FlatAppearance.BorderSize = 0;
             btnClose.Click += (s, e) => detailsForm.Close();
             detailsForm.Controls.Add(btnClose);
+            MakeButtonRounded(btnClose);
 
             detailsForm.ShowDialog();
         }
