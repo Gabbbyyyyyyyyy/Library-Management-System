@@ -730,7 +730,11 @@ namespace Library_Management_System.User_Control
                             FROM Penalties
                             WHERE Status = 'Unpaid'
                         ";
-                    lblUnpaid.Text = "₱" + new SQLiteCommand(sqlUnpaid, con).ExecuteScalar().ToString();
+                    using (var cmd = new SQLiteCommand(sqlUnpaid, con))
+                    {
+                        decimal totalUnpaid = Convert.ToDecimal(cmd.ExecuteScalar());
+                        lblUnpaid.Text = $"₱{totalUnpaid:N2}";
+                    }
 
                     // Period
                     lblPeriod.Text = DateTime.Now.ToString("MMMM yyyy");

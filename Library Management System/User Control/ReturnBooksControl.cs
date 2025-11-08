@@ -15,10 +15,8 @@ namespace Library_Management_System.User_Control
         public ReturnBooksControl()
         {
             InitializeComponent();
-            // 🔹 Set column header font to size 10
-            dgvBorrowedBooks.EnableHeadersVisualStyles = false; // ensures your font change is applied
+            dgvBorrowedBooks.EnableHeadersVisualStyles = false;
             dgvBorrowedBooks.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
-
 
             LoadBorrowedBooks();
 
@@ -47,42 +45,32 @@ namespace Library_Management_System.User_Control
                 ORDER BY br.DueDate ASC;
             ");
 
-            // Compute penalties dynamically
             foreach (DataRow row in dt.Rows)
             {
                 if (row["DueDate"] != DBNull.Value)
                 {
                     DateTime dueDate = Convert.ToDateTime(row["DueDate"]);
-                    DateTime returnDate = row["ReturnDate"] == DBNull.Value ? DateTime.Now : Convert.ToDateTime(row["ReturnDate"]);
+                    DateTime? returnDate = row["ReturnDate"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(row["ReturnDate"]);
 
-                    // Fine starts 1 hour after due date
-                    DateTime fineStart = dueDate.AddHours(1);
+                    double totalPenalty;
+                    int daysOverdue;
+                    int hoursOverdue;
 
-                    double totalPenalty = 0;
-
-                    if (returnDate > fineStart)
-                    {
-                        TimeSpan diff = returnDate - fineStart;
-
-                        int totalHours = (int)Math.Floor(diff.TotalHours);
-                        int totalDays = (int)Math.Floor(diff.TotalDays);
-
-                        totalPenalty = (totalHours * 2) + (totalDays * 10);
-                    }
-
+                    PenaltyHelper.CalculatePenalty(dueDate, returnDate, out totalPenalty, out daysOverdue, out hoursOverdue);
                     row["Penalty"] = totalPenalty;
+
                 }
             }
 
             dgvBorrowedBooks.DataSource = dt;
 
-            // Optional: Auto-format Penalty column
             if (dgvBorrowedBooks.Columns.Contains("Penalty"))
             {
                 dgvBorrowedBooks.Columns["Penalty"].DefaultCellStyle.Format = "₱0.00";
                 dgvBorrowedBooks.Columns["Penalty"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             }
 
+            dgvBorrowedBooks.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill; // auto-fit columns
             dgvBorrowedBooks.ClearSelection();
         }
 
@@ -105,8 +93,12 @@ namespace Library_Management_System.User_Control
             DateTime dueDate = Convert.ToDateTime(sel.Cells["DueDate"].Value);
             DateTime returnDate = DateTime.Now;
 
-            // ✅ Use PenaltyHelper
-            PenaltyHelper.CalculatePenalty(dueDate, returnDate, out double totalPenalty, out int daysOverdue);
+            double totalPenalty;
+            int daysOverdue;
+            int hoursOverdue;
+
+            PenaltyHelper.CalculatePenalty(dueDate, returnDate, out totalPenalty, out daysOverdue, out hoursOverdue);
+
 
             using (var conn = Db.GetConnection())
             {
@@ -115,7 +107,6 @@ namespace Library_Management_System.User_Control
                 {
                     try
                     {
-                        // Update Borrowings table
                         using (var cmd = new SQLiteCommand("UPDATE Borrowings SET Status='Accepted', ReturnDate=@r, Penalty=@p WHERE BorrowId=@id", conn))
                         {
                             cmd.Parameters.AddWithValue("@id", borrowId);
@@ -124,7 +115,6 @@ namespace Library_Management_System.User_Control
                             cmd.ExecuteNonQuery();
                         }
 
-                        // Insert penalty record only if >0 and not exists
                         if (totalPenalty > 0)
                         {
                             int memberId = Convert.ToInt32(DatabaseHelper.ExecuteScalar(
@@ -153,7 +143,6 @@ namespace Library_Management_System.User_Control
                             }
                         }
 
-                        // Increment available copies
                         using (var cmd3 = new SQLiteCommand("UPDATE Books SET AvailableCopies = AvailableCopies + 1 WHERE BookId=@b", conn))
                         {
                             cmd3.Parameters.AddWithValue("@b", bookId);
@@ -161,27 +150,23 @@ namespace Library_Management_System.User_Control
                         }
 
                         trans.Commit();
-                        MessageBox.Show("✅ Book return accepted! Penalty recorded: ₱" + totalPenalty.ToString("0.00"));
+                        MessageBox.Show($"✅ Book return accepted!\nPenalty recorded: ₱{totalPenalty:0.00}");
                         LoadBorrowedBooks();
 
-                        PenaltyUpdated?.Invoke(); // 🔔 Notify dashboard
-
-                        // 🔄 Update Penalties table dynamically
+                        PenaltyUpdated?.Invoke();
                         Penalties.SyncPenaltiesFromBorrowings();
 
-                        // 🔄 Refresh dashboard immediately
                         var dashboard = this.Parent?.Controls["DashboardControl"] as DashboardControl;
                         dashboard?.RefreshPenaltySummary();
                     }
                     catch (Exception ex)
                     {
                         trans.Rollback();
-                        MessageBox.Show("❌ Error while recording return:\n" + ex.Message);
+                        MessageBox.Show("⚠️ Something went wrong while processing the return.\n\nDetails: " + ex.Message);
                     }
                 }
             }
         }
-
 
         private void btnReturn_Click(object sender, EventArgs e)
         {
@@ -190,6 +175,9 @@ namespace Library_Management_System.User_Control
                 MessageBox.Show("⚠️ Please select a book to mark as returned.");
                 return;
             }
+
+            if (MessageBox.Show("Confirm marking this book as returned?", "Confirm Return",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No) return;
 
             var selectedRow = dgvBorrowedBooks.SelectedRows[0];
             int borrowId = Convert.ToInt32(selectedRow.Cells["BorrowId"].Value);
@@ -202,30 +190,23 @@ namespace Library_Management_System.User_Control
                 {
                     try
                     {
-                        // 1️⃣ Mark Borrowing as returned
-                        using (var cmd = new SQLiteCommand(
-                            "UPDATE Borrowings SET Status = 'Returned', ReturnDate = @r WHERE BorrowId = @id", conn))
+                        using (var cmd = new SQLiteCommand("UPDATE Borrowings SET Status = 'Returned', ReturnDate = @r WHERE BorrowId = @id", conn))
                         {
                             cmd.Parameters.AddWithValue("@r", DateTime.Now);
                             cmd.Parameters.AddWithValue("@id", borrowId);
                             cmd.ExecuteNonQuery();
                         }
 
-                        // 2️⃣ Update Book copies
-                        using (var cmd2 = new SQLiteCommand(
-                            "UPDATE Books SET AvailableCopies = AvailableCopies + 1 WHERE BookId = @b", conn))
+                        using (var cmd2 = new SQLiteCommand("UPDATE Books SET AvailableCopies = AvailableCopies + 1 WHERE BookId = @b", conn))
                         {
                             cmd2.Parameters.AddWithValue("@b", bookId);
                             cmd2.ExecuteNonQuery();
                         }
 
-                        // 3️⃣ Fetch MemberId, DueDate, Penalty from Borrowings
                         int memberId;
-                        double penalty;
                         DateTime dueDate;
 
-                        using (var cmdMember = new SQLiteCommand(
-                            "SELECT MemberId, DueDate, Penalty FROM Borrowings WHERE BorrowId = @id", conn))
+                        using (var cmdMember = new SQLiteCommand("SELECT MemberId, DueDate FROM Borrowings WHERE BorrowId = @id", conn))
                         {
                             cmdMember.Parameters.AddWithValue("@id", borrowId);
                             using (var reader = cmdMember.ExecuteReader())
@@ -235,83 +216,85 @@ namespace Library_Management_System.User_Control
 
                                 memberId = Convert.ToInt32(reader["MemberId"]);
                                 dueDate = Convert.ToDateTime(reader["DueDate"]);
-                                penalty = Convert.ToDouble(reader["Penalty"]);
                             }
                         }
 
-                        // 4️⃣ Calculate overdue days and update Penalties
-                        int daysOverdue = (int)Math.Ceiling((DateTime.Now - dueDate).TotalDays);
+                        double penalty;
+                        int daysOverdue;
+                        int hoursOverdue;
 
-                        if (daysOverdue > 0) // Only mark Paid if overdue
+                        PenaltyHelper.CalculatePenalty(dueDate, DateTime.Now, out penalty, out daysOverdue, out hoursOverdue);
+
+
+                        if (daysOverdue > 0)
                         {
-                            using (var cmd3 = new SQLiteCommand(conn))
+                            using (var checkCmd = new SQLiteCommand("SELECT COUNT(*) FROM Penalties WHERE BorrowId = @borrowId", conn))
                             {
-                                // Check if penalty already exists
-                                cmd3.CommandText = "SELECT COUNT(*) FROM Penalties WHERE BorrowId = @borrowId";
-                                cmd3.Parameters.AddWithValue("@borrowId", borrowId);
-                                long exists = (long)cmd3.ExecuteScalar();
+                                checkCmd.Parameters.AddWithValue("@borrowId", borrowId);
+                                long exists = (long)checkCmd.ExecuteScalar();
 
                                 if (exists == 0)
                                 {
-                                    // Insert new penalty
-                                    cmd3.CommandText = @"
-                                INSERT INTO Penalties 
-                                (BorrowId, MemberId, Amount, DaysOverdue, Status, PaidDate)
-                                VALUES (@borrowId, @memberId, @amount, @daysOverdue, 'Paid', @paidDate)
-                            ";
-                                    cmd3.Parameters.AddWithValue("@memberId", memberId);
-                                    cmd3.Parameters.AddWithValue("@amount", penalty);
-                                    cmd3.Parameters.AddWithValue("@daysOverdue", daysOverdue);
-                                    cmd3.Parameters.AddWithValue("@paidDate", DateTime.Now);
-                                    cmd3.ExecuteNonQuery();
+                                    using (var insertCmd = new SQLiteCommand(@"
+                                            INSERT INTO Penalties 
+                                            (BorrowId, MemberId, Amount, DaysOverdue, Status, PaidDate)
+                                            VALUES (@borrowId, @memberId, @amount, @daysOverdue, 'Paid', @paidDate)", conn))
+                                    {
+                                        insertCmd.Parameters.AddWithValue("@borrowId", borrowId);
+                                        insertCmd.Parameters.AddWithValue("@memberId", memberId);
+                                        insertCmd.Parameters.AddWithValue("@amount", penalty); // ✅ use calculated penalty
+                                        insertCmd.Parameters.AddWithValue("@daysOverdue", daysOverdue);
+                                        insertCmd.Parameters.AddWithValue("@paidDate", DateTime.Now);
+                                        insertCmd.ExecuteNonQuery();
+                                    }
                                 }
                                 else
                                 {
-                                    // Update existing penalty
-                                    cmd3.CommandText = @"
-                                UPDATE Penalties
-                                SET Status = 'Paid',
-                                    PaidDate = @paidDate,
-                                    
-                                    DaysOverdue = @daysOverdue
-                                WHERE BorrowId = @borrowId
-                            ";
-                                  
-                                    cmd3.Parameters.AddWithValue("@daysOverdue", daysOverdue);
-                                    cmd3.Parameters.AddWithValue("@paidDate", DateTime.Now);
-                                    cmd3.ExecuteNonQuery();
+                                    using (var updateCmd = new SQLiteCommand(@"
+            UPDATE Penalties
+            SET Status = 'Paid',
+                PaidDate = @paidDate,
+                DaysOverdue = @daysOverdue,
+                Amount = @amount  -- ✅ update penalty here
+            WHERE BorrowId = @borrowId", conn))
+                                    {
+                                        updateCmd.Parameters.AddWithValue("@borrowId", borrowId);
+                                        updateCmd.Parameters.AddWithValue("@daysOverdue", daysOverdue);
+                                        updateCmd.Parameters.AddWithValue("@paidDate", DateTime.Now);
+                                        updateCmd.Parameters.AddWithValue("@amount", penalty); // ✅ update penalty
+                                        updateCmd.ExecuteNonQuery();
+                                    }
                                 }
                             }
+
+                            // Also update Borrowings.Penalty to be sure
+                            using (var updateBorrowing = new SQLiteCommand("UPDATE Borrowings SET Penalty=@p WHERE BorrowId=@id", conn))
+                            {
+                                updateBorrowing.Parameters.AddWithValue("@p", penalty);
+                                updateBorrowing.Parameters.AddWithValue("@id", borrowId);
+                                updateBorrowing.ExecuteNonQuery();
+                            }
+
+                            trans.Commit();
+                            dgvBorrowedBooks.Rows.Remove(selectedRow);
+
+                            MessageBox.Show("✅ Book successfully marked as returned!");
+
+                            var dashboard = this.Parent?.Controls["DashboardControl"] as DashboardControl;
+                            dashboard?.RefreshPenaltySummary();
                         }
-
-                        trans.Commit();
-                        dgvBorrowedBooks.Rows.Remove(selectedRow);
-
-                        MessageBox.Show("✅ Book successfully marked as returned!");
-
-                        // 🔄 Refresh Penalties summary dynamically
-                        var dashboard = this.Parent?.Controls["DashboardControl"] as DashboardControl;
-                        dashboard?.RefreshPenaltySummary();
                     }
                     catch (Exception ex)
                     {
                         trans.Rollback();
-                        MessageBox.Show("❌ Error while returning book:\n" + ex.Message);
+                        MessageBox.Show("⚠️ Something went wrong while processing the return.\n\nDetails: " + ex.Message);
                     }
                 }
             }
         }
 
-
-
-        private void lblMessage_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void dgvBorrowedBooks_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-
-        }
+        private void lblMessage_Click(object sender, EventArgs e) { }
+        private void dgvBorrowedBooks_CellContentClick(object sender, DataGridViewCellEventArgs e) { }
+        private void ReturnBooksControl_Load(object sender, EventArgs e) { }
     }
 }

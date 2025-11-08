@@ -78,6 +78,7 @@
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "ReturnBooksControl";
             this.Size = new System.Drawing.Size(1855, 811);
+            this.Load += new System.EventHandler(this.ReturnBooksControl_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvBorrowedBooks)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
