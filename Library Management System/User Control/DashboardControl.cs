@@ -1215,7 +1215,7 @@ namespace Library_Management_System.User_Control
             {
                 e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
                 int shadowOffset = 4;
-                int shadowBlur = 6;
+                //int shadowBlur = 6;
 
                 Rectangle rect = new Rectangle(0, 0, pictureBox.Width - 1, pictureBox.Height - 1);
 
