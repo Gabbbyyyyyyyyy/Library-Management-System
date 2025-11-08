@@ -68,6 +68,7 @@ namespace Library_Management_System
         public MainForm()
         {
             InitializeComponent();
+            this.Shown += MainForm_Shown; // add this
             this.Dock = DockStyle.Fill;
             this.Size = Screen.PrimaryScreen.Bounds.Size;
             this.Location = Screen.PrimaryScreen.Bounds.Location;
@@ -86,12 +87,10 @@ namespace Library_Management_System
             this.Controls.Add(this.pictureBoxLogo);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLogo)).EndInit();
             this.ResumeLayout(false);
-
-          
-
-
-
-
+        }
+        private void MainForm_Shown(object sender, EventArgs e)
+        {
+            SetActiveButton(btnDashboard);
         }
 
         private void UpdateBottomSpacer()
@@ -262,6 +261,9 @@ namespace Library_Management_System
             sidebarIndicator.BackColor = Color.FromArgb(165, 105, 79); // Coffee brown
             sidebarIndicator.Visible = false;
             panel1.Controls.Add(sidebarIndicator);
+            // Pre-select dashboard button on login
+            SetActiveButton(btnDashboard);
+
 
 
 
@@ -423,6 +425,9 @@ namespace Library_Management_System
             if (panel1.Controls.Contains(button1)) panel1.Controls.SetChildIndex(button1, 8);
             if (panel1.Controls.Contains(btnDashboard)) panel1.Controls.SetChildIndex(btnDashboard, 9);
             if (panel1.Controls.Contains(pictureBoxLogo)) panel1.Controls.SetChildIndex(pictureBoxLogo, 10);
+
+            // ✅ Move dashboard indicator after all layout changes
+            SetActiveButton(btnDashboard);
 
             // === Add bottom spacer ===
             //bottomSpacer = new Panel();
@@ -602,8 +607,13 @@ namespace Library_Management_System
 
         private void pictureBox1_Click(object sender, EventArgs e)
         {
-            LoadControl(new DashboardControl());
+            // Set the Dashboard button as active
+            SetActiveButton(btnDashboard);
+
+            // Load the existing Dashboard instance
+            LoadControl(DashboardInstance);
         }
+
 
         private void label6_Click(object sender, EventArgs e)
         {
