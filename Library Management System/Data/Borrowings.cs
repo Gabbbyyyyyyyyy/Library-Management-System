@@ -60,23 +60,24 @@ namespace LibraryManagementSystem.Data
             {
                 con.Open();
 
-                // Insert new borrowing record with the current timestamp for BorrowDate
                 string query = @"
             INSERT INTO Borrowings (MemberId, BookId, BorrowDate, DueDate, Status)
-            VALUES (@MemberId, @BookId, CURRENT_TIMESTAMP, @DueDate, 'Borrowed');
+            VALUES (@MemberId, @BookId, @BorrowDate, @DueDate, 'Borrowed');
         ";
 
                 using (var cmd = new SQLiteCommand(query, con))
                 {
                     cmd.Parameters.AddWithValue("@MemberId", memberId);
                     cmd.Parameters.AddWithValue("@BookId", bookId);
-                    cmd.Parameters.AddWithValue("@DueDate", dueDate);  // Example due date, could be calculated
+                    // Use full timestamp
+                    cmd.Parameters.AddWithValue("@BorrowDate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                    cmd.Parameters.AddWithValue("@DueDate", dueDate);
 
                     cmd.ExecuteNonQuery();
                 }
-
             }
         }
+
 
         public static void ReturnBook(int borrowId)
         {
@@ -86,7 +87,7 @@ namespace LibraryManagementSystem.Data
 
                 string query = @"
                     UPDATE Borrowings
-                    SET Status = 'Returned', ReturnDate = CURRENT_TIMESTAMP
+                    SET Status = 'Returned', ReturnDate = DATETIME('now', 'localtime')
                     WHERE BorrowId = @BorrowId";
 
 

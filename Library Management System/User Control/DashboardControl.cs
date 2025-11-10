@@ -43,6 +43,7 @@ namespace Library_Management_System.User_Control
             LoadRecentBorrowings();
             LoadMostBorrowedBooks();
 
+
             _userDisplayName = string.IsNullOrWhiteSpace(userDisplayName) ? "ADMIN" : userDisplayName;
 
             // Initialize greeting
@@ -55,7 +56,8 @@ namespace Library_Management_System.User_Control
 
             // Load stats
             LoadDashboardStats();
-          
+            SetupDashboardChart();
+
 
             // Auto-refresh stats every 10 seconds
             _statsTimer = new Timer { Interval = 5000 };
@@ -351,85 +353,91 @@ namespace Library_Management_System.User_Control
             Dictionary<double, string> xLabels = new Dictionary<double, string>();
             Dictionary<double, int> dataDict = new Dictionary<double, int>();
             string dataQuery = "";
+            string col = trend == "Borrowings" ? "BorrowDate" :
+                         trend == "Returns" ? "ReturnDate" : "DueDate";
+                        
+            string extra = trend == "Returns" ? "AND ReturnDate IS NOT NULL" :
+                           trend == "Overdue" ? "AND ReturnDate IS NULL" : "";
 
             using (SQLiteConnection con = Db.GetConnection())
             {
                 con.Open();
-
                 if (mode == "today")
                 {
+                    // Initialize labels 7 AM to 5 PM
                     for (int h = 7; h <= 17; h++)
                     {
                         xLabels[h] = h <= 12 ? h + " AM" : (h - 12) + " PM";
                         dataDict[h] = 0;
                     }
 
-                    if (trend == "Borrowings")
-                        dataQuery = "SELECT strftime('%H', BorrowDate) AS Hour, COUNT(*) AS Count FROM Borrowings WHERE DATE(BorrowDate) = DATE('now') GROUP BY strftime('%H', BorrowDate);";
-                    else if (trend == "Returns")
-                        dataQuery = "SELECT strftime('%H', ReturnDate) AS Hour, COUNT(*) AS Count FROM Borrowings WHERE ReturnDate IS NOT NULL AND DATE(ReturnDate) = DATE('now') GROUP BY strftime('%H', ReturnDate);";
-                    else // Overdue
-                        dataQuery = "SELECT strftime('%H', DueDate) AS Hour, COUNT(*) AS Count FROM Borrowings WHERE ReturnDate IS NULL AND DATE(DueDate) = DATE('now') GROUP BY strftime('%H', DueDate);";
+                    // Query for borrowings today, group by hour
+                    dataQuery = $@"
+                        SELECT CAST(strftime('%H', {col}) AS INTEGER) AS Key, COUNT(*) AS Count
+                        FROM Borrowings
+                        WHERE DATE({col}) = DATE('now')
+                          {extra}   -- optional: MemberID filter
+                        GROUP BY Key
+                        ORDER BY Key;
+                    ";
                 }
+
                 else if (mode == "week")
                 {
-                    string[] days = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+                    string[] days = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
                     for (int i = 0; i < days.Length; i++)
                     {
-                        xLabels[i + 1] = days[i];
-                        dataDict[i + 1] = 0;
+                        xLabels[i] = days[i];
+                        dataDict[i] = 0;
                     }
 
-                    string col = trend == "Borrowings" ? "BorrowDate" : trend == "Returns" ? "ReturnDate" : "DueDate";
-                    string extra = trend == "Returns" ? "AND ReturnDate IS NOT NULL" : trend == "Overdue" ? "AND ReturnDate IS NULL" : "";
-                    dataQuery = "SELECT CAST(strftime('%w', " + col + ") AS INTEGER) AS DayIndex, COUNT(*) AS Count FROM Borrowings WHERE strftime('%w', " + col + ") BETWEEN '1' AND '6' " + extra + " GROUP BY strftime('%w', " + col + ") ORDER BY strftime('%w', " + col + ");";
+                    dataQuery = $@"
+                SELECT CAST(strftime('%w', {col}) AS INTEGER) AS Key, COUNT(*) AS Count
+                FROM Borrowings
+                WHERE 1=1 {extra}
+                GROUP BY Key
+                ORDER BY Key;
+            ";
                 }
                 else // month
                 {
                     string[] months = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
-                    for (int i = 0; i < months.Length; i++)
+                    for (int i = 1; i <= months.Length; i++)
                     {
-                        xLabels[i + 1] = months[i];
-                        dataDict[i + 1] = 0;
+                        xLabels[i] = months[i - 1];
+                        dataDict[i] = 0;
                     }
 
-                    string col = trend == "Borrowings" ? "BorrowDate" : trend == "Returns" ? "ReturnDate" : "DueDate";
-                    string extra = trend == "Returns" ? "AND ReturnDate IS NOT NULL" : trend == "Overdue" ? "AND ReturnDate IS NULL" : "";
-                    dataQuery = "SELECT CAST(strftime('%m', " + col + ") AS INTEGER) AS MonthIndex, COUNT(*) AS Count FROM Borrowings WHERE 1=1 " + extra + " GROUP BY strftime('%m', " + col + ") ORDER BY strftime('%m', " + col + ");";
+                    dataQuery = $@"
+                SELECT CAST(strftime('%m', {col}) AS INTEGER) AS Key, COUNT(*) AS Count
+                FROM Borrowings
+                WHERE 1=1 {extra}
+                GROUP BY Key
+                ORDER BY Key;
+            ";
                 }
 
-                using (SQLiteCommand cmd = new SQLiteCommand(dataQuery, con))
+                using (var cmd = new SQLiteCommand(dataQuery, con))
+                using (var da = new SQLiteDataAdapter(cmd))
                 {
-                    using (SQLiteDataReader reader = cmd.ExecuteReader())
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
+
+                    foreach (DataRow row in dt.Rows)
                     {
-                        while (reader.Read())
-                        {
-                            double key = 0;
-
-                            if (mode == "today")
-                                key = reader["Hour"] != DBNull.Value ? Convert.ToDouble(reader["Hour"]) : 0;
-                            else if (mode == "week")
-                                key = reader["DayIndex"] != DBNull.Value ? Convert.ToDouble(reader["DayIndex"]) : 0;
-                            else
-                                key = reader["MonthIndex"] != DBNull.Value ? Convert.ToDouble(reader["MonthIndex"]) : 0;
-
-                            if (dataDict.ContainsKey(key))
-                                dataDict[key] = reader["Count"] != DBNull.Value ? Convert.ToInt32(reader["Count"]) : 0;
-                        }
-
+                        int hour = Convert.ToInt32(row["Key"]);
+                        int count = Convert.ToInt32(row["Count"]);
+                        if (dataDict.ContainsKey(hour))
+                            dataDict[hour] = count;
                     }
                 }
             }
 
-            // --- Clear previous series ---
+            // --- Chart series setup remains unchanged ---
             chartReports.Series.Clear();
 
-            // Determine color based on trend
-            Color mainColor = Color.FromArgb(205, 133, 63); // same warm coffee color for all trends
+            Color mainColor = Color.FromArgb(205, 133, 63);
 
-              
-
-            // --- Shadow Area ---
             Series shadow = new Series(trend + "_shadow")
             {
                 ChartType = SeriesChartType.SplineArea,
@@ -441,7 +449,6 @@ namespace Library_Management_System.User_Control
             };
             shadow["LineTension"] = "0.4";
 
-            // --- Main Line ---
             Series series = new Series(trend)
             {
                 ChartType = SeriesChartType.Spline,
@@ -464,7 +471,6 @@ namespace Library_Management_System.User_Control
             chartReports.Series.Add(shadow);
             chartReports.Series.Add(series);
 
-            // --- Configure X-axis dynamically ---
             ChartArea area = chartReports.ChartAreas["MainArea"];
             area.AxisX.CustomLabels.Clear();
             foreach (var kv in xLabels)
@@ -473,23 +479,16 @@ namespace Library_Management_System.User_Control
             area.AxisX.Minimum = xLabels.Keys.Min() - 0.5;
             area.AxisX.Maximum = xLabels.Keys.Max() + 0.5;
             area.AxisX.Interval = 1;
+            area.AxisX.Title = mode == "today" ? "Hour of Day" : "";
 
-            // --- X-axis title only for Today ---
-            if (mode == "today")
-                area.AxisX.Title = "Hour of Day";
-            else
-                area.AxisX.Title = ""; // clear title for week/month
-
-            // --- Y-axis auto-scale ---
             area.AxisY.Minimum = 0;
             area.AxisY.Maximum = Math.Max(10, dataDict.Values.Max() + 1);
 
-            // --- Title ---
             string title = mode == "today"
-                ? "📈 " + trend + " Today"
+                ? $"📈 {trend} Today"
                 : mode == "week"
-                    ? "📈 " + trend + " This Week"
-                    : "📈 " + trend + " This Month";
+                    ? $"📈 {trend} This Week"
+                    : $"📈 {trend} This Month";
 
             chartReports.Titles.Clear();
             chartReports.Titles.Add(title);
@@ -504,7 +503,7 @@ namespace Library_Management_System.User_Control
         private void DashboardControl_Load(object sender, EventArgs e)
         {
             // 📊 Initialize the borrowing activity chart (upper section)
-            SetupDashboardChart();
+           
 
             // 🔄 Sync penalties first
             Penalties.SyncPenaltiesFromBorrowings();
@@ -1135,8 +1134,11 @@ namespace Library_Management_System.User_Control
                 int borrowedBooks = Convert.ToInt32(new SQLiteCommand("SELECT COUNT(*) FROM Borrowings WHERE ReturnDate IS NULL", con).ExecuteScalar());
                 int availableBooks = totalBooks - borrowedBooks;
                 int activeMembers = Convert.ToInt32(new SQLiteCommand("SELECT COUNT(*) FROM Members WHERE IsActive = 1", con).ExecuteScalar());
-                int overdueBooks = Convert.ToInt32(new SQLiteCommand("SELECT COUNT(*) FROM Borrowings WHERE ReturnDate IS NULL AND DueDate < DATE('now')", con).ExecuteScalar());
-
+                int overdueBooks = Convert.ToInt32(
+                new SQLiteCommand(
+                     "SELECT COUNT(*) FROM Borrowings WHERE ReturnDate IS NULL AND DueDate < datetime('now')", con
+                 ).ExecuteScalar()
+             );
                 lblTotalBooks.Text = $"Total Books";
                 
                 lblBorrowedBooks.Text = $"Borrowed";

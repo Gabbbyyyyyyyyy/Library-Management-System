@@ -344,7 +344,10 @@ namespace Library_Management_System.User_Control
 
             // 🧾 Display member info
             lblMemberName.Text = row["FullName"].ToString();
-            lblDueDate.Text = "Due Date: " + DateTime.Now.AddDays(DefaultLoanDays).ToShortDateString();
+
+            // Set due date to tomorrow 8 AM
+            DateTime dueDate = DateTime.Now.Date.AddDays(DefaultLoanDays).AddHours(8);
+            lblDueDate.Text = "Due Date: " + dueDate.ToString("yyyy-MM-dd HH:mm tt");
 
             // 📚 Count currently borrowed books
             var dtCount = DatabaseHelper.Query(
@@ -398,9 +401,10 @@ namespace Library_Management_System.User_Control
                 lblMessage.Text = "Cannot issue this book. No copies available.";
                 return;
             }
-
-            DateTime borrowDate = DateTime.Now.Date;
-            DateTime dueDate = borrowDate.AddDays(DefaultLoanDays);
+            // Use full timestamp for BorrowDate, optional short date for DueDate
+            DateTime borrowDate = DateTime.Now;
+            // Set due date to tomorrow 8:00 AM
+            DateTime dueDate = borrowDate.Date.AddDays(1).AddHours(8);
 
             using (var conn = Db.GetConnection())
             {
@@ -412,8 +416,8 @@ namespace Library_Management_System.User_Control
                         cmd.CommandText = "INSERT INTO Borrowings (MemberID, BookID, BorrowDate, DueDate, Status) VALUES (@m,@b,@bd,@dd,'Borrowed')";
                         cmd.Parameters.AddWithValue("@m", currentMemberId);
                         cmd.Parameters.AddWithValue("@b", bookId);
-                        cmd.Parameters.AddWithValue("@bd", borrowDate.ToString("yyyy-MM-dd"));
-                        cmd.Parameters.AddWithValue("@dd", dueDate.ToString("yyyy-MM-dd"));
+                        cmd.Parameters.AddWithValue("@bd", borrowDate.ToString("yyyy-MM-dd HH:mm:ss")); // include time
+                        cmd.Parameters.AddWithValue("@dd", dueDate.ToString("yyyy-MM-dd HH:mm:ss"));     // include time
                         cmd.ExecuteNonQuery();
                     }
 

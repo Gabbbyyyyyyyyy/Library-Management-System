@@ -98,7 +98,7 @@ namespace Library_Management_System.User_Control
             INNER JOIN Books bks ON br.BookId = bks.BookId
             LEFT JOIN Penalties p ON br.BorrowId = p.BorrowId
             WHERE (br.Status = 'Returned' AND br.ReturnDate > br.DueDate) 
-               OR (br.Status = 'Borrowed' AND br.ReturnDate IS NULL AND DATE('now') > br.DueDate)
+                OR (br.Status = 'Borrowed' AND br.ReturnDate IS NULL AND datetime('now') > br.DueDate)
             ORDER BY br.DueDate DESC;
         ";
 
@@ -128,8 +128,15 @@ namespace Library_Management_System.User_Control
                             hoursOverdue = Convert.ToInt32(reader["HoursOverdueFromTable"]);
 
                         // 3️⃣ Create a single Overdue text
-                        string overdueText = daysOverdue > 0 ? $"{daysOverdue} days" :
-                                             hoursOverdue > 0 ? $"{hoursOverdue} hours" : "-";
+                        string overdueText;
+
+                        if (daysOverdue > 0)
+                            overdueText = $"{daysOverdue} days";  // show only days
+                        else if (hoursOverdue > 0)
+                            overdueText = $"{hoursOverdue} hours";  // show hours only if <1 day
+                        else
+                            overdueText = "-";
+
 
                         // 4️⃣ Determine status text
                         string status = returnDate.HasValue && returnDate.Value > dueDate ? "Returned Late" : "Borrowed";

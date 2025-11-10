@@ -64,7 +64,7 @@ namespace LibraryManagementSystem.Data
             {
                 con.Open();
 
-                // Make sure HoursOverdue column exists
+                // Ensure HoursOverdue column exists
                 EnsureColumnExists(con, "Penalties", "HoursOverdue", "INTEGER DEFAULT 0");
 
                 string query = @"
@@ -81,30 +81,17 @@ namespace LibraryManagementSystem.Data
                         int borrowId = Convert.ToInt32(reader["BorrowId"]);
                         int memberId = Convert.ToInt32(reader["MemberId"]);
                         DateTime dueDate = Convert.ToDateTime(reader["DueDate"]);
-                        DateTime currentOrReturnDate = reader["ReturnDate"] == DBNull.Value
-                            ? DateTime.Now
+                        DateTime? returnDate = reader["ReturnDate"] == DBNull.Value
+                            ? (DateTime?)null
                             : Convert.ToDateTime(reader["ReturnDate"]);
 
-                        TimeSpan overdue = currentOrReturnDate - dueDate;
+                        // Use PenaltyHelper to calculate library-hours-based penalty
+                        double penaltyAmount;
+                        int daysOverdue, hoursOverdue;
 
-                        if (overdue.TotalMinutes <= 0) continue;
+                        PenaltyHelper.CalculatePenalty(dueDate, returnDate, out penaltyAmount, out daysOverdue, out hoursOverdue);
 
-                        int daysOverdue = 0;
-                        int hoursOverdue = 0;
-                        double penaltyAmount = 0;
-
-                        if (overdue.TotalDays >= 1)
-                        {
-                            daysOverdue = (int)Math.Floor(overdue.TotalDays);
-                            penaltyAmount = daysOverdue * 10.0;
-                        }
-                        else
-                        {
-                            hoursOverdue = (int)Math.Ceiling(overdue.TotalHours);
-                            penaltyAmount = hoursOverdue * 2.0;
-                        }
-
-                        // Check if a record exists (even paid ones)
+                        // Insert or update Penalties table
                         string checkSql = "SELECT COUNT(*) FROM Penalties WHERE BorrowId=@borrowId";
                         using (var checkCmd = new SQLiteCommand(checkSql, con))
                         {
@@ -113,7 +100,6 @@ namespace LibraryManagementSystem.Data
 
                             if (exists == 0)
                             {
-                                // Insert new penalty
                                 string insertSql = @"
                             INSERT INTO Penalties (BorrowId, MemberId, Amount, DaysOverdue, HoursOverdue, Status)
                             VALUES (@borrowId, @memberId, @amount, @daysOverdue, @hoursOverdue, 'Unpaid')
@@ -130,7 +116,6 @@ namespace LibraryManagementSystem.Data
                             }
                             else
                             {
-                                // Update existing unpaid penalties
                                 string updateSql = @"
                             UPDATE Penalties
                             SET Amount=@amount, DaysOverdue=@daysOverdue, HoursOverdue=@hoursOverdue
