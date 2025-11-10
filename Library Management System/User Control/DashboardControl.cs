@@ -301,9 +301,10 @@ namespace Library_Management_System.User_Control
                     if (pt != lockedPoint) // only show hover label if not locked
                     {
                         pt.Label = pt.YValues[0].ToString();
-                        pt.LabelForeColor = Color.FromArgb(205, 133, 63);
+                        pt.LabelForeColor = Color.Black;
                         pt.LabelBackColor = Color.Transparent;
-                        pt.LabelBorderColor = Color.Black;
+                        // Change label border color to (205, 133, 63)
+                        pt.LabelBorderColor = Color.FromArgb(205, 133, 63);
                         pt.LabelBorderWidth = 1;
                     }
                 }
@@ -355,9 +356,9 @@ namespace Library_Management_System.User_Control
             string dataQuery = "";
             string col = trend == "Borrowings" ? "BorrowDate" :
                          trend == "Returns" ? "ReturnDate" : "DueDate";
-                        
+
             string extra = trend == "Returns" ? "AND ReturnDate IS NOT NULL" :
-                           trend == "Overdue" ? "AND ReturnDate IS NULL" : "";
+               trend == "Overdue" ? "AND ReturnDate IS NULL AND DueDate < DATETIME('now', 'localtime')" : "";
 
             using (SQLiteConnection con = Db.GetConnection())
             {
@@ -371,16 +372,33 @@ namespace Library_Management_System.User_Control
                         dataDict[h] = 0;
                     }
 
-                    // Query for borrowings today, group by hour
-                    dataQuery = $@"
-                        SELECT CAST(strftime('%H', {col}) AS INTEGER) AS Key, COUNT(*) AS Count
-                        FROM Borrowings
-                        WHERE DATE({col}) = DATE('now')
-                          {extra}   -- optional: MemberID filter
-                        GROUP BY Key
-                        ORDER BY Key;
-                    ";
+                    if (trend == "Borrowings" || trend == "Returns")
+                    {
+                        // Borrowings / Returns today
+                        dataQuery = $@"
+            SELECT CAST(strftime('%H', {col}) AS INTEGER) AS Key, COUNT(*) AS Count
+            FROM Borrowings
+            WHERE DATE({col}) = DATE('now')
+              {extra}
+            GROUP BY Key
+            ORDER BY Key;
+        ";
+                    }
+                    else if (trend == "Overdue")
+                    {
+                        // Overdue today
+                        dataQuery = $@"
+            SELECT CAST(strftime('%H', DueDate) AS INTEGER) AS Key, COUNT(*) AS Count
+            FROM Borrowings
+            WHERE ReturnDate IS NULL
+              AND DATE(DueDate) = DATE('now')
+              AND DueDate < DATETIME('now')
+            GROUP BY Key
+            ORDER BY Key;
+        ";
+                    }
                 }
+
 
                 else if (mode == "week")
                 {
@@ -449,27 +467,63 @@ namespace Library_Management_System.User_Control
             };
             shadow["LineTension"] = "0.4";
 
-            Series series = new Series(trend)
+            var seriesHalo = new Series(trend + "_halo")
+            {
+                ChartType = SeriesChartType.Point,
+                MarkerStyle = MarkerStyle.Circle,
+                MarkerSize = 20, // bigger halo
+                MarkerColor = Color.Transparent, // hollow inside
+                BorderColor = mainColor,         // color of the border
+                BorderWidth = 1,
+                IsVisibleInLegend = false
+            };
+
+            var seriesMain = new Series(trend)
             {
                 ChartType = SeriesChartType.Spline,
                 BorderWidth = 3,
-                MarkerStyle = trend == "Overdue" ? MarkerStyle.Diamond : MarkerStyle.Circle,
+                MarkerStyle = MarkerStyle.Circle,
                 MarkerSize = 8,
-                MarkerColor = Color.White,
+                MarkerColor = Color.White,    // small main circle
                 MarkerBorderColor = mainColor,
                 Color = mainColor,
                 IsVisibleInLegend = false
             };
-            series["LineTension"] = "0.4";
 
+            // --- Inner white circle ---
+            var seriesInner = new Series(trend + "_inner")
+            {
+                ChartType = SeriesChartType.Point,
+                MarkerStyle = MarkerStyle.Circle,
+                MarkerSize = 4,               // slightly smaller inner circle
+                MarkerColor = Color.White,    // white inside
+                MarkerBorderColor = mainColor, // thin border to match main color
+                BorderWidth = 1,
+                IsVisibleInLegend = false
+            };
+
+            seriesMain["LineTension"] = "0.4";
+
+            // --- Add points ---
             foreach (var kv in dataDict)
             {
                 shadow.Points.AddXY(kv.Key, kv.Value);
-                series.Points.AddXY(kv.Key, kv.Value);
+
+                if (kv.Value > 0)
+                {
+                    seriesHalo.Points.AddXY(kv.Key, kv.Value);
+                    seriesInner.Points.AddXY(kv.Key, kv.Value);
+                }
+
+                seriesMain.Points.AddXY(kv.Key, kv.Value);
             }
 
-            chartReports.Series.Add(shadow);
-            chartReports.Series.Add(series);
+            // --- Add series in order to match screenshot effect ---
+            chartReports.Series.Add(shadow);     // bottom
+            chartReports.Series.Add(seriesHalo); // halo
+            chartReports.Series.Add(seriesMain); // main circle
+            chartReports.Series.Add(seriesInner);// white inner circle
+
 
             ChartArea area = chartReports.ChartAreas["MainArea"];
             area.AxisX.CustomLabels.Clear();
