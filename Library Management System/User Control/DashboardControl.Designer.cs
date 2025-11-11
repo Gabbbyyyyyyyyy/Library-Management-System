@@ -42,6 +42,8 @@ namespace Library_Management_System.User_Control
             this.picOverdueBooks = new System.Windows.Forms.PictureBox();
             this.label2 = new System.Windows.Forms.Label();
             this.panelMostBorrowed = new System.Windows.Forms.Panel();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.button1 = new System.Windows.Forms.Button();
             this.pnlTotalBooks.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.picTotalBooks)).BeginInit();
             this.pnlBorrowedBooks.SuspendLayout();
@@ -52,6 +54,7 @@ namespace Library_Management_System.User_Control
             ((System.ComponentModel.ISupportInitialize)(this.picActiveMembers)).BeginInit();
             this.pnlOverdueBooks.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.picOverdueBooks)).BeginInit();
+            this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
             // lblGreeting
@@ -272,6 +275,7 @@ namespace Library_Management_System.User_Control
             this.pnlOverdueBooks.Name = "pnlOverdueBooks";
             this.pnlOverdueBooks.Size = new System.Drawing.Size(225, 91);
             this.pnlOverdueBooks.TabIndex = 10;
+            this.pnlOverdueBooks.Paint += new System.Windows.Forms.PaintEventHandler(this.pnlOverdueBooks_Paint);
             // 
             // lblOverdueBooksValue
             // 
@@ -294,6 +298,7 @@ namespace Library_Management_System.User_Control
             this.lblOverdueBooks.Size = new System.Drawing.Size(72, 20);
             this.lblOverdueBooks.TabIndex = 9;
             this.lblOverdueBooks.Text = "Overdue\r\n";
+            this.lblOverdueBooks.Click += new System.EventHandler(this.lblOverdueBooks_Click);
             // 
             // picOverdueBooks
             // 
@@ -327,9 +332,29 @@ namespace Library_Management_System.User_Control
             this.panelMostBorrowed.TabIndex = 15;
             this.panelMostBorrowed.Paint += new System.Windows.Forms.PaintEventHandler(this.panelMostBorrowed_Paint);
             // 
+            // panel1
+            // 
+            this.panel1.Controls.Add(this.button1);
+            this.panel1.Location = new System.Drawing.Point(1293, 44);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(200, 47);
+            this.panel1.TabIndex = 16;
+            // 
+            // button1
+            // 
+            this.button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button1.Location = new System.Drawing.Point(0, 3);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(200, 41);
+            this.button1.TabIndex = 0;
+            this.button1.Text = "Library Closed";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
             // DashboardControl
             // 
             this.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.Controls.Add(this.panel1);
             this.Controls.Add(this.panelMostBorrowed);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.lblGreeting);
@@ -357,6 +382,7 @@ namespace Library_Management_System.User_Control
             this.pnlOverdueBooks.ResumeLayout(false);
             this.pnlOverdueBooks.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.picOverdueBooks)).EndInit();
+            this.panel1.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -386,5 +412,7 @@ namespace Library_Management_System.User_Control
         private Label lblOverdueBooksValue;
         private Label label2;
         private Panel panelMostBorrowed;
+        private Panel panel1;
+        private Button button1;
     }
 }

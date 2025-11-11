@@ -10,6 +10,7 @@ using System.Drawing.Printing;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using Library_Management_System.Models;
 
 
 namespace Library_Management_System.User_Control
@@ -42,6 +43,7 @@ namespace Library_Management_System.User_Control
             InitializeRecentBorrowingsSection();
             LoadRecentBorrowings();
             LoadMostBorrowedBooks();
+
 
 
             _userDisplayName = string.IsNullOrWhiteSpace(userDisplayName) ? "ADMIN" : userDisplayName;
@@ -167,15 +169,15 @@ namespace Library_Management_System.User_Control
             btnReturns.Cursor = Cursors.Hand;
             btnReturns.FlatAppearance.BorderSize = 0;
 
-            btnOverdue = new Button();
-            btnOverdue.Text = "Overdue";
-            btnOverdue.Font = new Font("Microsoft Sans Serif", 9, FontStyle.Regular);
-            btnOverdue.FlatStyle = FlatStyle.Flat;
-            btnOverdue.BackColor = Color.White;
-            btnOverdue.ForeColor = Color.Black;
-            btnOverdue.Size = new Size(100, 28);
-            btnOverdue.Cursor = Cursors.Hand;
-            btnOverdue.FlatAppearance.BorderSize = 0;
+            //btnOverdue = new Button();
+            //btnOverdue.Text = "Overdue";
+            //btnOverdue.Font = new Font("Microsoft Sans Serif", 9, FontStyle.Regular);
+            //btnOverdue.FlatStyle = FlatStyle.Flat;
+            //btnOverdue.BackColor = Color.White;
+            //btnOverdue.ForeColor = Color.Black;
+            //btnOverdue.Size = new Size(100, 28);
+            //btnOverdue.Cursor = Cursors.Hand;
+            //btnOverdue.FlatAppearance.BorderSize = 0;
 
             // --- Layout ---
             int topOffset = lblReports.Bottom - 20;
@@ -191,11 +193,11 @@ namespace Library_Management_System.User_Control
             int trendTop = btnToday.Bottom + 10;
             btnBorrowings.Location = new Point(20, trendTop);
             btnReturns.Location = new Point(btnBorrowings.Right + 10, trendTop);
-            btnOverdue.Location = new Point(btnReturns.Right + 10, trendTop);
+            //btnOverdue.Location = new Point(btnReturns.Right + 10, trendTop);
 
             pnlChartContainer.Controls.Add(btnBorrowings);
             pnlChartContainer.Controls.Add(btnReturns);
-            pnlChartContainer.Controls.Add(btnOverdue);
+            //pnlChartContainer.Controls.Add(btnOverdue);
 
             // --- Chart ---
             chartReports = new Chart();
@@ -272,13 +274,13 @@ namespace Library_Management_System.User_Control
                 LoadChartData(_currentTimeRange, currentTrend);
             };
 
-            btnOverdue.Click += (s, e) =>
-            {
-                currentTrend = "Overdue";
-                HighlightTrendButton(btnOverdue);
-                HighlightButton(GetButtonByTimeRange(_currentTimeRange));
-                LoadChartData(_currentTimeRange, currentTrend);
-            };
+            //btnOverdue.Click += (s, e) =>
+            //{
+            //    currentTrend = "Overdue";
+            //    HighlightTrendButton(btnOverdue);
+            //    HighlightButton(GetButtonByTimeRange(_currentTimeRange));
+            //    LoadChartData(_currentTimeRange, currentTrend);
+            //};
 
 
             chartReports.MouseMove += (s, e) =>
@@ -294,6 +296,7 @@ namespace Library_Management_System.User_Control
                             pt.Label = "";
                     }
                 }
+
 
                 if (result.ChartElementType == ChartElementType.DataPoint)
                 {
@@ -347,9 +350,21 @@ namespace Library_Management_System.User_Control
             activeTrendButton = selected;
         }
 
+        private void ChartReports_GetToolTipText(object sender, ToolTipEventArgs e)
+        {
+            // Only respond when the user is hovering over a data point
+            if (e.HitTestResult.ChartElementType == ChartElementType.DataPoint)
+            {
+                DataPoint dp = e.HitTestResult.Series.Points[e.HitTestResult.PointIndex];
+                e.Text = dp.ToolTip; // <-- assign the tooltip text here
+            }
+        }
+
+
         private void LoadChartData(string mode, string trend = "Borrowings")
         {
             if (chartReports == null) return;
+            chartReports.GetToolTipText += ChartReports_GetToolTipText;
 
             Dictionary<double, string> xLabels = new Dictionary<double, string>();
             Dictionary<double, int> dataDict = new Dictionary<double, int>();
@@ -357,12 +372,30 @@ namespace Library_Management_System.User_Control
             string col = trend == "Borrowings" ? "BorrowDate" :
                          trend == "Returns" ? "ReturnDate" : "DueDate";
 
-            string extra = trend == "Returns" ? "AND ReturnDate IS NOT NULL" :
-               trend == "Overdue" ? "AND ReturnDate IS NULL AND DueDate < DATETIME('now', 'localtime')" : "";
+            string extra = "";
+
+            // Extra conditions only for Returns or Overdue
+            if (trend == "Returns")
+            {
+                extra = "AND ReturnDate IS NOT NULL";
+            }
+            else if (trend == "Overdue")
+            {
+                if (mode == "today")
+                    extra = "AND ((ReturnDate IS NULL AND DATE(DueDate) = DATE('now') AND DueDate < DATETIME('now')) " +
+                            "OR (ReturnDate > DueDate AND DATE(ReturnDate) = DATE('now')))";
+                else if (mode == "week")
+                    extra = "AND ((ReturnDate IS NULL AND DueDate < DATETIME('now') AND DATE(DueDate) BETWEEN DATE('now','-6 days') AND DATE('now')) " +
+                            "OR (ReturnDate > DueDate AND DATE(ReturnDate) BETWEEN DATE('now','-6 days') AND DATE('now')))";
+                else if (mode == "month")
+                    extra = "AND ((ReturnDate IS NULL AND DueDate < DATETIME('now') AND strftime('%Y-%m', DueDate) = strftime('%Y-%m','now')) " +
+                            "OR (ReturnDate > DueDate AND strftime('%Y-%m', ReturnDate) = strftime('%Y-%m','now')))";
+            }
 
             using (SQLiteConnection con = Db.GetConnection())
             {
                 con.Open();
+
                 if (mode == "today")
                 {
                     // Initialize labels 7 AM to 5 PM
@@ -374,32 +407,33 @@ namespace Library_Management_System.User_Control
 
                     if (trend == "Borrowings" || trend == "Returns")
                     {
-                        // Borrowings / Returns today
                         dataQuery = $@"
-            SELECT CAST(strftime('%H', {col}) AS INTEGER) AS Key, COUNT(*) AS Count
-            FROM Borrowings
-            WHERE DATE({col}) = DATE('now')
-              {extra}
-            GROUP BY Key
-            ORDER BY Key;
-        ";
+SELECT CAST(strftime('%H', {col}) AS INTEGER) AS Key, COUNT(*) AS Count
+FROM Borrowings
+WHERE DATE({col}) = DATE('now') {extra}
+GROUP BY Key
+ORDER BY Key;";
                     }
                     else if (trend == "Overdue")
                     {
-                        // Overdue today
                         dataQuery = $@"
-            SELECT CAST(strftime('%H', DueDate) AS INTEGER) AS Key, COUNT(*) AS Count
-            FROM Borrowings
-            WHERE ReturnDate IS NULL
-              AND DATE(DueDate) = DATE('now')
-              AND DueDate < DATETIME('now')
-            GROUP BY Key
-            ORDER BY Key;
+  SELECT 
+    CASE 
+        WHEN CAST(strftime('%H', DueDate) AS INTEGER) < 7 THEN 7
+        WHEN CAST(strftime('%H', DueDate) AS INTEGER) > 17 THEN 17
+        ELSE CAST(strftime('%H', DueDate) AS INTEGER)
+    END AS Key,
+    COUNT(*) AS Count
+FROM Borrowings
+WHERE ReturnDate IS NULL 
+  AND DueDate <= DATETIME('now')
+  AND DATE(DueDate) = DATE('now')  -- only if you really want ""today only""
+GROUP BY Key
+ORDER BY Key;
+
         ";
                     }
                 }
-
-
                 else if (mode == "week")
                 {
                     string[] days = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
@@ -409,13 +443,29 @@ namespace Library_Management_System.User_Control
                         dataDict[i] = 0;
                     }
 
-                    dataQuery = $@"
-                SELECT CAST(strftime('%w', {col}) AS INTEGER) AS Key, COUNT(*) AS Count
-                FROM Borrowings
-                WHERE 1=1 {extra}
-                GROUP BY Key
-                ORDER BY Key;
-            ";
+                    if (trend == "Borrowings" || trend == "Returns")
+                    {
+                        dataQuery = $@"
+SELECT ((CAST(strftime('%w', {col}) AS INTEGER) + 6) % 7) AS Key,
+       COUNT(*) AS Count
+FROM Borrowings
+WHERE 1=1 {extra}
+GROUP BY Key
+ORDER BY Key;";
+                    }
+                    else if (trend == "Overdue")
+                    {
+                        dataQuery = $@"
+SELECT ((CAST(strftime('%w',
+       CASE WHEN ReturnDate IS NOT NULL AND ReturnDate > DueDate THEN ReturnDate ELSE DueDate END
+) AS INTEGER) + 6) % 7) AS Key,
+COUNT(*) AS Count
+FROM Borrowings
+WHERE (ReturnDate IS NULL AND DueDate < DATETIME('now') AND DATE(DueDate) BETWEEN DATE('now','-6 days') AND DATE('now'))
+   OR (ReturnDate > DueDate AND DATE(ReturnDate) BETWEEN DATE('now','-6 days') AND DATE('now'))
+GROUP BY Key
+ORDER BY Key;";
+                    }
                 }
                 else // month
                 {
@@ -426,15 +476,31 @@ namespace Library_Management_System.User_Control
                         dataDict[i] = 0;
                     }
 
-                    dataQuery = $@"
-                SELECT CAST(strftime('%m', {col}) AS INTEGER) AS Key, COUNT(*) AS Count
-                FROM Borrowings
-                WHERE 1=1 {extra}
-                GROUP BY Key
-                ORDER BY Key;
-            ";
+                    if (trend == "Borrowings" || trend == "Returns")
+                    {
+                        dataQuery = $@"
+SELECT CAST(strftime('%m', {col}) AS INTEGER) AS Key, COUNT(*) AS Count
+FROM Borrowings
+WHERE 1=1 {extra}
+GROUP BY Key
+ORDER BY Key;";
+                    }
+                    else if (trend == "Overdue")
+                    {
+                        dataQuery = $@"
+SELECT CAST(strftime('%m',
+       CASE WHEN ReturnDate IS NOT NULL AND ReturnDate > DueDate THEN ReturnDate ELSE DueDate END
+) AS INTEGER) AS Key,
+COUNT(*) AS Count
+FROM Borrowings
+WHERE (ReturnDate IS NULL AND DueDate < DATETIME('now') AND strftime('%Y-%m', DueDate) = strftime('%Y-%m','now'))
+   OR (ReturnDate > DueDate AND strftime('%Y-%m', ReturnDate) = strftime('%Y-%m','now'))
+GROUP BY Key
+ORDER BY Key;";
+                    }
                 }
 
+                // Execute query and fill chart
                 using (var cmd = new SQLiteCommand(dataQuery, con))
                 using (var da = new SQLiteDataAdapter(cmd))
                 {
@@ -443,16 +509,18 @@ namespace Library_Management_System.User_Control
 
                     foreach (DataRow row in dt.Rows)
                     {
-                        int hour = Convert.ToInt32(row["Key"]);
+                        int key = Convert.ToInt32(row["Key"]);
                         int count = Convert.ToInt32(row["Count"]);
-                        if (dataDict.ContainsKey(hour))
-                            dataDict[hour] = count;
+                        if (dataDict.ContainsKey(key))
+                            dataDict[key] = count;
                     }
                 }
             }
+        
 
-            // --- Chart series setup remains unchanged ---
-            chartReports.Series.Clear();
+
+        // --- Chart series setup remains unchanged ---
+        chartReports.Series.Clear();
 
             Color mainColor = Color.FromArgb(205, 133, 63);
 
@@ -466,6 +534,9 @@ namespace Library_Management_System.User_Control
                 IsVisibleInLegend = false
             };
             shadow["LineTension"] = "0.4";
+            // MOST IMPORTANT 🔥
+            shadow["ShowMarkerLines"] = "false";
+        
 
             var seriesHalo = new Series(trend + "_halo")
             {
@@ -504,19 +575,49 @@ namespace Library_Management_System.User_Control
 
             seriesMain["LineTension"] = "0.4";
 
+
             // --- Add points ---
             foreach (var kv in dataDict)
             {
-                shadow.Points.AddXY(kv.Key, kv.Value);
+                int key = (int)kv.Key;
+                int count = kv.Value;
 
-                if (kv.Value > 0)
+                string tooltipText = "";
+
+                if (mode == "today")
                 {
-                    seriesHalo.Points.AddXY(kv.Key, kv.Value);
-                    seriesInner.Points.AddXY(kv.Key, kv.Value);
+                    string formattedTime = DateTime.Today.AddHours(key).ToString("h tt");
+                    tooltipText = $"{count} {trend.ToLower()} at {formattedTime}";
+                }
+                else if (mode == "week" || mode == "month")
+                {
+                    // Use xLabels dictionary to safely get the label
+                    string label = xLabels.ContainsKey(key) ? xLabels[key] : key.ToString();
+                    tooltipText = $"Total {count} {trend.ToLower()} on {label}";
                 }
 
-                seriesMain.Points.AddXY(kv.Key, kv.Value);
+                // Shadow point
+                int idxShadow = shadow.Points.AddXY(key, count);
+
+                // Main line point
+                int idxMain = seriesMain.Points.AddXY(key, count);
+                DataPoint pMain = seriesMain.Points[idxMain];
+                pMain.ToolTip = tooltipText;
+
+                if (count > 0)
+                {
+                    // Halo point
+                    int idxHalo = seriesHalo.Points.AddXY(key, count);
+                    DataPoint pHalo = seriesHalo.Points[idxHalo];
+                    pHalo.ToolTip = tooltipText;
+
+                    // Inner point
+                    int idxInner = seriesInner.Points.AddXY(key, count);
+                    DataPoint pInner = seriesInner.Points[idxInner];
+                    pInner.ToolTip = tooltipText;
+                }
             }
+
 
             // --- Add series in order to match screenshot effect ---
             chartReports.Series.Add(shadow);     // bottom
@@ -556,8 +657,18 @@ namespace Library_Management_System.User_Control
 
         private void DashboardControl_Load(object sender, EventArgs e)
         {
-            // 📊 Initialize the borrowing activity chart (upper section)
-           
+            // Set initial text and color based on library status
+            if (LibraryStatusHelper.IsLibraryOpen())
+            {
+                button1.Text = "🟢 Library Open";
+                button1.BackColor = Color.LightGreen;
+            }
+            else
+            {
+                button1.Text = "🔴 Library Closed";
+                button1.BackColor = Color.LightCoral;
+            }
+
 
             // 🔄 Sync penalties first
             Penalties.SyncPenaltiesFromBorrowings();
@@ -1190,7 +1301,7 @@ namespace Library_Management_System.User_Control
                 int activeMembers = Convert.ToInt32(new SQLiteCommand("SELECT COUNT(*) FROM Members WHERE IsActive = 1", con).ExecuteScalar());
                 int overdueBooks = Convert.ToInt32(
                 new SQLiteCommand(
-                     "SELECT COUNT(*) FROM Borrowings WHERE ReturnDate IS NULL AND DueDate < datetime('now')", con
+                     "SELECT COUNT(*) \r\nFROM Borrowings \r\nWHERE ReturnDate IS NULL \r\n  AND DueDate < datetime('now','localtime')\r\n", con
                  ).ExecuteScalar()
              );
                 lblTotalBooks.Text = $"Total Books";
@@ -1324,6 +1435,37 @@ namespace Library_Management_System.User_Control
 
         private void panelMostBorrowed_Paint(object sender, PaintEventArgs e) { }
         private void pnlPenaltySummary_Paint(object sender, PaintEventArgs e) { }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            bool currentlyOpen = LibraryStatusHelper.IsLibraryOpen();
+
+            if (currentlyOpen)
+            {
+                LibraryStatusHelper.SetLibraryStatus("Closed");
+                button1.Text = "🔴 Library Closed";
+                button1.BackColor = Color.LightCoral;
+                MessageBox.Show("Library is now CLOSED. All transactions are paused.", "Library Closed", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else
+            {
+                LibraryStatusHelper.SetLibraryStatus("Open");
+                button1.Text = "🟢 Library Open";
+                button1.BackColor = Color.LightGreen;
+                MessageBox.Show("Library is now OPEN. Transactions resumed.", "Library Open", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        private void lblOverdueBooks_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void pnlOverdueBooks_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
         private void picOverdueBooks_Click(object sender, EventArgs e){ }
         private void lblGreeting_Click(object sender, EventArgs e){ }
     }

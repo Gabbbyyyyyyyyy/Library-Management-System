@@ -5,11 +5,13 @@ namespace LibraryManagementSystem.Helpers
     public static class PenaltyHelper
     {
         /// <summary>
-        /// Calculates penalty based on library hours (7am to 5pm = 10 hours/day)
-        /// ₱2 per overdue hour if less than a full day, ₱10 per full day if 10+ hours.
-        /// Only counts library open hours (7am-5pm).
+        /// Calculates penalty based on library hours (7am–5pm = 10 hours/day)
+        /// ₱2 per overdue hour (<10 hrs), ₱10 per full day (≥10 hrs), ignoring leftover hours.
+        /// Grace period: 8:00–8:59 AM on due date.
+        /// Counts strictly library hours only.
         /// </summary>
-        public static void CalculatePenalty(DateTime dueDate, DateTime? returnDate, out double totalPenalty, out int daysOverdue, out int hoursOverdue)
+        public static void CalculatePenalty(DateTime dueDate, DateTime? returnDate,
+            out double totalPenalty, out int daysOverdue, out int hoursOverdue)
         {
             DateTime endDate = returnDate ?? DateTime.Now;
 
@@ -17,12 +19,13 @@ namespace LibraryManagementSystem.Helpers
             TimeSpan closing = TimeSpan.FromHours(17);  // 5:00 PM
             int libraryHoursPerDay = 10;
 
-            // Adjust due date: cannot be before 7 AM
-            if (dueDate.TimeOfDay < opening)
-                dueDate = dueDate.Date + opening;
+            // --- Adjust due date to standardized 8:00–8:59 AM range ---
+            if (dueDate.TimeOfDay < TimeSpan.FromHours(8) || dueDate.TimeOfDay >= TimeSpan.FromHours(9))
+                dueDate = dueDate.Date.AddHours(8);
 
-            // If returned before due date → no penalty
-            if (endDate <= dueDate)
+            // --- Grace period until 8:59 AM ---
+            DateTime graceEnd = dueDate.Date.AddHours(8).AddMinutes(59);
+            if (endDate <= graceEnd)
             {
                 totalPenalty = 0;
                 daysOverdue = 0;
@@ -30,47 +33,42 @@ namespace LibraryManagementSystem.Helpers
                 return;
             }
 
-            // Count library hours between dueDate and returnDate
-            double totalLibraryHours = 0;
-            DateTime cursor = dueDate;
-
-            while (cursor.Date <= endDate.Date)
+            // --- Start counting penalty from 9:00 AM ---
+            DateTime penaltyStart = dueDate.Date.AddHours(9);
+            if (endDate <= penaltyStart)
             {
-                // Determine start of counting for this day
-                DateTime dayStart = cursor.Date + opening;
-                DateTime dayEnd = cursor.Date + closing;
-
-                // If first day, start from dueDate time
-                if (cursor.Date == dueDate.Date)
-                    dayStart = cursor;
-
-                // If last day, end at return time
-                if (cursor.Date == endDate.Date)
-                    dayEnd = endDate;
-
-                // Only count if dayEnd > dayStart
-                if (dayEnd > dayStart)
-                    totalLibraryHours += (dayEnd - dayStart).TotalHours;
-
-                cursor = cursor.AddDays(1).Date; // move to next day
+                totalPenalty = 0;
+                daysOverdue = 0;
+                hoursOverdue = 0;
+                return;
             }
 
-            // Calculate full days and leftover hours
+            // --- Count total library hours between penaltyStart and endDate ---
+            int totalLibraryHours = 0;
+            DateTime cursor = penaltyStart;
+
+            while (cursor < endDate)
+            {
+                // Only count hours inside library open hours
+                if (cursor.TimeOfDay >= opening && cursor.TimeOfDay < closing)
+                    totalLibraryHours++;
+
+                // Move cursor to next hour
+                cursor = cursor.AddHours(1);
+            }
+
+            // --- Compute penalties ---
             if (totalLibraryHours >= libraryHoursPerDay)
             {
-                daysOverdue = (int)Math.Floor(totalLibraryHours / libraryHoursPerDay);
+                // Full days only, ignore leftover hours
+                daysOverdue = totalLibraryHours / libraryHoursPerDay;
                 hoursOverdue = 0;
                 totalPenalty = daysOverdue * 10;
             }
             else
             {
                 daysOverdue = 0;
-                hoursOverdue = (int)Math.Ceiling(totalLibraryHours);
-
-                // If still in the first hour (7:00–7:59) → no penalty
-                if (totalLibraryHours < 1)
-                    hoursOverdue = 0;
-
+                hoursOverdue = totalLibraryHours;
                 totalPenalty = hoursOverdue * 2;
             }
         }

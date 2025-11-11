@@ -166,6 +166,7 @@
     <Compile Include="Data\Members.cs" />
     <Compile Include="Data\Penalties.cs" />
     <Compile Include="Data\Reservations.cs" />
+    <Compile Include="Data\Settings.cs" />
     <Compile Include="Forms\AdminForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -205,6 +206,7 @@
     <Compile Include="Models\DatabaseHelper.cs" />
     <Compile Include="Models\DataGridViewHelper.cs" />
     <Compile Include="Models\GoogleBooksHelper.cs" />
+    <Compile Include="Models\LibraryStatusHelper.cs" />
     <Compile Include="Models\PenaltyHelper.cs" />
     <Compile Include="Models\RoundedButton.cs">
       <SubType>Component</SubType>

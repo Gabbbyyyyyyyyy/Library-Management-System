@@ -4,6 +4,7 @@ using System.Data.SQLite;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Library_Management_System.Models;
 using LibraryManagementSystem.Data;
 
 namespace Library_Management_System.User_Control
@@ -366,6 +367,15 @@ namespace Library_Management_System.User_Control
 
         private void BtnIssue_Click(object sender, EventArgs e)
         {
+
+            if (!LibraryStatusHelper.IsLibraryOpen())
+            {
+                MessageBox.Show("The library is currently closed. Transactions are paused.",
+                                "Library Closed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+
             lblMessage.Text = "";
 
             if (currentMemberId <= 0)

@@ -74,115 +74,109 @@ namespace Library_Management_System.User_Control
         private void LoadOverdueBooks()
         {
             dgvBorrowedBooks.Rows.Clear();
-            int counter = 1; // numbering starts at 1
+            int counter = 1;
 
             using (var con = Db.GetConnection())
             {
                 con.Open();
+
+                // Sync penalties first
                 Penalties.SyncPenaltiesFromBorrowings();
 
+                DateTime now = DateTime.Now;
+
                 string query = @"
-            SELECT 
-                m.StudentNo,
-                (m.FirstName || ' ' || m.LastName) AS MemberName,
-                bks.Title AS BookTitle,
-                br.BorrowDate,
-                br.DueDate,
-                br.ReturnDate,
-                br.Status,
-                p.Amount AS PenaltyFromTable,
-                p.DaysOverdue AS DaysOverdueFromTable,
-                p.HoursOverdue AS HoursOverdueFromTable
-            FROM Borrowings br
-            INNER JOIN Members m ON br.MemberId = m.MemberId
-            INNER JOIN Books bks ON br.BookId = bks.BookId
-            LEFT JOIN Penalties p ON br.BorrowId = p.BorrowId
-            WHERE (br.Status = 'Returned' AND br.ReturnDate > br.DueDate) 
-                OR (br.Status = 'Borrowed' AND br.ReturnDate IS NULL AND datetime('now') > br.DueDate)
-            ORDER BY br.DueDate DESC;
-        ";
+                SELECT 
+                    m.StudentNo,
+                    (m.FirstName || ' ' || m.LastName) AS MemberName,
+                    bks.Title AS BookTitle,
+                    br.BorrowDate,
+                    br.DueDate,
+                    br.ReturnDate,
+                    br.Status,
+                    p.Amount AS PenaltyFromTable,
+                    p.DaysOverdue AS DaysOverdueFromTable,
+                    p.HoursOverdue AS HoursOverdueFromTable
+                FROM Borrowings br
+                INNER JOIN Members m ON br.MemberId = m.MemberId
+                INNER JOIN Books bks ON br.BookId = bks.BookId
+                LEFT JOIN Penalties p ON br.BorrowId = p.BorrowId
+                WHERE (br.Status = 'Returned' AND br.ReturnDate > br.DueDate)
+                   OR (br.Status = 'Borrowed' AND br.ReturnDate IS NULL AND datetime('now', 'localtime') > br.DueDate)
+                ORDER BY br.DueDate DESC;
+            ";
 
                 using (var cmd = new SQLiteCommand(query, con))
-                using (var reader = cmd.ExecuteReader())
                 {
-                    while (reader.Read())
+                    cmd.Parameters.AddWithValue("@now", now);
+
+                    using (var reader = cmd.ExecuteReader())
                     {
-                        DateTime dueDate = Convert.ToDateTime(reader["DueDate"]);
-                        DateTime? returnDate = reader["ReturnDate"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["ReturnDate"]);
+                        while (reader.Read())
+                        {
+                            DateTime borrowDate = Convert.ToDateTime(reader["BorrowDate"]);
+                            DateTime dueDate = Convert.ToDateTime(reader["DueDate"]);
+                            DateTime? returnDate = reader["ReturnDate"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["ReturnDate"]);
 
-                        // 1️⃣ Calculate penalty dynamically
-                        int daysOverdue;
-                        int hoursOverdue;
-                        double penalty;
+                            // Calculate penalty dynamically
+                            int daysOverdue, hoursOverdue;
+                            double penalty;
+                            PenaltyHelper.CalculatePenalty(dueDate, returnDate, out penalty, out daysOverdue, out hoursOverdue);
 
-                        PenaltyHelper.CalculatePenalty(dueDate, returnDate, out penalty, out daysOverdue, out hoursOverdue);
+                            // Override with stored values if available
+                            if (reader["PenaltyFromTable"] != DBNull.Value)
+                                penalty = Convert.ToDouble(reader["PenaltyFromTable"]);
+                            if (reader["DaysOverdueFromTable"] != DBNull.Value)
+                                daysOverdue = Convert.ToInt32(reader["DaysOverdueFromTable"]);
+                            if (reader["HoursOverdueFromTable"] != DBNull.Value)
+                                hoursOverdue = Convert.ToInt32(reader["HoursOverdueFromTable"]);
 
-                        // 2️⃣ Override with database values if they exist
-                        if (reader["PenaltyFromTable"] != DBNull.Value)
-                            penalty = Convert.ToDouble(reader["PenaltyFromTable"]);
+                            // Create readable overdue text
+                            string overdueText = daysOverdue > 0
+                                ? daysOverdue == 1 ? "1 day" : $"{daysOverdue} days"
+                                : hoursOverdue > 0
+                                    ? hoursOverdue == 1 ? "1 hour" : $"{hoursOverdue} hours"
+                                    : "-";
 
-                        if (reader["DaysOverdueFromTable"] != DBNull.Value)
-                            daysOverdue = Convert.ToInt32(reader["DaysOverdueFromTable"]);
+                            // Determine status text
+                            string status = returnDate.HasValue && returnDate.Value > dueDate ? "Returned Late" : "Borrowed";
 
-                        if (reader["HoursOverdueFromTable"] != DBNull.Value)
-                            hoursOverdue = Convert.ToInt32(reader["HoursOverdueFromTable"]);
+                            // Add row to DataGridView with date + time
+                            int rowIndex = dgvBorrowedBooks.Rows.Add(
+                                counter++,
+                                reader["StudentNo"],
+                                reader["MemberName"],
+                                reader["BookTitle"],
+                                borrowDate.ToString("yyyy-MM-dd HH:mm"),
+                                dueDate.ToString("yyyy-MM-dd HH:mm"),
+                                returnDate.HasValue ? returnDate.Value.ToString("yyyy-MM-dd HH:mm") : "Not Returned",
+                                overdueText,
+                                penalty.ToString("₱0.00"),
+                                status
+                            );
 
-                        // 3️⃣ Create a single Overdue text
-                        string overdueText;
-
-                        if (daysOverdue > 0)
-                            overdueText = $"{daysOverdue} days";  // show only days
-                        else if (hoursOverdue > 0)
-                            overdueText = $"{hoursOverdue} hours";  // show hours only if <1 day
-                        else
-                            overdueText = "-";
-
-
-                        // 4️⃣ Determine status text
-                        string status = returnDate.HasValue && returnDate.Value > dueDate ? "Returned Late" : "Borrowed";
-
-                        // 5️⃣ Add row to DataGridView
-                        int rowIndex = dgvBorrowedBooks.Rows.Add(
-                            counter++,
-                            reader["StudentNo"],
-                            reader["MemberName"],
-                            reader["BookTitle"],
-                            Convert.ToDateTime(reader["BorrowDate"]).ToString("yyyy-MM-dd"),
-                            dueDate.ToString("yyyy-MM-dd"),
-                            returnDate.HasValue ? returnDate.Value.ToString("yyyy-MM-dd") : "Not Returned",
-                            overdueText,
-                            penalty.ToString("₱0.00"),
-                            status
-                        );
-
-                        // 6️⃣ Change text color of the "Status" cell
-                        var statusCell = dgvBorrowedBooks.Rows[rowIndex].Cells["Status"];
-                        statusCell.Style.ForeColor = status == "Returned Late" ? Color.Green : Color.Red;
+                            // Set Status color
+                            dgvBorrowedBooks.Rows[rowIndex].Cells["Status"].Style.ForeColor =
+                                status == "Returned Late" ? Color.Green : Color.Red;
+                        }
                     }
                 }
             }
 
-            // 7️⃣ Clear selection
+            // Clear selection
             if (dgvBorrowedBooks.Rows.Count > 0)
             {
                 dgvBorrowedBooks.ClearSelection();
                 dgvBorrowedBooks.CurrentCell = null;
             }
 
-            // 8️⃣ Refresh dashboard summary
-            var dashboard = this.Parent?.Controls["DashboardControl"] as DashboardControl;
-            if (dashboard != null)
-                dashboard.RefreshPenaltySummary();
-            else
-            {
-                var mainForm = this.FindForm() as MainForm;
-                mainForm?.DashboardInstance?.RefreshPenaltySummary();
-            }
+            // ✅ Refresh dashboard via MainForm reference
+            mainForm?.DashboardInstance?.RefreshPenaltySummary();
 
-            // 9️⃣ Notify if no overdue books
             if (dgvBorrowedBooks.Rows.Count == 0)
                 MessageBox.Show("No overdue books found.", "Overdue Report", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
+
 
 
 

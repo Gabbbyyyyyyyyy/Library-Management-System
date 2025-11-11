@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data.SQLite;
+using Library_Management_System.Models;
 using LibraryManagementSystem.Helpers;
 
 namespace LibraryManagementSystem.Data
@@ -60,6 +61,10 @@ namespace LibraryManagementSystem.Data
 
         public static void SyncPenaltiesFromBorrowings()
         {
+
+            if (!LibraryStatusHelper.IsLibraryOpen())
+                return; // ✅ Skip penalty updates when library is closed
+
             using (var con = Db.GetConnection())
             {
                 con.Open();
@@ -67,67 +72,83 @@ namespace LibraryManagementSystem.Data
                 // Ensure HoursOverdue column exists
                 EnsureColumnExists(con, "Penalties", "HoursOverdue", "INTEGER DEFAULT 0");
 
+                var now = DateTime.Now;
                 string query = @"
-            SELECT BorrowId, MemberId, BorrowDate, DueDate, ReturnDate
-            FROM Borrowings
-            WHERE ReturnDate > DueDate OR (ReturnDate IS NULL AND DueDate < DATETIME('now'))
-        ";
-
+                    SELECT BorrowId, MemberId, BorrowDate, DueDate, ReturnDate
+                    FROM Borrowings
+                    WHERE (ReturnDate IS NOT NULL AND ReturnDate > DueDate)
+                       OR (ReturnDate IS NULL AND DueDate < @now)
+                ";
                 using (var cmd = new SQLiteCommand(query, con))
-                using (var reader = cmd.ExecuteReader())
                 {
-                    while (reader.Read())
+                    cmd.Parameters.AddWithValue("@now", now);
+
+                    using (var reader = cmd.ExecuteReader())
                     {
-                        int borrowId = Convert.ToInt32(reader["BorrowId"]);
-                        int memberId = Convert.ToInt32(reader["MemberId"]);
-                        DateTime dueDate = Convert.ToDateTime(reader["DueDate"]);
-                        DateTime? returnDate = reader["ReturnDate"] == DBNull.Value
-                            ? (DateTime?)null
-                            : Convert.ToDateTime(reader["ReturnDate"]);
-
-                        // Use PenaltyHelper to calculate library-hours-based penalty
-                        double penaltyAmount;
-                        int daysOverdue, hoursOverdue;
-
-                        PenaltyHelper.CalculatePenalty(dueDate, returnDate, out penaltyAmount, out daysOverdue, out hoursOverdue);
-
-                        // Insert or update Penalties table
-                        string checkSql = "SELECT COUNT(*) FROM Penalties WHERE BorrowId=@borrowId";
-                        using (var checkCmd = new SQLiteCommand(checkSql, con))
+                        while (reader.Read())
                         {
-                            checkCmd.Parameters.AddWithValue("@borrowId", borrowId);
-                            long exists = (long)checkCmd.ExecuteScalar();
+                            int borrowId = Convert.ToInt32(reader["BorrowId"]);
+                            int memberId = Convert.ToInt32(reader["MemberId"]);
+                            DateTime dueDate = Convert.ToDateTime(reader["DueDate"]);
+                            DateTime? returnDate = reader["ReturnDate"] == DBNull.Value
+                                ? (DateTime?)null
+                                : Convert.ToDateTime(reader["ReturnDate"]);
 
-                            if (exists == 0)
+                        
+
+                            // --------------------------
+                            // Calculate penalty
+                            // --------------------------
+                            double penaltyAmount;
+                            int daysOverdue, hoursOverdue;
+
+                            PenaltyHelper.CalculatePenalty(dueDate, returnDate,
+                                out penaltyAmount, out daysOverdue, out hoursOverdue);
+
+                            // If still in grace period (no penalty yet)
+                            if (penaltyAmount <= 0)
+                                continue;
+
+                            // --------------------------
+                            // Insert or update Penalties table
+                            // --------------------------
+                            string checkSql = "SELECT COUNT(*) FROM Penalties WHERE BorrowId=@borrowId";
+                            using (var checkCmd = new SQLiteCommand(checkSql, con))
                             {
-                                string insertSql = @"
+                                checkCmd.Parameters.AddWithValue("@borrowId", borrowId);
+                                long exists = (long)checkCmd.ExecuteScalar();
+
+                                if (exists == 0)
+                                {
+                                    string insertSql = @"
                             INSERT INTO Penalties (BorrowId, MemberId, Amount, DaysOverdue, HoursOverdue, Status)
                             VALUES (@borrowId, @memberId, @amount, @daysOverdue, @hoursOverdue, 'Unpaid')
                         ";
-                                using (var insertCmd = new SQLiteCommand(insertSql, con))
-                                {
-                                    insertCmd.Parameters.AddWithValue("@borrowId", borrowId);
-                                    insertCmd.Parameters.AddWithValue("@memberId", memberId);
-                                    insertCmd.Parameters.AddWithValue("@amount", penaltyAmount);
-                                    insertCmd.Parameters.AddWithValue("@daysOverdue", daysOverdue);
-                                    insertCmd.Parameters.AddWithValue("@hoursOverdue", hoursOverdue);
-                                    insertCmd.ExecuteNonQuery();
+                                    using (var insertCmd = new SQLiteCommand(insertSql, con))
+                                    {
+                                        insertCmd.Parameters.AddWithValue("@borrowId", borrowId);
+                                        insertCmd.Parameters.AddWithValue("@memberId", memberId);
+                                        insertCmd.Parameters.AddWithValue("@amount", penaltyAmount);
+                                        insertCmd.Parameters.AddWithValue("@daysOverdue", daysOverdue);
+                                        insertCmd.Parameters.AddWithValue("@hoursOverdue", hoursOverdue);
+                                        insertCmd.ExecuteNonQuery();
+                                    }
                                 }
-                            }
-                            else
-                            {
-                                string updateSql = @"
+                                else
+                                {
+                                    string updateSql = @"
                             UPDATE Penalties
                             SET Amount=@amount, DaysOverdue=@daysOverdue, HoursOverdue=@hoursOverdue
                             WHERE BorrowId=@borrowId AND Status='Unpaid'
                         ";
-                                using (var updateCmd = new SQLiteCommand(updateSql, con))
-                                {
-                                    updateCmd.Parameters.AddWithValue("@amount", penaltyAmount);
-                                    updateCmd.Parameters.AddWithValue("@daysOverdue", daysOverdue);
-                                    updateCmd.Parameters.AddWithValue("@hoursOverdue", hoursOverdue);
-                                    updateCmd.Parameters.AddWithValue("@borrowId", borrowId);
-                                    updateCmd.ExecuteNonQuery();
+                                    using (var updateCmd = new SQLiteCommand(updateSql, con))
+                                    {
+                                        updateCmd.Parameters.AddWithValue("@amount", penaltyAmount);
+                                        updateCmd.Parameters.AddWithValue("@daysOverdue", daysOverdue);
+                                        updateCmd.Parameters.AddWithValue("@hoursOverdue", hoursOverdue);
+                                        updateCmd.Parameters.AddWithValue("@borrowId", borrowId);
+                                        updateCmd.ExecuteNonQuery();
+                                    }
                                 }
                             }
                         }

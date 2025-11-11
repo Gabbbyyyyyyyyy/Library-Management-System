@@ -3,6 +3,7 @@ using System.Data;
 using System.Data.SQLite;
 using System.Drawing;
 using System.Windows.Forms;
+using Library_Management_System.Models;
 using LibraryManagementSystem.Data;
 using LibraryManagementSystem.Helpers;
 
@@ -84,6 +85,15 @@ namespace Library_Management_System.User_Control
 
         private void BtnAcceptReturn_Click(object sender, EventArgs e)
         {
+
+            // ✅ Check library status
+            if (!LibraryStatusHelper.IsLibraryOpen())
+            {
+                MessageBox.Show("The library is currently closed. Transactions are paused.",
+                                "Library Closed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             if (dgvBorrowedBooks.SelectedRows.Count == 0) return;
 
             var sel = dgvBorrowedBooks.SelectedRows[0];
@@ -170,6 +180,15 @@ namespace Library_Management_System.User_Control
 
         private void btnReturn_Click(object sender, EventArgs e)
         {
+
+            // ✅ Block marking returns if library is closed
+            if (!LibraryStatusHelper.IsLibraryOpen())
+            {
+                MessageBox.Show("The library is currently closed. Transactions are paused.",
+                                "Library Closed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             if (dgvBorrowedBooks.SelectedRows.Count == 0)
             {
                 MessageBox.Show("⚠️ Please select a book to mark as returned.");
