@@ -20,6 +20,10 @@ A C# Windows Forms application for managing a library, using **SQLite** as the d
 
 4. Build and run the project.
 
+## Additional
+1. Install System.Data.SQLite.Core
+2. Install Newtonsoft.Json
+
 ## Database Setup
 The database file `library.db` is ignored in this repository.
 Instead, you can rebuild it anytime from the schema.
