@@ -130,6 +130,12 @@ namespace Library_Management_System.User_Control
                     DataTable dt = new DataTable();
                     da.Fill(dt);
                     dgvAvailableBooks.DataSource = dt;
+                 
+                    dgvAvailableBooks.Columns["AvailableCopies"].HeaderText = "Available Copies";
+                    // Hide Bookid column
+                    if (dgvAvailableBooks.Columns.Contains("BookId"))
+                        dgvAvailableBooks.Columns["BookId"].Visible = false;
+
 
                     dgvAvailableBooks.ReadOnly = true;
                     dgvAvailableBooks.RowTemplate.Height = 40;
@@ -220,6 +226,10 @@ namespace Library_Management_System.User_Control
                         DataTable dt = new DataTable();
                         da.Fill(dt);
                         dgvAvailableBooks.DataSource = dt;
+                        // Hide Bookid column
+                        if (dgvAvailableBooks.Columns.Contains("BookId"))
+                            dgvAvailableBooks.Columns["BookId"].Visible = false;
+
                         dgvAvailableBooks.ClearSelection();
                         dgvAvailableBooks.CurrentCell = null;
 
@@ -270,6 +280,10 @@ namespace Library_Management_System.User_Control
                         DataTable dt = new DataTable();
                         da.Fill(dt);
                         dgvAvailableBooks.DataSource = dt;
+                        // Hide Bookid column
+                        if (dgvAvailableBooks.Columns.Contains("BookId"))
+                            dgvAvailableBooks.Columns["BookId"].Visible = false;
+
                         dgvAvailableBooks.ClearSelection();
                         dgvAvailableBooks.CurrentCell = null;
 
@@ -322,7 +336,7 @@ namespace Library_Management_System.User_Control
             // 🧠 Now process results outside the connection
             if (dtMember.Rows.Count == 0)
             {
-                lblMessage.Text = $"No member found with Student Number: {studentNo}";
+                lblMessage.Text = $"No Student found with Student Number: {studentNo}";
                 currentMemberId = -1;
                 lblMemberName.Text = "";
                 return;
@@ -380,7 +394,7 @@ namespace Library_Management_System.User_Control
 
             if (currentMemberId <= 0)
             {
-                lblMessage.Text = "Load a valid member first.";
+                lblMessage.Text = "Load a valid Student first.";
                 return;
             }
 
@@ -479,9 +493,30 @@ namespace Library_Management_System.User_Control
         private void dgvAvailableBooks_CellContentClick(object sender, DataGridViewCellEventArgs e) {
         }
 
-
-
         private void txtMemberID_TextChanged(object sender, EventArgs e)
+        {
+            // Keep only digits
+            string digitsOnly = "";
+            foreach (char c in txtMemberID.Text)
+            {
+                if (char.IsDigit(c))
+                    digitsOnly += c;
+            }
+
+            // Limit to 6 digits
+            if (digitsOnly.Length > 6)
+                digitsOnly = digitsOnly.Substring(0, 6);
+
+            // Update textbox if changed
+            if (txtMemberID.Text != digitsOnly)
+            {
+                int cursorPosition = txtMemberID.SelectionStart - 1;
+                txtMemberID.Text = digitsOnly;
+                txtMemberID.SelectionStart = Math.Min(digitsOnly.Length, Math.Max(0, cursorPosition));
+            }
+        }
+
+        private void lblMessage_Click(object sender, EventArgs e)
         {
 
         }

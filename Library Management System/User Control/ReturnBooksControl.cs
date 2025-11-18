@@ -64,6 +64,10 @@ namespace Library_Management_System.User_Control
             }
 
             dgvBorrowedBooks.DataSource = dt;
+            // Hide MemberId column
+            if (dgvBorrowedBooks.Columns.Contains("BorrowId"))
+                dgvBorrowedBooks.Columns["BorrowId"].Visible = false;
+
 
             if (dgvBorrowedBooks.Columns.Contains("Penalty"))
             {

@@ -45,7 +45,7 @@ namespace LibraryManagementSystem
             // txtFirstName
             // 
             this.txtFirstName.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtFirstName.Location = new System.Drawing.Point(230, 161);
+            this.txtFirstName.Location = new System.Drawing.Point(218, 105);
             this.txtFirstName.Name = "txtFirstName";
             this.txtFirstName.Size = new System.Drawing.Size(151, 27);
             this.txtFirstName.TabIndex = 1;
@@ -54,7 +54,7 @@ namespace LibraryManagementSystem
             // txtLastName
             // 
             this.txtLastName.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtLastName.Location = new System.Drawing.Point(230, 212);
+            this.txtLastName.Location = new System.Drawing.Point(218, 156);
             this.txtLastName.Name = "txtLastName";
             this.txtLastName.Size = new System.Drawing.Size(151, 27);
             this.txtLastName.TabIndex = 2;
@@ -63,7 +63,7 @@ namespace LibraryManagementSystem
             // txtCourse
             // 
             this.txtCourse.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtCourse.Location = new System.Drawing.Point(230, 265);
+            this.txtCourse.Location = new System.Drawing.Point(218, 209);
             this.txtCourse.Name = "txtCourse";
             this.txtCourse.Size = new System.Drawing.Size(151, 27);
             this.txtCourse.TabIndex = 3;
@@ -72,7 +72,7 @@ namespace LibraryManagementSystem
             // txtYearLevel
             // 
             this.txtYearLevel.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtYearLevel.Location = new System.Drawing.Point(230, 322);
+            this.txtYearLevel.Location = new System.Drawing.Point(218, 266);
             this.txtYearLevel.Name = "txtYearLevel";
             this.txtYearLevel.Size = new System.Drawing.Size(151, 27);
             this.txtYearLevel.TabIndex = 4;
@@ -82,7 +82,7 @@ namespace LibraryManagementSystem
             // 
             this.lblFirstName.AutoSize = true;
             this.lblFirstName.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblFirstName.Location = new System.Drawing.Point(128, 163);
+            this.lblFirstName.Location = new System.Drawing.Point(116, 107);
             this.lblFirstName.Name = "lblFirstName";
             this.lblFirstName.Size = new System.Drawing.Size(87, 20);
             this.lblFirstName.TabIndex = 5;
@@ -92,7 +92,7 @@ namespace LibraryManagementSystem
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.Location = new System.Drawing.Point(128, 219);
+            this.label2.Location = new System.Drawing.Point(116, 163);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(86, 20);
             this.label2.TabIndex = 6;
@@ -102,7 +102,7 @@ namespace LibraryManagementSystem
             // 
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label3.Location = new System.Drawing.Point(128, 272);
+            this.label3.Location = new System.Drawing.Point(116, 216);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(63, 20);
             this.label3.TabIndex = 7;
@@ -112,7 +112,7 @@ namespace LibraryManagementSystem
             // 
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label4.Location = new System.Drawing.Point(128, 329);
+            this.label4.Location = new System.Drawing.Point(116, 273);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(83, 20);
             this.label4.TabIndex = 8;
@@ -121,7 +121,7 @@ namespace LibraryManagementSystem
             // btnSave
             // 
             this.btnSave.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSave.Location = new System.Drawing.Point(258, 369);
+            this.btnSave.Location = new System.Drawing.Point(246, 313);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(88, 32);
             this.btnSave.TabIndex = 9;

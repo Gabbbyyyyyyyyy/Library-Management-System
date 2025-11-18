@@ -98,6 +98,7 @@ namespace Library_Management_System
             bottomSpacer.Height = (int)(panel1.Height * 0.05);
             bottomSpacer.Width = panel1.Width;
             bottomSpacer.Location = new Point(0, panel1.Height - bottomSpacer.Height);
+            bottomSpacer.BackColor = Color.FromArgb(194, 167, 144);
         }
 
 
@@ -483,7 +484,7 @@ namespace Library_Management_System
             // Set new active button
             activeButton = clickedButton;
             activeButton.ForeColor = Color.FromArgb(205, 133, 63); // Peru
-            activeButton.BackColor = Color.White; // optional very light beige highlight
+            activeButton.BackColor = Color.Transparent; // optional very light beige highlight
 
             // Move and show the indicator beside it
             sidebarIndicator.Height = activeButton.Height;

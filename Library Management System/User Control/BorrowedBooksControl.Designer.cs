@@ -42,33 +42,36 @@
             // 
             // txtMemberID
             // 
+            this.txtMemberID.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtMemberID.Location = new System.Drawing.Point(328, 242);
             this.txtMemberID.Margin = new System.Windows.Forms.Padding(4);
             this.txtMemberID.Name = "txtMemberID";
-            this.txtMemberID.Size = new System.Drawing.Size(199, 22);
+            this.txtMemberID.Size = new System.Drawing.Size(199, 27);
             this.txtMemberID.TabIndex = 0;
             this.txtMemberID.TextChanged += new System.EventHandler(this.txtMemberID_TextChanged);
             // 
             // btnLoadMember
             // 
+            this.btnLoadMember.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnLoadMember.Location = new System.Drawing.Point(541, 239);
             this.btnLoadMember.Margin = new System.Windows.Forms.Padding(4);
             this.btnLoadMember.Name = "btnLoadMember";
-            this.btnLoadMember.Size = new System.Drawing.Size(133, 31);
+            this.btnLoadMember.Size = new System.Drawing.Size(145, 31);
             this.btnLoadMember.TabIndex = 1;
-            this.btnLoadMember.Text = "Load Member";
+            this.btnLoadMember.Text = "Show Student";
             this.btnLoadMember.UseVisualStyleBackColor = true;
             this.btnLoadMember.Click += new System.EventHandler(this.BtnLoadMember_Click);
             // 
             // lblMemberName
             // 
             this.lblMemberName.AutoSize = true;
+            this.lblMemberName.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblMemberName.Location = new System.Drawing.Point(328, 285);
             this.lblMemberName.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblMemberName.Name = "lblMemberName";
-            this.lblMemberName.Size = new System.Drawing.Size(101, 16);
+            this.lblMemberName.Size = new System.Drawing.Size(124, 20);
             this.lblMemberName.TabIndex = 2;
-            this.lblMemberName.Text = "Member: (none)";
+            this.lblMemberName.Text = "Student: (none)";
             // 
             // dgvAvailableBooks
             // 
@@ -89,6 +92,7 @@
             // 
             // btnIssue
             // 
+            this.btnIssue.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnIssue.Location = new System.Drawing.Point(754, 233);
             this.btnIssue.Margin = new System.Windows.Forms.Padding(4);
             this.btnIssue.Name = "btnIssue";
@@ -101,23 +105,26 @@
             // lblDueDate
             // 
             this.lblDueDate.AutoSize = true;
+            this.lblDueDate.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblDueDate.Location = new System.Drawing.Point(914, 243);
             this.lblDueDate.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblDueDate.Name = "lblDueDate";
-            this.lblDueDate.Size = new System.Drawing.Size(67, 16);
+            this.lblDueDate.Size = new System.Drawing.Size(86, 20);
             this.lblDueDate.TabIndex = 5;
             this.lblDueDate.Text = "Due Date:";
             // 
             // lblMessage
             // 
             this.lblMessage.AutoSize = true;
+            this.lblMessage.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblMessage.ForeColor = System.Drawing.Color.Red;
             this.lblMessage.Location = new System.Drawing.Point(754, 282);
             this.lblMessage.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblMessage.Name = "lblMessage";
-            this.lblMessage.Size = new System.Drawing.Size(71, 16);
+            this.lblMessage.Size = new System.Drawing.Size(86, 20);
             this.lblMessage.TabIndex = 6;
             this.lblMessage.Text = "Messages";
+            this.lblMessage.Click += new System.EventHandler(this.lblMessage_Click);
             // 
             // label6
             // 
@@ -141,9 +148,10 @@
             // label1
             // 
             this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.Location = new System.Drawing.Point(328, 222);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(76, 16);
+            this.label1.Size = new System.Drawing.Size(96, 20);
             this.label1.TabIndex = 8;
             this.label1.Text = "Student No.";
             // 

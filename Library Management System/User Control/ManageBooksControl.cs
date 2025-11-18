@@ -1,715 +1,294 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Data;
 using System.Data.SQLite;
 using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Net.Http;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Newtonsoft.Json.Linq; // install via NuGet
+using Library_Management_System.Forms;
 using LibraryManagementSystem.Data;
 using Library_Management_System.Models;
-
+using static Guna.UI2.WinForms.Suite.Descriptions;
 
 namespace LibraryManagementSystem
 {
     public partial class ManageBooksControl : UserControl
     {
-        private ErrorProvider errorProvider1 = new ErrorProvider();
+        private readonly ErrorProvider errorProvider1 = new ErrorProvider();
+        private Label lblNoBooksFound;
+        private FlowLayoutPanel flowBooks;
+
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        private static extern Int32 SendMessage(IntPtr hWnd, int msg, int wParam, string lParam);
+        private const int EM_SETCUEBANNER = 0x1501;
 
         public ManageBooksControl()
         {
             InitializeComponent();
-            dgvBooks.EnableHeadersVisualStyles = false;
-            dgvBooks.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
-            LoadBooks();
 
-            // 👇 Add this line
-            dgvBooks.CellFormatting += dgvBooks_CellFormatting;
+            flowBooks = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                AutoScroll = true
+            };
+            this.Controls.Add(flowBooks);
+
+            // DataGridView setup
+            dgvBooks.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
+
+            dgvBooks.EnableHeadersVisualStyles = false;
+            dgvBooks.RowTemplate.Height = 40;
             dgvBooks.ReadOnly = true;
             dgvBooks.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvBooks.AllowUserToAddRows = false;
             dgvBooks.AllowUserToDeleteRows = false;
             DataGridViewHelper.ApplyDefaultStyle(dgvBooks);
 
-            // Prevent auto-selection after loading data
+            dgvBooks.CellPainting += DgvBooks_CellPainting_HeaderAction;
+            dgvBooks.Paint += DgvBooks_Paint_ActionHeader;
+            dgvBooks.Scroll += (s, e) => dgvBooks.Invalidate();
+            dgvBooks.ColumnWidthChanged += (s, e) => dgvBooks.Invalidate();
+            dgvBooks.CellFormatting += DgvBooks_CellFormatting;
+            dgvBooks.CellContentClick += DgvBooks_CellContentClick;
             dgvBooks.DataBindingComplete += (s, e) => dgvBooks.ClearSelection();
 
+            // Initialize the "No books found" label
+            lblNoBooksFound = new Label
+            {
+                Text = "No books found",
+                AutoSize = true,
+                Font = new Font("Segoe UI", 12, FontStyle.Bold | FontStyle.Italic),
+                ForeColor = Color.Gray,
+                Visible = false
+            };
 
+            // Position it below the search textbox
+            lblNoBooksFound.Location = new Point(txtSearch.Left, txtSearch.Bottom + 5);
+            this.Controls.Add(lblNoBooksFound);
 
             SendMessage(txtSearch.Handle, EM_SETCUEBANNER, 0, "Search books...");
-            txtSearch.ForeColor = Color.Black;
-            txtSearch.KeyDown += txtSearch_KeyDown;
+            txtSearch.KeyDown += TxtSearch_KeyDown;
+            txtSearch.TextChanged += (s, e) => PerformSearch();
+
             this.Dock = DockStyle.Fill;
             this.Size = Screen.PrimaryScreen.Bounds.Size;
             this.Location = Screen.PrimaryScreen.Bounds.Location;
+
+            LoadBooksAsync("").ConfigureAwait(false);
         }
 
-        private async Task FetchBookInfo(string searchText)
+        #region Load Books
+
+        public async Task LoadBooksAsync(string search = "")
         {
-            using (HttpClient client = new HttpClient())
+            try
             {
-                // Search by title or ISBN
-                string url = $"https://www.googleapis.com/books/v1/volumes?q={searchText}";
-                var response = await client.GetStringAsync(url);
-
-                JObject json = JObject.Parse(response);
-
-                if (json["items"] != null)
+                using (SQLiteConnection con = Db.GetConnection())
                 {
-                    var volumeInfo = json["items"][0]["volumeInfo"];
+                    await con.OpenAsync();
 
-                    // ISBN
-                    var identifiers = volumeInfo["industryIdentifiers"];
-                    if (identifiers != null)
-                    {
-                        foreach (var id in identifiers)
-                        {
-                            if (id["type"].ToString() == "ISBN_13")
-                            {
-                                txtISBN.Text = id["identifier"].ToString();
-                                break;
-                            }
-                        }
-                    }
-                    // Title
-                    txtTitle.Text = volumeInfo["title"]?.ToString() ?? "";
+                    string query = @"
+                        SELECT BookId, ISBN, Title, Author, Category, Quantity, AvailableCopies,
+                            CASE 
+                                WHEN EXISTS (SELECT 1 FROM Reservations r WHERE r.BookId = b.BookId AND r.Status = 'Active') THEN 'Reserved'
+                                WHEN AvailableCopies = 0 THEN 'Not Available'
+                                ELSE 'Available'
+                            END AS Status
+                        FROM Books b";
 
-                    // Authors
-                    txtAuthor.Text = volumeInfo["authors"] != null
-                        ? string.Join(", ", volumeInfo["authors"])
-                        : "";
-
-                    // Category
-                    txtCategory.Text = volumeInfo["categories"] != null
-                        ? string.Join(", ", volumeInfo["categories"])
-                        : "";
-                }
-                else
-                {
-                    MessageBox.Show("Book not found in API. Please enter manually.");
-                }
-            }
-        }
-
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto)]
-        private static extern Int32 SendMessage(IntPtr hWnd, int msg, int wParam, string lParam);
-
-        private const int EM_SETCUEBANNER = 0x1501;
-
-        // Load Books into DataGridView
-        private void LoadBooks(string search = "")
-        {
-            using (var con = Db.GetConnection())
-            {
-                con.Open();
-                string query = @"
-                    SELECT 
-                        BookId, ISBN, Title, Author, Category, Quantity, AvailableCopies,
-                        CASE 
-                            WHEN EXISTS (SELECT 1 FROM Reservations r WHERE r.BookId = b.BookId AND r.Status = 'Active') 
-                                THEN 'Reserved'
-                            WHEN AvailableCopies = 0 
-                                THEN 'Not Available'
-                            ELSE 'Available'
-                        END AS Status
-                    FROM Books b";
-
-
-                if (!string.IsNullOrWhiteSpace(search))
-                {
-                    query += " WHERE Title LIKE @search OR Author LIKE @search OR Category LIKE @search OR ISBN LIKE @search";
-                }
-
-                using (var cmd = new SQLiteCommand(query, con))
-                {
                     if (!string.IsNullOrWhiteSpace(search))
-                        cmd.Parameters.AddWithValue("@search", "%" + search + "%");
+                        query += " WHERE Title LIKE @search OR Author LIKE @search OR Category LIKE @search OR ISBN LIKE @search";
 
-                    using (var da = new SQLiteDataAdapter(cmd))
+                    using (SQLiteCommand cmd = new SQLiteCommand(query, con))
                     {
-                        DataTable dt = new DataTable();
-                        da.Fill(dt);
+                        if (!string.IsNullOrWhiteSpace(search))
+                            cmd.Parameters.AddWithValue("@search", "%" + search + "%");
 
-                        // Set a taller row height
-                        dgvBooks.RowTemplate.Height = 40; // adjust the number as you like
-                        dgvBooks.DataSource = dt;
-                        // Color only the Status text
-                        //ColorStatusColumnText();
-                        dgvBooks.ClearSelection();
-                        dgvBooks.CurrentCell = null;
-                        dgvBooks.Focus();
-
-                        // Remove default selection
-                        if (dgvBooks.Rows.Count > 0)
-                            dgvBooks.ClearSelection();
-                    }
-                }
-            }
-        }
-        //private void ColorStatusColumnText()
-        //{
-        //    foreach (DataGridViewRow row in dgvBooks.Rows)
-        //    {
-        //        if (row.Cells["Status"].Value != null)
-        //        {
-        //            string status = row.Cells["Status"].Value.ToString();
-
-        //            switch (status)
-        //            {
-        //                case "Available":
-        //                    row.Cells["Status"].Style.ForeColor = Color.Green;
-        //                    row.Cells["Status"].Style.Font = new Font(dgvBooks.Font, FontStyle.Regular);
-        //                    break;
-
-        //                case "Reserved":
-        //                    row.Cells["Status"].Style.ForeColor = Color.Orange;
-        //                    row.Cells["Status"].Style.Font = new Font(dgvBooks.Font, FontStyle.Regular);
-        //                    break;
-
-        //                case "Not Available":
-        //                case "Borrowed Out":
-        //                    row.Cells["Status"].Style.ForeColor = Color.Red;
-        //                    row.Cells["Status"].Style.Font = new Font(dgvBooks.Font, FontStyle.Regular);
-        //                    break;
-        //            }
-        //        }
-        //    }
-        //}
-
-
-        // When a row is clicked, fill only the Quantity textbox
-        private void dgvBooks_CellClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex >= 0)
-            {
-                txtQuantity.Text = dgvBooks.Rows[e.RowIndex].Cells["Quantity"].Value.ToString();
-            }
-        }
-
-
-        private void btnAdd_Click(object sender, EventArgs e)
-        {
-            if (!ValidateInputs()) return; // Make sure all fields are filled
-
-            // ISBN validation: must be exactly 13 digits
-            string isbn = txtISBN.Text.Trim();
-            if (isbn.Length != 13 || !isbn.All(char.IsDigit))
-            {
-                MessageBox.Show("ISBN must contain exactly 13 numeric digits.", "Invalid ISBN", MessageBoxButtons.OK);
-                txtISBN.Focus();
-                return;
-            }
-
-            int qty = int.Parse(txtQuantity.Text);
-
-            using (var con = Db.GetConnection())
-            {
-                con.Open();
-
-                // Check if book already exists by ISBN
-                string checkQuery = "SELECT Title FROM Books WHERE ISBN=@isbn";
-                using (var checkCmd = new SQLiteCommand(checkQuery, con))
-                {
-                    checkCmd.Parameters.AddWithValue("@isbn", txtISBN.Text.Trim());
-                    var existingTitle = checkCmd.ExecuteScalar()?.ToString();
-
-                    if (!string.IsNullOrEmpty(existingTitle))
-                    {
-                        if (existingTitle != txtTitle.Text.Trim())
+                        using (SQLiteDataAdapter da = new SQLiteDataAdapter(cmd))
                         {
-                            MessageBox.Show("This ISBN already exists with a different title. ISBN must be unique!");
-                            return; // Stop adding
-                        }
-                        else
-                        {
-                            MessageBox.Show("This book already exists. Use Update button to change quantity.");
-                            return; // Stop adding
-                        }
-                    }
-                }
-                // Optional: Check for same Title & Author
-                string checkTitleAuthorQuery = "SELECT COUNT(*) FROM Books WHERE Title=@title AND Author=@author";
-                using (var checkCmd = new SQLiteCommand(checkTitleAuthorQuery, con))
-                {
-                    checkCmd.Parameters.AddWithValue("@title", txtTitle.Text.Trim());
-                    checkCmd.Parameters.AddWithValue("@author", txtAuthor.Text.Trim());
-                    int duplicateCount = Convert.ToInt32(checkCmd.ExecuteScalar());
+                            DataTable dt = new DataTable();
+                            da.Fill(dt);
 
-                    if (duplicateCount > 0)
-                    {
-                        DialogResult result = MessageBox.Show(
-                            "A book with the same Title and Author already exists with a different ISBN. Add anyway?",
-                            "Duplicate Book",
-                            MessageBoxButtons.YesNo,
-                            MessageBoxIcon.Warning
-                        );
+                            dgvBooks.DataSource = dt;
 
-                        if (result == DialogResult.No)
-                            return; // Cancel insert
-                    }
-                }
+                            dgvBooks.Columns["AvailableCopies"].HeaderText = "Available Copies";
 
-                // Insert new book (safe, because ISBN is unique)
-                string insertQuery = "INSERT INTO Books (ISBN, Title, Author, Category, Quantity, AvailableCopies) " +
-                                     "VALUES (@isbn, @title, @author, @category, @qty, @qty)";
-                using (var insertCmd = new SQLiteCommand(insertQuery, con))
-                {
-                    insertCmd.Parameters.AddWithValue("@isbn", txtISBN.Text.Trim());
-                    insertCmd.Parameters.AddWithValue("@title", txtTitle.Text.Trim());
-                    insertCmd.Parameters.AddWithValue("@author", txtAuthor.Text.Trim());
-                    insertCmd.Parameters.AddWithValue("@category", txtCategory.Text.Trim());
-                    insertCmd.Parameters.AddWithValue("@qty", qty);
-                    insertCmd.ExecuteNonQuery();
-                }
-
-                MessageBox.Show("Book added successfully!");
-
-                // **Clear the error icon here**
-                errorProvider1.SetError(txtISBN, "");
-            }
-
-            LoadBooks();   // Refresh DataGridView
-            ClearInputs(); // Clear input fields
-        }
+                            // Hide "No books found" label if rows exist
+                            dgvBooks.Paint += (s, e) => DrawNoBooksMessage(dgvBooks, e);
 
 
 
-        private void btnUpdate_Click(object sender, EventArgs e)
-        {
-            // Step 1: Ensure a book row is selected
-            if (dgvBooks.SelectedRows.Count == 0)
-            {
-                MessageBox.Show("Select a book to update.");
-                return;
-            }
+                            if (dgvBooks.Columns.Contains("BookId"))
+                                dgvBooks.Columns["BookId"].Visible = false;
 
-            // Validate quantity input
-            if (string.IsNullOrWhiteSpace(txtQuantity.Text) || !int.TryParse(txtQuantity.Text, out int newQty) || newQty < 1)
-            {
-                errorProvider1.SetError(txtQuantity, "Please enter a valid quantity.");
-                MessageBox.Show("Please enter a valid quantity.", "Invalid Input", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-            else
-            {
-                errorProvider1.SetError(txtQuantity, "");
-            }
-
-            // Step 2: Ask for confirmation
-            var confirm = MessageBox.Show(
-                "Are you sure you want to update this book?",
-                "Confirm Update",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question);
-
-            if (confirm != DialogResult.Yes)
-                return;
-
-            // Step 3: Get the BookId
-            int bookId = Convert.ToInt32(dgvBooks.SelectedRows[0].Cells["BookId"].Value);
-
-            using (var con = Db.GetConnection())
-            {
-                con.Open();
-
-                // Get current values
-                string getQuery = "SELECT Quantity, AvailableCopies FROM Books WHERE BookId=@id";
-                int currentQty = 0, currentAvailable = 0;
-
-                using (var getCmd = new SQLiteCommand(getQuery, con))
-                {
-                    getCmd.Parameters.AddWithValue("@id", bookId);
-                    using (var reader = getCmd.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            currentQty = Convert.ToInt32(reader["Quantity"]);
-                            currentAvailable = Convert.ToInt32(reader["AvailableCopies"]);
-                        }
-                    }
-                }
-
-                // Compute difference
-                int diff = newQty - currentQty;
-                int newAvailable = currentAvailable + diff;
-
-                if (newAvailable < 0) newAvailable = 0; // just in case
-
-                // Update both Quantity & AvailableCopies
-                string query = "UPDATE Books SET Quantity=@qty, AvailableCopies=@available WHERE BookId=@id";
-                using (var cmd = new SQLiteCommand(query, con))
-                {
-                    cmd.Parameters.AddWithValue("@qty", newQty);
-                    cmd.Parameters.AddWithValue("@available", newAvailable);
-                    cmd.Parameters.AddWithValue("@id", bookId);
-                    cmd.ExecuteNonQuery();
-                }
-            }
-
-            MessageBox.Show("Book updated successfully!");
-            LoadBooks();
-            txtQuantity.Clear();
-        }
-
-
-
-
-        private void btnDelete_Click(object sender, EventArgs e)
-        {
-            if (dgvBooks.SelectedRows.Count == 0)
-            {
-                MessageBox.Show("Select a book to delete.");
-                return;
-            }
-
-            // Show confirmation dialog
-            DialogResult result = MessageBox.Show(
-                "Are you sure you want to delete this book?",
-                "Confirm Delete",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Warning
-            );
-
-            if (result == DialogResult.No)
-            {
-                return; // User canceled
-            }
-
-            int bookId = Convert.ToInt32(dgvBooks.SelectedRows[0].Cells["BookId"].Value);
-
-            using (var con = Db.GetConnection())
-            {
-                con.Open();
-                string query = "DELETE FROM Books WHERE BookId=@id";
-
-                using (var cmd = new SQLiteCommand(query, con))
-                {
-                    cmd.Parameters.AddWithValue("@id", bookId);
-                    cmd.ExecuteNonQuery();
-                }
-            }
-
-            MessageBox.Show("Book deleted successfully!");
-            LoadBooks();
-            ClearInputs();
-        }
-
-
-        private void btnSearch_Click(object sender, EventArgs e)
-        {
-            //LoadBooks(txtSearch.Text); // Make sure you add a txtSearch TextBox in your form
-
-            PerformSearch();
-        }
-
-
-
-        private void ClearInputs()
-        {
-            txtISBN.Clear();
-            txtTitle.Clear();
-            txtAuthor.Clear();
-            txtCategory.Clear();
-            txtQuantity.Clear();
-        }
-
-        private bool ValidateInputs()
-        {
-            if (string.IsNullOrWhiteSpace(txtISBN.Text) ||
-                string.IsNullOrWhiteSpace(txtTitle.Text) ||
-                string.IsNullOrWhiteSpace(txtAuthor.Text) ||
-                string.IsNullOrWhiteSpace(txtCategory.Text) ||
-                string.IsNullOrWhiteSpace(txtQuantity.Text))
-            {
-                MessageBox.Show("Please fill in all fields.");
-                return false;
-            }
-
-            if (!int.TryParse(txtQuantity.Text, out int qty) || qty < 1)
-            {
-                MessageBox.Show("Quantity must be a valid positive number.");
-                return false;
-            }
-            return true;
-        }
-        public async Task FetchAndSaveAllBooksFromAPI(string[] categories)
-        {
-            using (var con = new SQLiteConnection(Db.ConnectionString))
-            {
-                con.Open();
-
-                foreach (var category in categories)
-                {
-                    // ✅ Skip if we already have books from this category
-                    if (CategoryExists(con, category))
-                    {
-                        Console.WriteLine($"Skipping {category}, already cached.");
-                        continue;
-                    }
-
-                    // Otherwise, fetch from API
-                    await FetchCategoryFromAPI(category);
-
-                    // Small delay to avoid 429
-                    await Task.Delay(1000);
-                }
-            }
-        }
-
-
-        private bool CategoryExists(SQLiteConnection con, string category)
-        {
-            string sql = "SELECT COUNT(*) FROM Books WHERE Category = @Category";
-            using (var cmd = new SQLiteCommand(sql, con))
-            {
-                cmd.Parameters.AddWithValue("@Category", category);
-                long count = (long)cmd.ExecuteScalar();
-                return count > 0;
-            }
-        }
-
-
-        private async Task FetchCategoryFromAPI(string category)
-        {
-            using (var con = Db.GetConnection())
-            {
-                await con.OpenAsync();
-                using (HttpClient client = new HttpClient())
-                {
-                    int startIndex = 0;
-                    int maxResults = 20;
-                    bool moreResults = true;
-
-                    while (moreResults)
-                    {
-                        string apiKey = "AIzaSyBXvUHhGqOI0F6w0-CSaUk2bjs25KMrfE0";
-                        string url = $"https://www.googleapis.com/books/v1/volumes?q={category}&startIndex={startIndex}&maxResults={maxResults}&key={apiKey}";
-
-                        string response = await SafeGetAsync(client, url);
-
-                        JObject json = JObject.Parse(response);
-
-                        if (json["items"] != null)
-                        {
-                            foreach (var item in json["items"])
-                            {
-                                var volumeInfo = item["volumeInfo"];
-                                string isbn = "";
-
-                                var identifiers = volumeInfo["industryIdentifiers"];
-                                if (identifiers != null)
-                                {
-                                    foreach (var id in identifiers)
-                                    {
-                                        if (id["type"]?.ToString() == "ISBN_13")
-                                        {
-                                            isbn = id["identifier"]?.ToString();
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                if (string.IsNullOrWhiteSpace(isbn)) continue;
-
-                                string title = volumeInfo["title"]?.ToString() ?? "Unknown Title";
-                                string author = volumeInfo["authors"] != null ? string.Join(", ", volumeInfo["authors"]) : "Unknown Author";
-                                string cat = volumeInfo["categories"] != null ? string.Join(", ", volumeInfo["categories"]) : "Uncategorized";
-
-                                // Check if book exists
-                                string checkQuery = "SELECT 1 FROM Books WHERE ISBN=@isbn";
-                                using (var checkCmd = new SQLiteCommand(checkQuery, con))
-                                {
-                                    checkCmd.Parameters.AddWithValue("@isbn", isbn);
-                                    var exists = checkCmd.ExecuteScalar();
-
-                                    if (exists == null)
-                                    {
-                                        string insertQuery = "INSERT INTO Books (ISBN, Title, Author, Category, Quantity, AvailableCopies) " +
-                                                             "VALUES (@isbn, @title, @author, @category, 1, 1)";
-                                        using (var insertCmd = new SQLiteCommand(insertQuery, con))
-                                        {
-                                            insertCmd.Parameters.AddWithValue("@isbn", isbn);
-                                            insertCmd.Parameters.AddWithValue("@title", title);
-                                            insertCmd.Parameters.AddWithValue("@author", author);
-                                            insertCmd.Parameters.AddWithValue("@category", cat);
-                                            insertCmd.ExecuteNonQuery();
-                                        }
-                                    }
-                                }
-                            }
-
-                            int itemsCount = ((JArray)json["items"]).Count;
-                            startIndex += itemsCount;
-                            if (itemsCount < maxResults) moreResults = false;
-                        }
-                        else
-                        {
-                            moreResults = false;
+                            SetupActionButtons();
                         }
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading books: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
-        private async Task<string> SafeGetAsync(HttpClient client, string url)
+        private void DrawNoBooksMessage(DataGridView dgv, PaintEventArgs e)
         {
-            int retries = 3;
-            for (int i = 0; i < retries; i++)
+            if (dgv.Rows.Count == 0)
             {
-                var response = await client.GetAsync(url);
+                string message = "No books found";
+                Image icon = Library_Management_System.Properties.Resources.NoBooksIcon;
 
-                if (response.IsSuccessStatusCode)
-                    return await response.Content.ReadAsStringAsync();
+                // Scale icon to 20% of DataGridView width, but not larger than 150x150
+                int iconWidth = Math.Min((int)(dgv.ClientSize.Width * 0.2), 150);
+                int iconHeight = (int)(iconWidth * ((float)icon.Height / icon.Width)); // maintain aspect ratio
 
-                if ((int)response.StatusCode == 429) // Too Many Requests
+                // Center coordinates
+                int iconX = (dgv.ClientSize.Width - iconWidth) / 2;
+                int iconY = (dgv.ClientSize.Height - iconHeight) / 2 - 20; // slightly above center for label
+
+                e.Graphics.DrawImage(icon, new Rectangle(iconX, iconY, iconWidth, iconHeight));
+
+                // Adjust font size based on DataGridView width
+                float fontSize = Math.Min(dgv.ClientSize.Width / 25f, 24f); // max 24pt
+                using (Font font = new Font("Segoe UI", fontSize, FontStyle.Bold | FontStyle.Italic))
+                using (SolidBrush brush = new SolidBrush(Color.Gray))
                 {
-                    await Task.Delay(2000 * (i + 1)); // Exponential backoff
-                    continue;
-                }
-
-                response.EnsureSuccessStatusCode(); // Throw for other errors
-            }
-
-            throw new HttpRequestException("Too many retries, API still failing.");
-        }
-
-
-
-
-        private void txtISBN_TextChanged(object sender, EventArgs e)
-        {
-            // Skip if textbox is empty
-            if (string.IsNullOrWhiteSpace(txtISBN.Text))
-            {
-                errorProvider1.SetError(txtISBN, "");
-                return;
-            }
-            // Check if the input contains any non-digit character
-            if (txtISBN.Text.Any(c => !char.IsDigit(c)))
-            {
-                MessageBox.Show("ISBN must contain only numbers.", "Invalid Input", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-
-                // Remove non-digit characters
-                string digitsOnly = new string(txtISBN.Text.Where(char.IsDigit).ToArray());
-                txtISBN.Text = digitsOnly;
-                txtISBN.SelectionStart = txtISBN.Text.Length; // Keep cursor at the end
-                return;
-            }
-
-            // Limit to 13 digits
-            if (txtISBN.Text.Length > 13)
-            {
-                MessageBox.Show("ISBN cannot be longer than 13 digits.", "Invalid ISBN", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                txtISBN.Text = txtISBN.Text.Substring(0, 13);
-                txtISBN.SelectionStart = txtISBN.Text.Length;
-            }
-
-            // Optional: show error icon if length is not 13
-            if (txtISBN.Text.Length != 13)
-                errorProvider1.SetError(txtISBN, "ISBN must be exactly 13 digits.");
-            else
-                errorProvider1.SetError(txtISBN, "");
-        }
-
-
-
-        private void txtAuthor_TextChanged(object sender, EventArgs e)
-        {
-            string validChars = new string(txtAuthor.Text
-                .Where(c => char.IsLetterOrDigit(c) || c == ' ' || c == '-' || c == '.')
-                .ToArray());
-
-            if (txtAuthor.Text != validChars)
-            {
-                MessageBox.Show("Author name can only contain letters, numbers, spaces, hyphens, and periods.",
-                                "Invalid Input", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-
-                txtAuthor.Text = validChars;
-                txtAuthor.SelectionStart = txtAuthor.Text.Length; // Keep cursor at the end
-            }
-        }
-
-
-
-
-
-        // Quantity area: the quantity must larger or equal than available copy. - add validation for this!
-        //                if the user borrowed  books the quantity is decrease by 1 also the available copy
-        //                update the quantity, if the user edit the quantity the available copy also increase. for example the quantity is 10 and available copy is 10 also if  there's a user that borrowrd book so the quantity remain 10 then the available copy decrease by 1. so the available copy is now 9, and the quantity remains 10. But if the admin edit the quantity and add 5 the available copy will also add 5 so the quantity is 15 and the available copy is 19. and if the student returned the book so the available copy will update it will go back to 20.
-        private void txtQuantity_TextChanged(object sender, EventArgs e)
-        {
-            string input = txtQuantity.Text.Trim();
-
-            // Check if input is empty
-            if (string.IsNullOrEmpty(input)) return;
-
-            // Check if input contains non-digit characters
-            if (input.Any(c => !char.IsDigit(c)))
-            {
-                MessageBox.Show("Quantity must contain only numbers.", "Invalid Input", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-
-                // Remove non-digit characters
-                string digitsOnly = new string(input.Where(char.IsDigit).ToArray());
-                txtQuantity.Text = digitsOnly;
-                txtQuantity.SelectionStart = txtQuantity.Text.Length;
-                return;
-            }
-
-            // Check if input is 0
-            if (int.TryParse(input, out int qty) && qty == 0)
-            {
-                MessageBox.Show("Quantity cannot be 0.", "Invalid Quantity", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                txtQuantity.Text = ""; // clear invalid input
-                return;
-            }
-
-            // Optional: clear any previous error
-            errorProvider1.SetError(txtQuantity, "");
-        }
-
-
-
-
-        // ✅ Trigger search when typing or pressing Enter
-        private void txtSearch_TextChanged(object sender, EventArgs e)
-        {
-            using (var con = Db.GetConnection())
-            {
-                con.Open();
-                string query = @"
-                    SELECT 
-                        b.BookId, b.ISBN, b.Title, b.Author, b.Category, 
-                        b.Quantity, b.AvailableCopies,
-                        CASE 
-                            WHEN b.AvailableCopies = 0 THEN 'Not Available' 
-                            ELSE 'Available' 
-                        END AS Status
-                    FROM Books b
-                    WHERE b.Title LIKE @search 
-                       OR b.Author LIKE @search 
-                       OR b.Category LIKE @search 
-                       OR b.ISBN LIKE @search";
-
-                using (var cmd = new SQLiteCommand(query, con))
-                {
-                    cmd.Parameters.AddWithValue("@search", "%" + txtSearch.Text + "%");
-
-                    using (var da = new SQLiteDataAdapter(cmd))
-                    {
-                        DataTable dt = new DataTable();
-                        da.Fill(dt);
-
-                        dgvBooks.DataSource = dt;
-                        dgvBooks.ClearSelection();
-                        dgvBooks.CurrentCell = null;
-                    }
+                    SizeF textSize = e.Graphics.MeasureString(message, font);
+                    float textX = (dgv.ClientSize.Width - textSize.Width) / 2;
+                    float textY = iconY + iconHeight + 10; // 10px spacing below icon
+                    e.Graphics.DrawString(message, font, brush, textX, textY);
                 }
             }
         }
-        private void txtSearch_KeyDown(object sender, KeyEventArgs e)
+
+
+        private void SetupActionButtons()
+        {
+            if (dgvBooks.Columns.Contains("Edit")) dgvBooks.Columns.Remove("Edit");
+            if (dgvBooks.Columns.Contains("Delete")) dgvBooks.Columns.Remove("Delete");
+
+            DataGridViewButtonColumn editCol = new DataGridViewButtonColumn
+            {
+                Name = "Edit",
+                HeaderText = "",
+                Text = "Edit",
+                UseColumnTextForButtonValue = true,
+               
+            };
+            dgvBooks.Columns.Add(editCol);
+
+            DataGridViewButtonColumn deleteCol = new DataGridViewButtonColumn
+            {
+                Name = "Delete",
+                HeaderText = "",
+                Text = "Delete",
+                UseColumnTextForButtonValue = true,
+               
+            };
+            dgvBooks.Columns.Add(deleteCol);
+            editCol.Width = 70;
+            deleteCol.Width = 70;
+            dgvBooks.ClearSelection();
+        }
+
+        #endregion
+
+        #region DataGridView Formatting
+
+        private void DgvBooks_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex < 0) return; // skip header
+
+            string colName = dgvBooks.Columns[e.ColumnIndex].Name;
+
+            // Color Edit button
+            if (colName == "Edit")
+            {
+                e.CellStyle.BackColor = Color.LightBlue;      // button background
+                e.CellStyle.ForeColor = Color.LightBlue;          // text color
+                e.CellStyle.SelectionBackColor = Color.DodgerBlue; // hover selection
+                e.CellStyle.Font = new Font(dgvBooks.Font, FontStyle.Regular); // bold text
+                e.FormattingApplied = true;
+            }
+            // Color Delete button
+            else if (colName == "Delete")
+            {
+                e.CellStyle.BackColor = Color.IndianRed;
+                e.CellStyle.ForeColor = Color.  IndianRed;
+                e.CellStyle.SelectionBackColor = Color.Red;
+                e.CellStyle.Font = new Font(dgvBooks.Font, FontStyle.Regular);
+                e.FormattingApplied = true;
+            }
+
+
+            if (dgvBooks.Columns[e.ColumnIndex].Name == "Status" && e.Value != null)
+            {
+                string status = e.Value.ToString();
+                Color color;
+                switch (status)
+                {
+                    case "Available":
+                        color = Color.Green;
+                        break;
+                    case "Not Available":
+                        color = Color.Red;
+                        break;
+                    case "Reserved":
+                        color = Color.Orange;
+                        break;
+                    default:
+                        color = Color.Black;
+                        break;
+                }
+
+
+                e.CellStyle.ForeColor = color;
+                e.FormattingApplied = true;
+            }
+        }
+
+        private void DgvBooks_CellPainting_HeaderAction(object sender, DataGridViewCellPaintingEventArgs e)
+        {
+            if (e.RowIndex == -1 && e.ColumnIndex >= 0 && e.ColumnIndex < dgvBooks.Columns.Count)
+            {
+                string colName = dgvBooks.Columns[e.ColumnIndex].Name;
+                if (colName == "Edit" || colName == "Delete")
+                    e.Handled = true;
+
+
+            }
+        }
+
+        private void DgvBooks_Paint_ActionHeader(object sender, PaintEventArgs e)
+        {
+            if (!dgvBooks.Columns.Contains("Edit") || !dgvBooks.Columns.Contains("Delete")) return;
+
+            Rectangle firstCol = dgvBooks.GetCellDisplayRectangle(dgvBooks.Columns["Edit"].Index, -1, true);
+            Rectangle lastCol = dgvBooks.GetCellDisplayRectangle(dgvBooks.Columns["Delete"].Index, -1, true);
+
+            Rectangle headerRect = new Rectangle(firstCol.X, firstCol.Y, lastCol.X + lastCol.Width - firstCol.X, firstCol.Height);
+            e.Graphics.FillRectangle(Brushes.LightGray, headerRect);
+            e.Graphics.DrawRectangle(Pens.Gray, headerRect);
+
+            TextRenderer.DrawText(
+                  e.Graphics,
+                  "Action",
+                  new Font("Segoe UI", 10, FontStyle.Regular),   // ★ custom font here
+                  headerRect,
+                  Color.Black,
+                  TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter
+              );
+        }
+
+        #endregion
+
+        #region Search
+
+        private void TxtSearch_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
             {
@@ -718,97 +297,57 @@ namespace LibraryManagementSystem
             }
         }
 
-        // ✅ Centralized search logic (same as BorrowedBooksControl)
         private void PerformSearch()
         {
-            string searchText = txtSearch.Text.Trim();
+            LoadBooksAsync(txtSearch.Text.Trim()).ConfigureAwait(false);
+        }
 
-            using (var con = Db.GetConnection())
+        #endregion
+
+        #region Add/Edit/Delete
+
+        private async void btnAdd_Click(object sender, EventArgs e)
+        {
+            using (Add_Book addBookForm = new Add_Book())
             {
-                con.Open();
-
-                string query = @"
-                    SELECT 
-                        b.BookId, b.ISBN, b.Title, b.Author, b.Category, 
-                        b.Quantity, b.AvailableCopies,
-                        CASE 
-                            WHEN b.AvailableCopies = 0 THEN 'Not Available' 
-                            ELSE 'Available' 
-                        END AS Status
-                    FROM Books b
-                    WHERE b.Title LIKE @search 
-                       OR b.Author LIKE @search 
-                       OR b.Category LIKE @search 
-                       OR b.ISBN LIKE @search";
-
-                using (var cmd = new SQLiteCommand(query, con))
+                if (addBookForm.ShowDialog() == DialogResult.OK)
                 {
-                    cmd.Parameters.AddWithValue("@search", "%" + searchText + "%");
+                    await InsertOrUpdateBook(
+                        addBookForm.ISBN,
+                        addBookForm.Title,
+                        addBookForm.Author,
+                        addBookForm.Category,
+                        addBookForm.Quantity,
+                        "Book added successfully!"
+                    );
 
-                    using (var da = new SQLiteDataAdapter(cmd))
-                    {
-                        DataTable dt = new DataTable();
-                        da.Fill(dt);
-
-                        dgvBooks.DataSource = dt;
-                        dgvBooks.ClearSelection();
-                        dgvBooks.CurrentCell = null;
-                    }
+                    await LoadBooksAsync();
                 }
             }
         }
 
-        private void label1_Click(object sender, EventArgs e)
+     
+        private async Task InsertOrUpdateBook(string isbn, string title, string author, string category, int quantity, string successMessage)
         {
-
-        }
-
-        private void label2_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private async void btnFetchAPI_Click(object sender, EventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(txtISBN.Text) && string.IsNullOrWhiteSpace(txtTitle.Text))
+            using (SQLiteConnection con = Db.GetConnection())
             {
-                MessageBox.Show("Please enter a Title or ISBN first.");
-                return;
-            }
-            string searchQuery = !string.IsNullOrWhiteSpace(txtISBN.Text) ? txtISBN.Text : txtTitle.Text;
-            await FetchBookInfo(searchQuery); // Fill txtTitle, txtAuthor, txtCategory, txtISBN
-
-            if (string.IsNullOrWhiteSpace(txtTitle.Text))
-            {
-                MessageBox.Show("Book not found in API. Please enter manually.");
-                return;
-            }
-            // Default quantity = 1 if empty
-            if (string.IsNullOrWhiteSpace(txtQuantity.Text) || !int.TryParse(txtQuantity.Text, out int qty))
-            {
-                qty = 1;
-                txtQuantity.Text = "1";
-            }
-            using (var con = Db.GetConnection())
-            {
-                con.Open();
+                await con.OpenAsync();
 
                 string checkQuery = "SELECT BookId, Quantity, AvailableCopies FROM Books WHERE ISBN=@isbn";
-                using (var checkCmd = new SQLiteCommand(checkQuery, con))
+                using (SQLiteCommand checkCmd = new SQLiteCommand(checkQuery, con))
                 {
-                    checkCmd.Parameters.AddWithValue("@isbn", txtISBN.Text);
-                    using (var reader = checkCmd.ExecuteReader())
+                    checkCmd.Parameters.AddWithValue("@isbn", isbn);
+                    using (SQLiteDataReader reader = checkCmd.ExecuteReader())
                     {
                         if (reader.Read())
                         {
-                            // Update existing book quantity
                             int bookId = Convert.ToInt32(reader["BookId"]);
-                            int newQty = Convert.ToInt32(reader["Quantity"]) + qty;
-                            int newAvailable = Convert.ToInt32(reader["AvailableCopies"]) + qty;
+                            int newQty = Convert.ToInt32(reader["Quantity"]) + quantity;
+                            int newAvailable = Convert.ToInt32(reader["AvailableCopies"]) + quantity;
                             reader.Close();
 
                             string updateQuery = "UPDATE Books SET Quantity=@qty, AvailableCopies=@available WHERE BookId=@id";
-                            using (var updateCmd = new SQLiteCommand(updateQuery, con))
+                            using (SQLiteCommand updateCmd = new SQLiteCommand(updateQuery, con))
                             {
                                 updateCmd.Parameters.AddWithValue("@qty", newQty);
                                 updateCmd.Parameters.AddWithValue("@available", newAvailable);
@@ -816,165 +355,84 @@ namespace LibraryManagementSystem
                                 updateCmd.ExecuteNonQuery();
                             }
 
-                            MessageBox.Show("Book quantity updated successfully!");
+                            MessageBox.Show("Book quantity updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                         else
                         {
                             reader.Close();
 
-                            // Insert new book
                             string insertQuery = "INSERT INTO Books (ISBN, Title, Author, Category, Quantity, AvailableCopies, CreatedAt) " +
-                                                 "VALUES (@isbn, @title, @author, @category, @qty, @available, @createdAt)";
-                            using (var insertCmd = new SQLiteCommand(insertQuery, con))
+                                                 "VALUES (@isbn,@title,@author,@category,@qty,@available,@createdAt)";
+                            using (SQLiteCommand insertCmd = new SQLiteCommand(insertQuery, con))
                             {
-                                insertCmd.Parameters.AddWithValue("@isbn", txtISBN.Text);
-                                insertCmd.Parameters.AddWithValue("@title", txtTitle.Text);
-                                insertCmd.Parameters.AddWithValue("@author", txtAuthor.Text);
-                                insertCmd.Parameters.AddWithValue("@category", txtCategory.Text);
-                                insertCmd.Parameters.AddWithValue("@qty", qty);
-                                insertCmd.Parameters.AddWithValue("@available", qty);
+                                insertCmd.Parameters.AddWithValue("@isbn", isbn);
+                                insertCmd.Parameters.AddWithValue("@title", title);
+                                insertCmd.Parameters.AddWithValue("@author", author);
+                                insertCmd.Parameters.AddWithValue("@category", category);
+                                insertCmd.Parameters.AddWithValue("@qty", quantity);
+                                insertCmd.Parameters.AddWithValue("@available", quantity);
                                 insertCmd.Parameters.AddWithValue("@createdAt", DateTime.Now);
                                 insertCmd.ExecuteNonQuery();
                             }
-                            MessageBox.Show("Book added from API successfully!");
+
+                            MessageBox.Show(successMessage, "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                     }
                 }
             }
-
-            LoadBooks();   // Refresh DataGridView
-            ClearInputs(); // Clear input fields
         }
 
-        private void listView1_SelectedIndexChanged(object sender, EventArgs e)
+        private void DgvBooks_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
+            if (e.RowIndex < 0) return;
 
+            int bookId = Convert.ToInt32(dgvBooks.Rows[e.RowIndex].Cells["BookId"].Value);
+
+            string colName = dgvBooks.Columns[e.ColumnIndex].Name;
+            if (colName == "Edit")
+                OpenEditForm(bookId);
+            else if (colName == "Delete")
+                DeleteBook(bookId);
         }
 
-        private void lblSearchMessage_Click(object sender, EventArgs e)
+        private void OpenEditForm(int bookId)
         {
-
-        }
-
-
-        private async void ManageBooksControl_Load(object sender, EventArgs e)
-        {
-            try
+            using (FrmEditBook frm = new FrmEditBook(bookId, this))
             {
-                // 1. Load existing books from SQLite (persistent data)
-                LoadBooks();
+                frm.ShowDialog();
+            }
+            LoadBooksAsync().ConfigureAwait(false);
+        }
 
-                // 2. Check if the Books table already contains data
-                using (var con = Db.GetConnection())
+        private void DeleteBook(int bookId)
+        {
+            if (MessageBox.Show("Are you sure you want to delete this book?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+                return;
+
+            using (SQLiteConnection con = Db.GetConnection())
+            {
+                con.Open();
+                using (SQLiteCommand cmd = new SQLiteCommand("DELETE FROM Books WHERE BookId=@id", con))
                 {
-                    con.Open();
-                    string checkQuery = "SELECT COUNT(*) FROM Books";
-                    using (var cmd = new SQLiteCommand(checkQuery, con))
-                    {
-                        long count = (long)cmd.ExecuteScalar();
-
-                        // 3. If empty, fetch from API and save locally
-                        if (count == 0)
-                        {
-                            string[] categories =
-                            {
-                        "programming",
-                        "library",
-                        "mathematics",
-                        "science",
-                        "history",
-                        "fiction"
-                    };
-
-                            await FetchAndSaveAllBooksFromAPI(categories);
-
-                            // 4. Reload to display fetched data
-                            LoadBooks();
-                        }
-                    }
+                    cmd.Parameters.AddWithValue("@id", bookId);
+                    cmd.ExecuteNonQuery();
                 }
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error loading books: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+
+            MessageBox.Show("Book deleted successfully!");
+            LoadBooksAsync().ConfigureAwait(false);
         }
 
+        #endregion
 
-
-
-
-        // ✅ Same color formatting logic as BorrowBooksControl
-        private void dgvBooks_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
-        {
-            if (dgvBooks.Columns[e.ColumnIndex].Name == "Status" && e.Value != null)
-            {
-                string status = e.Value.ToString().Trim();
-
-                switch (status)
-                {
-                    case "Available":
-                        e.CellStyle.ForeColor = Color.Green;
-                        break;
-                    case "Not Available":
-                        e.CellStyle.ForeColor = Color.Red;
-                        break;
-                    case "Reserved":
-                        e.CellStyle.ForeColor = Color.Orange;
-                        break;
-                    default:
-                        e.CellStyle.ForeColor = Color.Black;
-                        break;
-                }
-
-                e.FormattingApplied = true;
-            }
-        }
-
-
-        private void txtTitle_TextChanged(object sender, EventArgs e)
-        {
-            string title = txtTitle.Text.Trim();
-
-            // Allow letters, numbers, spaces, periods, hyphens, commas, apostrophes
-            if (!System.Text.RegularExpressions.Regex.IsMatch(title, @"^[a-zA-Z0-9\s\.\-,'']*$"))
-            {
-                MessageBox.Show("Title can only contain letters, numbers, spaces, periods, hyphens, commas, and apostrophes.");
-
-                // Remove invalid characters
-                string validText = new string(title.Where(c => char.IsLetterOrDigit(c) || c == ' ' || c == '.' || c == '-' || c == ',' || c == '\'').ToArray());
-                txtTitle.Text = validText;
-                txtTitle.SelectionStart = txtTitle.Text.Length; // Keep cursor at the end
-            }
-        }
-
-
-
-        private void txtCategory_TextChanged(object sender, EventArgs e)
-        {
-            string category = txtCategory.Text.Trim();
-
-            // Allow only letters, spaces, hyphens, and commas
-            if (!System.Text.RegularExpressions.Regex.IsMatch(category, @"^[a-zA-Z\s,-]*$"))
-            {
-                MessageBox.Show("Category can only contain letters, spaces, hyphens, and commas.");
-
-                // Remove invalid characters
-                string validText = new string(category.Where(c => char.IsLetter(c) || c == ' ' || c == '-' || c == ',').ToArray());
-
-                // Temporarily remove the event handler to prevent infinite loop
-                txtCategory.TextChanged -= txtCategory_TextChanged;
-                txtCategory.Text = validText;
-                txtCategory.SelectionStart = txtCategory.Text.Length; // Keep cursor at the end
-                txtCategory.TextChanged += txtCategory_TextChanged;
-            }
-        }
-
-        private void dgvBooks_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private void ManageBooksControl_Load(object sender, EventArgs e)
         {
 
         }
 
-        
+        private void dgvBooks_CellContentClick_1(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
     }
 }

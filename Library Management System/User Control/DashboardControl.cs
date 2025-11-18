@@ -103,7 +103,7 @@ namespace Library_Management_System.User_Control
             // --- Chart Container ---
             pnlChartContainer = new Panel();
             pnlChartContainer.Size = new Size(1280, 325);
-            pnlChartContainer.BackColor = Color.White;
+            pnlChartContainer.BackColor = Color.FromArgb(242, 229, 217);
             pnlChartContainer.Location = new Point(226, 215);
             ApplyCardStyle(pnlChartContainer, 12);
 
@@ -203,12 +203,12 @@ namespace Library_Management_System.User_Control
             chartReports = new Chart();
             chartReports.Dock = DockStyle.Bottom;
             chartReports.Height = 240;
-            chartReports.BackColor = Color.White;
+            chartReports.BackColor = Color.FromArgb(242, 229, 217);
 
             ChartArea area = new ChartArea("MainArea");
-            area.BackColor = Color.White;
+            area.BackColor = Color.FromArgb(242, 229, 217);
             area.AxisX.MajorGrid.Enabled = false;
-            area.AxisY.MajorGrid.LineColor = Color.FromArgb(230, 230, 230);
+            area.AxisY.MajorGrid.LineColor = Color.FromArgb(194, 167, 144);
             area.AxisX.LineWidth = 1;
             area.AxisY.LineWidth = 1;
             area.AxisX.LabelStyle.ForeColor = Color.Black;
@@ -677,11 +677,11 @@ ORDER BY Key;";
             InitializePenaltySummaryCard();
 
             // 🎨 Apply consistent visual styles to the statistic cards
-            StyleCard(pnlTotalBooks, Color.White);
-            StyleCard(pnlBorrowedBooks, Color.White);
-            StyleCard(pnlAvailableBooks, Color.White);
-            StyleCard(pnlActiveMembers, Color.White);
-            StyleCard(pnlOverdueBooks, Color.White);
+            StyleCard(pnlTotalBooks, Color.FromArgb(242, 229, 217));
+            StyleCard(pnlBorrowedBooks, Color.FromArgb(242, 229, 217));
+            StyleCard(pnlAvailableBooks, Color.FromArgb(242, 229, 217));
+            StyleCard(pnlActiveMembers, Color.FromArgb(242, 229, 217));
+            StyleCard(pnlOverdueBooks, Color.FromArgb(242, 229, 217));
 
             // 🟢 Add rounded corners for better UI
             ApplyCardStyle(pnlTotalBooks, 10);
@@ -714,7 +714,7 @@ ORDER BY Key;";
             {
                 Width = 600,
                 Height = 310,
-                BackColor = Color.White,
+                BackColor = Color.FromArgb(242, 229, 217),
                 Location = new Point(226, 560)
             };
             // 4️⃣ Add it to the form (or parent container)
@@ -769,9 +769,7 @@ ORDER BY Key;";
             // Place DataGridView below the label with some spacing
             dgvRecentBorrowings.Location = new Point(0, lblRecentBorrowings.Bottom + 5);
             dgvRecentBorrowings.Size = new Size(pnlRecentBorrowings.Width, pnlRecentBorrowings.Height - lblRecentBorrowings.Bottom - 10);
-            dgvRecentBorrowings.RowPostPaint += dgvRecentBorrowings_RowPostPaint;
-            dgvRecentBorrowings.RowHeadersVisible = true;
-            dgvRecentBorrowings.RowHeadersWidth = 50; // enough space for numbers
+          
             // Attach DataBindingComplete only once
             dgvRecentBorrowings.DataBindingComplete += DgvRecentBorrowings_DataBindingComplete;
             dgvRecentBorrowings.SelectionChanged += DgvRecentBorrowings_SelectionChanged;
@@ -783,6 +781,9 @@ ORDER BY Key;";
             dgvRecentBorrowings.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(245, 245, 245);
 
             pnlRecentBorrowings.Controls.Add(dgvRecentBorrowings);
+            // Load data immediately after setting up the DataGridView
+            LoadRecentBorrowings();
+
         }
 
         private Timer penaltySummaryTimer;
@@ -794,7 +795,7 @@ ORDER BY Key;";
             {
                 Width = 243,
                 Height = 309,
-                BackColor = Color.White,
+                BackColor = Color.FromArgb(242, 229, 217),
                 Location = new Point(1264, 561),
                 BorderStyle = BorderStyle.None,
                 Padding = new Padding(10)
@@ -1133,6 +1134,24 @@ ORDER BY Key;";
         {
             dgvRecentBorrowings.ClearSelection();  // remove pre-selected row
             dgvRecentBorrowings.CurrentCell = null; // no active cell
+                                                    // Apply row color based on Status
+            foreach (DataGridViewRow row in dgvRecentBorrowings.Rows)
+            {
+                if (row.IsNewRow) continue; // skip the empty new row
+                                            // Set row background color
+                row.DefaultCellStyle.BackColor = Color.FromArgb(242, 229, 217);
+
+                string status = row.Cells["Status"].Value?.ToString().Trim();
+                var statusCell = row.Cells["Status"];
+
+                if (string.Equals(status, "Borrowed", StringComparison.OrdinalIgnoreCase))
+                    statusCell.Style.ForeColor = Color.FromArgb(30, 144, 255); // DodgerBlue
+                else if (string.Equals(status, "Returned", StringComparison.OrdinalIgnoreCase))
+                    statusCell.Style.ForeColor = Color.FromArgb(34, 139, 34); // ForestGreen
+                else if (string.Equals(status, "Overdue", StringComparison.OrdinalIgnoreCase))
+                    statusCell.Style.ForeColor = Color.FromArgb(205, 92, 92); // IndianRed
+            }
+
         }
 
         private void dgvRecentBorrowings_RowPostPaint(object sender, DataGridViewRowPostPaintEventArgs e)
@@ -1183,7 +1202,7 @@ ORDER BY Key;";
                         dgvRecentBorrowings.CurrentCell = null;
 
                         // Rename columns
-                        dgvRecentBorrowings.Columns["MemberName"].HeaderText = "Member";
+                        dgvRecentBorrowings.Columns["MemberName"].HeaderText = "Students";
                         dgvRecentBorrowings.Columns["BookTitle"].HeaderText = "Book";
                         dgvRecentBorrowings.Columns["BorrowDate"].HeaderText = "Borrowed On";
                         dgvRecentBorrowings.Columns["DueDate"].HeaderText = "Due Date";
@@ -1193,18 +1212,7 @@ ORDER BY Key;";
                         dgvRecentBorrowings.Columns["BorrowDate"].DefaultCellStyle.Format = "MMM dd, yyyy";
                         dgvRecentBorrowings.Columns["DueDate"].DefaultCellStyle.Format = "MMM dd, yyyy";
 
-                        // Row color by status
-                        foreach (DataGridViewRow row in dgvRecentBorrowings.Rows)
-                        {
-                            string status = row.Cells["Status"].Value?.ToString();
-
-                            if (status == "Borrowed")
-                                row.DefaultCellStyle.ForeColor = Color.FromArgb(30, 144, 255); // DodgerBlue
-                            else if (status == "Returned")
-                                row.DefaultCellStyle.ForeColor = Color.FromArgb(34, 139, 34); // ForestGreen
-                            else if (status == "Overdue")
-                                row.DefaultCellStyle.ForeColor = Color.FromArgb(205, 92, 92); // IndianRed
-                        }
+                       
 
                         // Auto-size columns to fit content
                         dgvRecentBorrowings.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);

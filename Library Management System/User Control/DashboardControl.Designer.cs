@@ -80,7 +80,7 @@ namespace Library_Management_System.User_Control
             // 
             // pnlTotalBooks
             // 
-            this.pnlTotalBooks.BackColor = System.Drawing.Color.White;
+            this.pnlTotalBooks.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(233)))), ((int)(((byte)(211)))), ((int)(((byte)(192)))));
             this.pnlTotalBooks.Controls.Add(this.lblTotalBooksValue);
             this.pnlTotalBooks.Controls.Add(this.lblTotalBooks);
             this.pnlTotalBooks.Controls.Add(this.picTotalBooks);
@@ -128,7 +128,7 @@ namespace Library_Management_System.User_Control
             // 
             // pnlBorrowedBooks
             // 
-            this.pnlBorrowedBooks.BackColor = System.Drawing.Color.White;
+            this.pnlBorrowedBooks.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(218)))), ((int)(((byte)(207)))), ((int)(((byte)(182)))));
             this.pnlBorrowedBooks.Controls.Add(this.lblBorrowedBooksValue);
             this.pnlBorrowedBooks.Controls.Add(this.lblBorrowedBooks);
             this.pnlBorrowedBooks.Controls.Add(this.picBorrowedBooks);
@@ -174,7 +174,7 @@ namespace Library_Management_System.User_Control
             // 
             // pnlAvailableBooks
             // 
-            this.pnlAvailableBooks.BackColor = System.Drawing.Color.White;
+            this.pnlAvailableBooks.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(218)))), ((int)(((byte)(207)))), ((int)(((byte)(182)))));
             this.pnlAvailableBooks.Controls.Add(this.lblAvailableBooksValue);
             this.pnlAvailableBooks.Controls.Add(this.lblAvailableBooks);
             this.pnlAvailableBooks.Controls.Add(this.picAvailableBooks);
@@ -220,7 +220,7 @@ namespace Library_Management_System.User_Control
             // 
             // pnlActiveMembers
             // 
-            this.pnlActiveMembers.BackColor = System.Drawing.Color.White;
+            this.pnlActiveMembers.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(218)))), ((int)(((byte)(207)))), ((int)(((byte)(182)))));
             this.pnlActiveMembers.Controls.Add(this.lblActiveMembersValue);
             this.pnlActiveMembers.Controls.Add(this.lblActiveMembers);
             this.pnlActiveMembers.Controls.Add(this.picActiveMembers);
@@ -267,7 +267,7 @@ namespace Library_Management_System.User_Control
             // 
             // pnlOverdueBooks
             // 
-            this.pnlOverdueBooks.BackColor = System.Drawing.Color.White;
+            this.pnlOverdueBooks.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(218)))), ((int)(((byte)(207)))), ((int)(((byte)(182)))));
             this.pnlOverdueBooks.Controls.Add(this.lblOverdueBooksValue);
             this.pnlOverdueBooks.Controls.Add(this.lblOverdueBooks);
             this.pnlOverdueBooks.Controls.Add(this.picOverdueBooks);
@@ -325,7 +325,7 @@ namespace Library_Management_System.User_Control
             // panelMostBorrowed
             // 
             this.panelMostBorrowed.AutoScroll = true;
-            this.panelMostBorrowed.BackColor = System.Drawing.Color.White;
+            this.panelMostBorrowed.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(229)))), ((int)(((byte)(217)))));
             this.panelMostBorrowed.Location = new System.Drawing.Point(833, 561);
             this.panelMostBorrowed.Name = "panelMostBorrowed";
             this.panelMostBorrowed.Size = new System.Drawing.Size(425, 309);
@@ -353,7 +353,7 @@ namespace Library_Management_System.User_Control
             // 
             // DashboardControl
             // 
-            this.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(212)))), ((int)(((byte)(201)))));
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.panelMostBorrowed);
             this.Controls.Add(this.label2);

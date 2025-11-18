@@ -241,7 +241,7 @@
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(275, 48);
             this.button2.TabIndex = 1;
-            this.button2.Text = "  Manage Members";
+            this.button2.Text = "  Manage Students";
             this.button2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.button2.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.button2.UseVisualStyleBackColor = true;
@@ -270,7 +270,7 @@
             // 
             // panel1
             // 
-            this.panel1.BackColor = System.Drawing.Color.White;
+            this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(194)))), ((int)(((byte)(167)))), ((int)(((byte)(144)))));
             this.panel1.Controls.Add(this.button9);
             this.panel1.Controls.Add(this.pictureBox1);
             this.panel1.Controls.Add(this.button8);

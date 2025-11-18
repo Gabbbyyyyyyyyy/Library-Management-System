@@ -14,6 +14,7 @@ namespace LibraryManagementSystem
         public MemberEditForm(int id, string firstName, string lastName, string course, string yearLevel)
         {
             InitializeComponent();
+            this.StartPosition = FormStartPosition.CenterScreen;
             memberId = id;
             txtFirstName.Text = firstName;
             txtLastName.Text = lastName;

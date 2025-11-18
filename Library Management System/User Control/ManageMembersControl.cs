@@ -19,21 +19,23 @@ namespace LibraryManagementSystem
             InitializeComponent();
 
             // Set search box style
-           
-            txtSearch.Font = new Font(txtSearch.Font.FontFamily, 10, txtSearch.Font.Style);
 
+            txtSearch.Font = new Font(txtSearch.Font.FontFamily, 10, txtSearch.Font.Style);
+            dgvMembers.CellContentClick += DgvMembers_CellContentClick;
             dgvMembers.EnableHeadersVisualStyles = false;
             dgvMembers.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
 
+            dgvMembers.CellPainting += dgvMembers_CellPainting_HeaderAction;
             dgvMembers.CellFormatting += dgvMembers_CellFormatting;
-            dgvMembers.SelectionChanged += dgvMembers_SelectionChanged;
+   
             dgvMembers.CellDoubleClick += dgvMembers_CellDoubleClick;
+            dgvMembers.Paint += DgvMembers_Paint_ActionHeader;
 
             dgvMembers.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvMembers.MultiSelect = false;
             dgvMembers.ClearSelection();
             dgvMembers.CurrentCell = null;
-          
+
 
 
             this.Size = Screen.PrimaryScreen.Bounds.Size;
@@ -103,7 +105,36 @@ namespace LibraryManagementSystem
                     {
                         DataTable dt = new DataTable();
                         da.Fill(dt);
+
+                        // 2️⃣ Bind data
                         dgvMembers.DataSource = dt;
+
+                        dgvMembers.Columns["StudentNo"].HeaderText = "Student Number";
+                        dgvMembers.Columns["FirstName"].HeaderText = "First Name";
+                        dgvMembers.Columns["LastName"].HeaderText = "Last Name";
+                        dgvMembers.Columns["Course"].HeaderText = "Course";
+                        dgvMembers.Columns["YearLevel"].HeaderText = "Year Level";
+                        dgvMembers.Columns["Status"].HeaderText = "Status";
+                        dgvMembers.Columns["HasPendingBorrow"].HeaderText = "Pending Borrow";
+                       
+
+
+                        // 1️⃣ Setup Action button column first
+                        SetupActionButtons();
+
+                        // 3️⃣ Hide MemberId
+                        if (dgvMembers.Columns.Contains("MemberId"))
+                            dgvMembers.Columns["MemberId"].Visible = false;
+
+                        // 4️⃣ Set Action text per row
+                        foreach (DataGridViewRow row in dgvMembers.Rows)
+                        {
+                            bool isActive = row.Cells["Status"].Value.ToString() == "Active";
+                            row.Cells["Action"].Value = isActive ? "Deactivate" : "Reactivate";
+                        }
+                        // Clear selection so no row is pre-selected
+                        dgvMembers.ClearSelection();
+                        dgvMembers.CurrentCell = null; // also removes focus from any cell
 
                         // Format rows and add color for HasPendingBorrow
                         foreach (DataGridViewRow row in dgvMembers.Rows)
@@ -116,13 +147,11 @@ namespace LibraryManagementSystem
                         }
 
                         // ✅ Ensure no row stays selected
-                    
+
                         dgvMembers.CurrentCell = null;
-                       
 
 
-                        btnDeactivate.Enabled = false;
-                        btnReactivate.Enabled = false;
+
 
                         lblSearchMessage.Text = dt.Rows.Count == 0 ? "No members match your search." : "";
 
@@ -233,6 +262,43 @@ namespace LibraryManagementSystem
 
         private void dgvMembers_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {
+            if (e.RowIndex < 0) return; // skip header
+
+            string colName = dgvMembers.Columns[e.ColumnIndex].Name;
+
+            // Color Edit button
+            if (colName == "Edit")
+            {
+                e.CellStyle.BackColor = Color.LightBlue;      // button background
+                e.CellStyle.ForeColor = Color.LightBlue;          // text color
+                e.CellStyle.SelectionBackColor = Color.DodgerBlue; // hover selection
+                e.CellStyle.Font = new Font(dgvMembers.Font, FontStyle.Regular); // bold text
+                e.FormattingApplied = true;
+            }
+            // Action button (Deactivate = red, Reactivate = green)
+            else if (colName == "Action")
+            {
+                if (e.Value != null)
+                {
+                    string actionText = e.Value.ToString();
+                    if (actionText == "Deactivate")
+                    {
+                        e.CellStyle.BackColor = Color.IndianRed;
+                        e.CellStyle.ForeColor = Color.White;
+                        e.CellStyle.SelectionBackColor = Color.Red;
+                    }
+                    else if (actionText == "Reactivate")
+                    {
+                        e.CellStyle.BackColor = Color.MediumSeaGreen;
+                        e.CellStyle.ForeColor = Color.White;
+                        e.CellStyle.SelectionBackColor = Color.Green;
+                    }
+                }
+                e.CellStyle.Font = new Font(dgvMembers.Font, FontStyle.Regular);
+                e.FormattingApplied = true;
+            }
+
+
             if (dgvMembers.Columns[e.ColumnIndex].Name == "Status" && e.Value != null)
                 e.CellStyle.ForeColor = e.Value.ToString() == "Inactive" ? Color.Red : Color.Green;
 
@@ -241,21 +307,7 @@ namespace LibraryManagementSystem
 
         }
 
-        private void dgvMembers_SelectionChanged(object sender, EventArgs e)
-        {
-            if (dgvMembers.SelectedRows.Count > 0)
-            {
-                string status = dgvMembers.SelectedRows[0].Cells["Status"].Value?.ToString() ?? "";
-
-                btnDeactivate.Enabled = status == "Active";
-                btnReactivate.Enabled = status == "Inactive";
-            }
-            else
-            {
-                btnDeactivate.Enabled = false;
-                btnReactivate.Enabled = false;
-            }
-        }
+       
 
         private void dgvMembers_CellClick(object sender, DataGridViewCellEventArgs e)
         {
@@ -365,23 +417,84 @@ namespace LibraryManagementSystem
             }
         }
 
-        private void btnDeactivate_Click(object sender, EventArgs e)
+
+        private void SetupActionButtons()
         {
-            if (dgvMembers.SelectedRows.Count == 0) return;
+            // Add Edit column if it doesn't exist
+            if (!dgvMembers.Columns.Contains("Edit"))
+            {
+                DataGridViewButtonColumn editCol = new DataGridViewButtonColumn
+                {
+                    Name = "Edit",
+                    HeaderText = "",
+                    Text = "Edit",
+                    UseColumnTextForButtonValue = true,
+                    
+                };
+                dgvMembers.Columns.Add(editCol);
+                editCol.Width = 70;
+            }
 
-            int memberId = Convert.ToInt32(dgvMembers.SelectedRows[0].Cells["MemberId"].Value);
+            // Add Action column (Deactivate/Reactivate) if it doesn't exist
+            if (!dgvMembers.Columns.Contains("Action"))
+            {
+                DataGridViewButtonColumn actionCol = new DataGridViewButtonColumn
+                {
+                    Name = "Action",
+                    HeaderText = "",
+                    UseColumnTextForButtonValue = false, // text will change per row
+                   
+                };
+                dgvMembers.Columns.Add(actionCol);
+                actionCol.Width = 70;
+            }
 
+            // Make sure they are the last columns
+            dgvMembers.Columns["Edit"].DisplayIndex = dgvMembers.Columns.Count - 2;
+            dgvMembers.Columns["Action"].DisplayIndex = dgvMembers.Columns.Count - 1;
+        }
+
+
+
+        private void DgvMembers_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0) return; // ignore header
+            var row = dgvMembers.Rows[e.RowIndex];
+
+            int memberId = Convert.ToInt32(row.Cells["MemberId"].Value);
+
+            if (dgvMembers.Columns[e.ColumnIndex].Name == "Edit")
+            {
+                string firstName = row.Cells["FirstName"].Value.ToString();
+                string lastName = row.Cells["LastName"].Value.ToString();
+                string course = row.Cells["Course"].Value.ToString();
+                string yearLevel = row.Cells["YearLevel"].Value.ToString();
+
+                MemberEditForm editForm = new MemberEditForm(memberId, firstName, lastName, course, yearLevel);
+                if (editForm.ShowDialog() == DialogResult.OK)
+                    LoadMembers(txtSearch.Text.Trim());
+            }
+            else if (dgvMembers.Columns[e.ColumnIndex].Name == "Action")
+            {
+                string currentAction = row.Cells["Action"].Value?.ToString();
+                if (currentAction == "Deactivate")
+                    DeactivateMember(memberId, row);
+                else if (currentAction == "Reactivate")
+                    ReactivateMember(memberId, row);
+            }
+        }
+
+        private void DeactivateMember(int memberId, DataGridViewRow row)
+        {
             using (var con = Db.GetConnection())
             {
                 con.Open();
 
-                // Check if member has any active borrowings (ReturnDate IS NULL)
                 string checkQuery = "SELECT COUNT(*) FROM Borrowings WHERE MemberId = @memberId AND ReturnDate IS NULL";
                 using (var cmd = new SQLiteCommand(checkQuery, con))
                 {
                     cmd.Parameters.AddWithValue("@memberId", memberId);
                     int activeBorrows = Convert.ToInt32(cmd.ExecuteScalar());
-
                     if (activeBorrows > 0)
                     {
                         MessageBox.Show(
@@ -394,7 +507,6 @@ namespace LibraryManagementSystem
                     }
                 }
 
-                // If no active borrowings, deactivate the member
                 using (var cmd = new SQLiteCommand("UPDATE Members SET IsActive = 0 WHERE MemberId = @id", con))
                 {
                     cmd.Parameters.AddWithValue("@id", memberId);
@@ -403,18 +515,20 @@ namespace LibraryManagementSystem
             }
 
             MessageBox.Show("Member deactivated successfully!");
-            LoadMembers(txtSearch.Text.Trim());
+
+            // Update buttons for this row only
+            row.Cells["Status"].Value = "Inactive";
+            row.Cells["Action"].Value = "Reactivate";
+
         }
 
 
-        private void btnReactivate_Click(object sender, EventArgs e)
+        private void ReactivateMember(int memberId, DataGridViewRow row)
         {
-            if (dgvMembers.SelectedRows.Count == 0) return;
-
-            int memberId = Convert.ToInt32(dgvMembers.SelectedRows[0].Cells["MemberId"].Value);
             using (var con = Db.GetConnection())
             {
                 con.Open();
+
                 using (var cmd = new SQLiteCommand("UPDATE Members SET IsActive = 1 WHERE MemberId = @id", con))
                 {
                     cmd.Parameters.AddWithValue("@id", memberId);
@@ -423,31 +537,54 @@ namespace LibraryManagementSystem
             }
 
             MessageBox.Show("Member reactivated successfully!");
-            LoadMembers(txtSearch.Text.Trim());
+
+            // Update buttons for this row only
+            row.Cells["Status"].Value = "Active";
+            row.Cells["Action"].Value = "Deactivate";
+
         }
 
-        private void btnUpdate_Click(object sender, EventArgs e)
+
+        private void dgvMembers_CellPainting_HeaderAction(object sender, DataGridViewCellPaintingEventArgs e)
         {
-            // Step 1: Ensure a book row is selected
-            if (dgvMembers.SelectedRows.Count == 0)
+            if (e.RowIndex == -1 && e.ColumnIndex >= 0 && e.ColumnIndex < dgvMembers.Columns.Count)
             {
-                MessageBox.Show("Select a member to edit.");
-                return;
+                string colName = dgvMembers.Columns[e.ColumnIndex].Name;
+                if (colName == "Edit" || colName == "Deactivate")
+                    e.Handled = true;
             }
-            if (dgvMembers.SelectedRows.Count == 0) return;
+        }
 
-            var row = dgvMembers.SelectedRows[0];
-            int memberId = Convert.ToInt32(row.Cells["MemberId"].Value);
-            string firstName = row.Cells["FirstName"].Value.ToString();
-            string lastName = row.Cells["LastName"].Value.ToString();
-            string course = row.Cells["Course"].Value.ToString();
-            string yearLevel = row.Cells["YearLevel"].Value.ToString();
+        private void DgvMembers_Paint_ActionHeader(object sender, PaintEventArgs e)
+        {
+            if (!dgvMembers.Columns.Contains("Edit") || !dgvMembers.Columns.Contains("Action")) return;
 
-            MemberEditForm editForm = new MemberEditForm(memberId, firstName, lastName, course, yearLevel);
-            if (editForm.ShowDialog() == DialogResult.OK)
-            {
-                LoadMembers(txtSearch.Text.Trim());
-            }
+            // Get rectangles for the two button columns
+            Rectangle editRect = dgvMembers.GetCellDisplayRectangle(dgvMembers.Columns["Edit"].Index, -1, true);
+            Rectangle actionRect = dgvMembers.GetCellDisplayRectangle(dgvMembers.Columns["Action"].Index, -1, true);
+
+            // Combine the rectangles into one header area
+            Rectangle headerRect = new Rectangle(editRect.X, editRect.Y, actionRect.X + actionRect.Width - editRect.X, editRect.Height);
+
+            // Draw background and border
+            e.Graphics.FillRectangle(Brushes.LightGray, headerRect);
+            e.Graphics.DrawRectangle(Pens.Gray, headerRect);
+
+            // Draw header text centered
+            TextRenderer.DrawText(
+                 e.Graphics,
+                 "Action",
+                 new Font("Segoe UI", 10, FontStyle.Regular),   // ★ custom font here
+                 headerRect,
+                 Color.Black,
+                 TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter
+             );
+
+        }
+
+        private void dgvMembers_CellContentClick_1(object sender, DataGridViewCellEventArgs e)
+        {
+
         }
     }
 }

@@ -339,27 +339,27 @@ private void MakeButtonRounded(Button btn, float radiusPercent = 0.02f)
         }
 
 
-        // Handles displaying books from the reader
-        private void DisplayBooks(SQLiteDataReader reader)
-        {
-            bool found = false;
+        //// Handles displaying books from the reader
+        //private void DisplayBooks(SQLiteDataReader reader)
+        //{
+        //    bool found = false;
 
-            while (reader.Read())
-            {
-                found = true;
-                string title = reader["Title"].ToString();
-                string author = reader["Author"].ToString();
-                string isbn = reader["ISBN"].ToString();
-                string status = reader["Status"].ToString();
-                string category = reader["Category"].ToString();
+        //    while (reader.Read())
+        //    {
+        //        found = true;
+        //        string title = reader["Title"].ToString();
+        //        string author = reader["Author"].ToString();
+        //        string isbn = reader["ISBN"].ToString();
+        //        string status = reader["Status"].ToString();
+        //        string category = reader["Category"].ToString();
 
-                Image cover = LoadLocalCover(isbn) ?? Properties.Resources.Bc;
-                flowBooks.Controls.Add(AddBookCard(title, author, status, cover, isbn, category));
-            }
+        //        Image cover = LoadLocalCover(isbn) ?? Properties.Resources.Bc;
+        //        flowBooks.Controls.Add(AddBookCard(title, author, status, cover, isbn, category));
+        //    }
 
-            if (!found)
-                ShowNoBooksMessage();
-        }
+        //    if (!found)
+        //        ShowNoBooksMessage();
+        //}
 
         // Shows a centered "No books found" message
         private void ShowNoBooksMessage()
