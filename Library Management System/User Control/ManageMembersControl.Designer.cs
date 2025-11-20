@@ -36,7 +36,10 @@ namespace LibraryManagementSystem
             this.txtSearch = new System.Windows.Forms.TextBox();
             this.lblSearchMessage = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.label1 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dgvMembers)).BeginInit();
+            this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
             // dgvMembers
@@ -75,16 +78,37 @@ namespace LibraryManagementSystem
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 16.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label6.Location = new System.Drawing.Point(288, 61);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(131, 32);
+            this.label6.Size = new System.Drawing.Size(0, 32);
             this.label6.TabIndex = 0;
-            this.label6.Text = "Members";
             this.label6.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            // 
+            // panel1
+            // 
+            this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(194)))), ((int)(((byte)(167)))), ((int)(((byte)(144)))));
+            this.panel1.Controls.Add(this.label1);
+            this.panel1.Location = new System.Drawing.Point(244, 28);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(200, 51);
+            this.panel1.TabIndex = 22;
+            this.panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.panel1_Paint);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 16.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.Location = new System.Drawing.Point(27, 10);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(127, 32);
+            this.label1.TabIndex = 20;
+            this.label1.Text = "Students";
+            this.label1.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
             // ManageMembersControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(212)))), ((int)(((byte)(201)))));
+            this.Controls.Add(this.panel1);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.lblSearchMessage);
             this.Controls.Add(this.txtSearch);
@@ -93,6 +117,8 @@ namespace LibraryManagementSystem
             this.Size = new System.Drawing.Size(1749, 959);
             this.Load += new System.EventHandler(this.ManageMembersControl_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvMembers)).EndInit();
+            this.panel1.ResumeLayout(false);
+            this.panel1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -103,5 +129,7 @@ namespace LibraryManagementSystem
         private System.Windows.Forms.TextBox txtSearch;
         private System.Windows.Forms.Label lblSearchMessage;
         private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Label label1;
     }
 }

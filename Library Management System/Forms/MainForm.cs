@@ -12,6 +12,7 @@ using LibraryManagementSystem;
 using LibraryManagementSystem.Data;
 using System.Runtime.InteropServices;
 using Library_Management_System.Forms;
+using System.Drawing.Drawing2D;
 
 //cpanel password = GabrielCpanelAccount1
 //Hostinger account = GabrielHosting1
@@ -20,6 +21,7 @@ namespace Library_Management_System
 {
     public partial class MainForm : Form
     {
+
         // Add this property here
         public bool IsAdmin { get; set; } = false;
         public string Username { get; set; } = "ADMIN";
@@ -52,6 +54,12 @@ namespace Library_Management_System
         // ✅ Store reference to the dashboard so other controls can refresh it
         public DashboardControl DashboardInstance;
         private ReturnBooksControl returnBooksControl;
+        private ManageBooksControl manageBooksControl;
+        private ManageMembersControl manageMembersControl;
+        private BorrowBooksControl borrowBooksControl = new BorrowBooksControl();
+        private OverdueReportControl overdueBooksControl;
+     
+
 
 
 
@@ -68,6 +76,10 @@ namespace Library_Management_System
         public MainForm()
         {
             InitializeComponent();
+            // Create the control once
+            manageBooksControl = new ManageBooksControl();
+            manageMembersControl = new ManageMembersControl();
+
             this.Shown += MainForm_Shown; // add this
             this.Dock = DockStyle.Fill;
             this.Size = Screen.PrimaryScreen.Bounds.Size;
@@ -81,6 +93,7 @@ namespace Library_Management_System
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLogo)).BeginInit();
             this.SuspendLayout();
             button6.Cursor = Cursors.Hand;
+
 
 
             // MainForm
@@ -98,7 +111,8 @@ namespace Library_Management_System
             bottomSpacer.Height = (int)(panel1.Height * 0.05);
             bottomSpacer.Width = panel1.Width;
             bottomSpacer.Location = new Point(0, panel1.Height - bottomSpacer.Height);
-            bottomSpacer.BackColor = Color.FromArgb(194, 167, 144);
+
+          
         }
 
 
@@ -198,23 +212,38 @@ namespace Library_Management_System
         }
 
 
-
-
-
-
-
         private void button1_Click(object sender, EventArgs e)
         {
             SetActiveButton(button1);
-            // New way (loads UserControl into panelContainer):
-            LoadControl(new ManageBooksControl());
+
+            // Create a fresh instance so updates always reflect
+            ManageBooksControl booksControl = new ManageBooksControl();
+            booksControl.Dock = DockStyle.Fill;
+
+            panelContainer.Controls.Clear();
+            panelContainer.Controls.Add(booksControl);
+
+            // Trigger the horizontal rollout animation
+            booksControl.RollOutPanel();
         }
+
+
 
         private void button2_Click(object sender, EventArgs e)
         {
             SetActiveButton(button2);
-            LoadControl(new ManageMembersControl());
+
+            // Create a fresh instance each time to reflect updates
+            ManageMembersControl membersControl = new ManageMembersControl();
+            membersControl.Dock = DockStyle.Fill;
+
+            panelContainer.Controls.Clear();
+            panelContainer.Controls.Add(membersControl);
+
+            // Trigger horizontal rollout animation
+            membersControl.RollOutPanel();
         }
+
         private void MoveIndicatorSmooth(object sender, EventArgs e)
         {
             int currentTop = sidebarIndicator.Top;
@@ -259,7 +288,7 @@ namespace Library_Management_System
             // === Create sidebar selection indicator ===
             sidebarIndicator = new Panel();
             sidebarIndicator.Size = new Size(4, 40); // thin vertical bar
-            sidebarIndicator.BackColor = Color.FromArgb(165, 105, 79); // Coffee brown
+            sidebarIndicator.BackColor = Color.FromArgb(242, 229, 217); // Coffee brown
             sidebarIndicator.Visible = false;
             panel1.Controls.Add(sidebarIndicator);
             // Pre-select dashboard button on login
@@ -445,7 +474,7 @@ namespace Library_Management_System
             // === Create bottom spacer (inside sidebar only) ===
             bottomSpacer = new Panel
             {
-                BackColor = Color.White,
+                BackColor = Color.FromArgb(194, 167, 144),
                 Height = Math.Max(20, (int)(panel1.Height * 0.05)), // 5% of sidebar
                 Dock = DockStyle.Bottom // <-- simpler and reliable
             };
@@ -483,7 +512,7 @@ namespace Library_Management_System
 
             // Set new active button
             activeButton = clickedButton;
-            activeButton.ForeColor = Color.FromArgb(205, 133, 63); // Peru
+            activeButton.ForeColor = Color.Black; // Peru
             activeButton.BackColor = Color.Transparent; // optional very light beige highlight
 
             // Move and show the indicator beside it
@@ -623,25 +652,66 @@ namespace Library_Management_System
 
         private void panel1_Paint(object sender, PaintEventArgs e)
         {
-           
+            int radius = 30; // adjust roundness
+
+            Panel p = sender as Panel;
+            Graphics g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+
+            GraphicsPath path = new GraphicsPath();
+
+            // Top-left corner (sharp)
+            path.AddLine(0, 0, p.Width - radius, 0);
+
+            // Top-right corner (rounded)
+            path.AddArc(p.Width - radius, 0, radius, radius, 270, 90);
+
+            // Right side
+            path.AddLine(p.Width, radius, p.Width, p.Height);
+
+            // Bottom
+            path.AddLine(p.Width, p.Height, 0, p.Height);
+
+            // Left side
+            path.AddLine(0, p.Height, 0, 0);
+
+            path.CloseFigure();
+
+            p.Region = new Region(path);
         }
 
 
         private void button3_Click(object sender, EventArgs e)
         {
             SetActiveButton(button3);
-            LoadControl(new BorrowBooksControl());
+
+            // Create a fresh instance every time (so updates are reflected)
+            BorrowBooksControl borrowControl = new BorrowBooksControl();
+            borrowControl.Dock = DockStyle.Fill;
+
+            // Clear previous control and add the new one
+            panelContainer.Controls.Clear();
+            panelContainer.Controls.Add(borrowControl);
+
+            // Trigger horizontal rollout animation
+            borrowControl.RollOutPanel();
         }
+
 
         private void button4_Click(object sender, EventArgs e)
         {
             SetActiveButton(button4);
+
             panelContainer.Controls.Clear();
 
             // ✅ Reuse the same instance so the event connection works
             returnBooksControl.Dock = DockStyle.Fill;
             panelContainer.Controls.Add(returnBooksControl);
+
+            // Trigger horizontal rollout animation
+            returnBooksControl.RollOutPanel();
         }
+
 
 
 
@@ -749,9 +819,11 @@ namespace Library_Management_System
 
         }
 
+        // Button 9: Overdue Books
         private void button9_Click(object sender, EventArgs e)
         {
             SetActiveButton(button9);
+
             panelContainer.Controls.Clear();
 
             // ✅ Pass MainForm reference so OverdueReportControl can call back
@@ -759,6 +831,9 @@ namespace Library_Management_System
             overdueBooks.Dock = DockStyle.Fill;
 
             panelContainer.Controls.Add(overdueBooks);
+
+            // Trigger horizontal rollout animation
+            overdueBooks.RollOutPanel();
         }
 
 

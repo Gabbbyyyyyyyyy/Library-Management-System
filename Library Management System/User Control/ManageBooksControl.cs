@@ -11,6 +11,7 @@ using Library_Management_System.Forms;
 using LibraryManagementSystem.Data;
 using Library_Management_System.Models;
 using static Guna.UI2.WinForms.Suite.Descriptions;
+using System.Drawing.Drawing2D;
 
 namespace LibraryManagementSystem
 {
@@ -20,6 +21,10 @@ namespace LibraryManagementSystem
         private Label lblNoBooksFound;
         private FlowLayoutPanel flowBooks;
 
+        private int targetWidth = 150; // final width when fully shown
+        private Timer slideTimer;
+
+
 
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         private static extern Int32 SendMessage(IntPtr hWnd, int msg, int wParam, string lParam);
@@ -28,6 +33,16 @@ namespace LibraryManagementSystem
         public ManageBooksControl()
         {
             InitializeComponent();
+            //dgvBooks.CellPainting += DgvBooks_CustomButtonColor;
+
+            // Initially collapsed
+            panel1.Width = 0;
+
+            // Setup Timer
+            slideTimer = new Timer();
+            slideTimer.Interval = 10;
+            slideTimer.Tick += SlideTimer_Tick;
+
 
             flowBooks = new FlowLayoutPanel
             {
@@ -79,6 +94,51 @@ namespace LibraryManagementSystem
 
             LoadBooksAsync("").ConfigureAwait(false);
         }
+
+        //private void DgvBooks_CustomButtonColor(object sender, DataGridViewCellPaintingEventArgs e)
+        //{
+        //    if (e.RowIndex < 0) return;
+
+        //    string col = dgvBooks.Columns[e.ColumnIndex].Name;
+
+        //    if (col != "Edit" && col != "Delete") return;
+
+        //    e.PaintBackground(e.CellBounds, true);
+
+        //    Color backColor;
+        //    Color textColor;
+        //    Color borderColor;
+
+        //    // 🎨 Custom colors
+        //    if (col == "Edit")
+        //    {
+        //        backColor = Color.FromArgb(242, 229, 217);  // light blue
+        //        borderColor = Color.LightBlue;
+        //        textColor = Color.Black;
+        //    }
+        //    else // Delete
+        //    {
+        //        backColor = Color.FromArgb(242, 229, 217);  // light red
+        //        borderColor = Color.IndianRed;
+        //        textColor = Color.Black;
+        //    }
+
+        //    using (SolidBrush br = new SolidBrush(backColor))
+        //        e.Graphics.FillRectangle(br, e.CellBounds);
+
+        //    // center text
+        //    TextRenderer.DrawText(
+        //        e.Graphics,
+        //        col,
+        //        new Font("Segoe UI", 9, FontStyle.Bold),
+        //        e.CellBounds,
+        //        textColor,
+        //        TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter
+        //    );
+
+        //    e.Handled = true;
+        //}
+
 
         #region Load Books
 
@@ -434,5 +494,53 @@ namespace LibraryManagementSystem
         {
 
         }
+
+        private void SlideTimer_Tick(object sender, EventArgs e)
+        {
+            if (panel1.Width < targetWidth)
+            {
+                panel1.Width += 8; // adjust speed
+                panel1.Invalidate(); // redraw rounded corners
+            }
+            else
+            {
+                slideTimer.Stop(); // stop when fully expanded
+            }
+        }
+
+        // Call this from MainForm
+        public void RollOutPanel()
+        {
+            // Reset panel to collapsed before rolling out
+            if (panel1.Width != 0)
+            {
+                panel1.Width = 0;
+                panel1.Invalidate();
+            }
+
+            slideTimer.Start();
+        }
+
+
+        private void panel1_Paint(object sender, PaintEventArgs e)
+        {
+            int radius = 20;
+            Graphics g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+
+            GraphicsPath path = new GraphicsPath();
+
+            // Only round top-right and bottom-right corners
+            path.AddLine(0, 0, panel1.Width - radius, 0);                    // top edge
+            path.AddArc(panel1.Width - radius, 0, radius, radius, 270, 90); // top-right
+            path.AddLine(panel1.Width, radius, panel1.Width, panel1.Height - radius); // right edge
+            path.AddArc(panel1.Width - radius, panel1.Height - radius, radius, radius, 0, 90); // bottom-right
+            path.AddLine(panel1.Width - radius, panel1.Height, 0, panel1.Height);             // bottom edge
+            path.AddLine(0, panel1.Height, 0, 0);                                           // left edge
+            path.CloseFigure();
+
+            panel1.Region = new Region(path);
+        }
     }
 }
+

@@ -631,16 +631,29 @@ private void MakeButtonRounded(Button btn, float radiusPercent = 0.02f)
                 Location = new Point(120, 290),
                 BackColor = Color.LightGreen,
                 FlatStyle = FlatStyle.Flat,
-                Cursor = Cursors.Hand
+                Cursor = Cursors.Hand,
             };
-            btnReserve.FlatAppearance.BorderColor = Color.FromArgb(64, 64, 64); // light black
+
+            // 💡 ENABLE ONLY WHEN NOT AVAILABLE
+            btnReserve.Enabled = status == "Not Available";
+
+            // Optional: change appearance when disabled
+            if (!btnReserve.Enabled)
+            {
+                btnReserve.BackColor = Color.Gray;
+                btnReserve.Cursor = Cursors.No;
+            }
+
+            btnReserve.FlatAppearance.BorderColor = Color.FromArgb(64, 64, 64);
             btnReserve.FlatAppearance.BorderSize = 0;
+
             btnReserve.Click += (s, e) =>
             {
-                if (status == "Available")
-                    MessageBox.Show($"You have reserved {title}!", "Reserved", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                else
-                    MessageBox.Show($"Sorry, {title} is currently unavailable.", "Cannot Reserve", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                if (status == "Not Available")
+                {
+                    MessageBox.Show($"You have reserved {title}!", "Reserved",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
             };
 
             // Apply rounded corners AFTER button has a valid size

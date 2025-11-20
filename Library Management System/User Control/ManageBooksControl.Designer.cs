@@ -37,7 +37,9 @@ namespace LibraryManagementSystem
             this.txtSearch = new System.Windows.Forms.TextBox();
             this.lblSearchMessage = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
+            this.panel1 = new System.Windows.Forms.Panel();
             ((System.ComponentModel.ISupportInitialize)(this.dgvBooks)).BeginInit();
+            this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
             // dgvBooks
@@ -84,27 +86,39 @@ namespace LibraryManagementSystem
             // 
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Microsoft Sans Serif", 16.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(288, 61);
+            this.label6.Location = new System.Drawing.Point(27, 10);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(93, 32);
             this.label6.TabIndex = 20;
             this.label6.Text = "Books";
             this.label6.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
+            // panel1
+            // 
+            this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(194)))), ((int)(((byte)(167)))), ((int)(((byte)(144)))));
+            this.panel1.Controls.Add(this.label6);
+            this.panel1.Location = new System.Drawing.Point(244, 28);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(200, 51);
+            this.panel1.TabIndex = 21;
+            this.panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.panel1_Paint);
+            // 
             // ManageBooksControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.WhiteSmoke;
-            this.Controls.Add(this.label6);
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(212)))), ((int)(((byte)(201)))));
             this.Controls.Add(this.lblSearchMessage);
             this.Controls.Add(this.txtSearch);
             this.Controls.Add(this.btnAdd);
             this.Controls.Add(this.dgvBooks);
+            this.Controls.Add(this.panel1);
             this.Name = "ManageBooksControl";
             this.Size = new System.Drawing.Size(1749, 959);
             this.Load += new System.EventHandler(this.ManageBooksControl_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvBooks)).EndInit();
+            this.panel1.ResumeLayout(false);
+            this.panel1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -116,5 +130,6 @@ namespace LibraryManagementSystem
         private System.Windows.Forms.TextBox txtSearch;
         private System.Windows.Forms.Label lblSearchMessage;
         private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.Panel panel1;
     }
 }

@@ -121,7 +121,7 @@ namespace Library_Management_System.User_Control
             btnToday.Text = "Today";
             btnToday.Font = new Font("Microsoft Sans Serif", 9);
             btnToday.FlatStyle = FlatStyle.Flat;
-            btnToday.BackColor = Color.White;
+            btnToday.BackColor = Color.FromArgb(224, 212, 201);
             btnToday.ForeColor = Color.Black;
             btnToday.Size = new Size(80, 28);
             btnToday.Cursor = Cursors.Hand;
@@ -131,7 +131,7 @@ namespace Library_Management_System.User_Control
             btnLastWeek.Text = "Last Week";
             btnLastWeek.Font = new Font("Microsoft Sans Serif", 9);
             btnLastWeek.FlatStyle = FlatStyle.Flat;
-            btnLastWeek.BackColor = Color.White;
+            btnLastWeek.BackColor = Color.FromArgb(224, 212, 201);
             btnLastWeek.ForeColor = Color.Black;
             btnLastWeek.Size = new Size(100, 28);
             btnLastWeek.Cursor = Cursors.Hand;
@@ -141,7 +141,7 @@ namespace Library_Management_System.User_Control
             btnLastMonth.Text = "Last Month";
             btnLastMonth.Font = new Font("Microsoft Sans Serif", 9);
             btnLastMonth.FlatStyle = FlatStyle.Flat;
-            btnLastMonth.BackColor = Color.White;
+            btnLastMonth.BackColor = Color.FromArgb(224, 212, 201);
             btnLastMonth.ForeColor = Color.Black;
             btnLastMonth.Size = new Size(110, 28);
             btnLastMonth.Cursor = Cursors.Hand;
@@ -152,7 +152,7 @@ namespace Library_Management_System.User_Control
             btnBorrowings.Text = "Borrowings";
             btnBorrowings.Font = new Font("Microsoft Sans Serif", 9, FontStyle.Regular);
             btnBorrowings.FlatStyle = FlatStyle.Flat;
-            btnBorrowings.BackColor = Color.FromArgb(165, 105, 79);
+            btnBorrowings.BackColor = Color.FromArgb(224, 212, 201);
             btnBorrowings.ForeColor = Color.White;
             btnBorrowings.Size = new Size(100, 28);
             btnBorrowings.Cursor = Cursors.Hand;
@@ -163,7 +163,7 @@ namespace Library_Management_System.User_Control
             btnReturns.Text = "Returns";
             btnReturns.Font = new Font("Microsoft Sans Serif", 9, FontStyle.Regular);
             btnReturns.FlatStyle = FlatStyle.Flat;
-            btnReturns.BackColor = Color.White;
+            btnReturns.BackColor = Color.FromArgb(224, 212, 201);
             btnReturns.ForeColor = Color.Black;
             btnReturns.Size = new Size(100, 28);
             btnReturns.Cursor = Cursors.Hand;
@@ -226,7 +226,7 @@ namespace Library_Management_System.User_Control
             // --- Underline ---
             pnlUnderline = new Panel();
             pnlUnderline.Size = new Size(btnToday.Width, 3);
-            pnlUnderline.BackColor = Color.FromArgb(205, 133, 63);
+            pnlUnderline.BackColor = Color.FromArgb(194, 167, 144);
             pnlUnderline.Location = new Point(btnToday.Left, btnToday.Bottom);
             pnlChartContainer.Controls.Add(pnlUnderline);
             pnlUnderline.BringToFront();
@@ -342,10 +342,10 @@ namespace Library_Management_System.User_Control
         {
             if (activeTrendButton != null)
             {
-                activeTrendButton.BackColor = Color.White;
+                activeTrendButton.BackColor = Color.FromArgb(224, 212, 201);
                 activeTrendButton.ForeColor = Color.Black;
             }
-            selected.BackColor = Color.FromArgb(205, 133, 63);
+            selected.BackColor = Color.FromArgb(194, 167, 144);
             selected.ForeColor = Color.White;
             activeTrendButton = selected;
         }
@@ -661,7 +661,7 @@ ORDER BY Key;";
             if (LibraryStatusHelper.IsLibraryOpen())
             {
                 button1.Text = "🟢 Library Open";
-                button1.BackColor = Color.LightGreen;
+                button1.BackColor = Color.FromArgb(46, 204, 113);
             }
             else
             {
@@ -755,7 +755,7 @@ ORDER BY Key;";
             // DataGridView setup
             dgvRecentBorrowings = new DataGridView
             {
-                BackgroundColor = Color.White,
+                BackgroundColor = Color.FromArgb(245, 245, 245),
                 BorderStyle = BorderStyle.None,
                 AllowUserToAddRows = false,
                 AllowUserToDeleteRows = false,
@@ -774,7 +774,7 @@ ORDER BY Key;";
             dgvRecentBorrowings.DataBindingComplete += DgvRecentBorrowings_DataBindingComplete;
             dgvRecentBorrowings.SelectionChanged += DgvRecentBorrowings_SelectionChanged;
             // Styling
-            dgvRecentBorrowings.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(205, 133, 63); // Peru highlight color
+            dgvRecentBorrowings.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(194, 167, 144); // Peru highlight color
             dgvRecentBorrowings.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
             dgvRecentBorrowings.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
             dgvRecentBorrowings.DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
@@ -1145,7 +1145,7 @@ ORDER BY Key;";
                 var statusCell = row.Cells["Status"];
 
                 if (string.Equals(status, "Borrowed", StringComparison.OrdinalIgnoreCase))
-                    statusCell.Style.ForeColor = Color.FromArgb(30, 144, 255); // DodgerBlue
+                    statusCell.Style.ForeColor = Color.Red; // DodgerBlue
                 else if (string.Equals(status, "Returned", StringComparison.OrdinalIgnoreCase))
                     statusCell.Style.ForeColor = Color.FromArgb(34, 139, 34); // ForestGreen
                 else if (string.Equals(status, "Overdue", StringComparison.OrdinalIgnoreCase))
@@ -1315,8 +1315,8 @@ ORDER BY Key;";
                 lblTotalBooks.Text = $"Total Books";
                 
                 lblBorrowedBooks.Text = $"Borrowed";
-                lblAvailableBooks.Text = $"Available";
-                lblActiveMembers.Text = $"Active Members";
+                lblAvailableBooks.Text = $"Available Copies";
+                lblActiveMembers.Text = $"Active Students";
                 lblOverdueBooks.Text = $"Overdue";
 
                 // Value labels (under the title, bottom-right aligned)
@@ -1459,7 +1459,7 @@ ORDER BY Key;";
             {
                 LibraryStatusHelper.SetLibraryStatus("Open");
                 button1.Text = "🟢 Library Open";
-                button1.BackColor = Color.LightGreen;
+                button1.BackColor = Color.FromArgb(46, 204, 113);
                 MessageBox.Show("Library is now OPEN. Transactions resumed.", "Library Open", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
@@ -1470,6 +1470,16 @@ ORDER BY Key;";
         }
 
         private void pnlOverdueBooks_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void lblAvailableBooks_Click_1(object sender, EventArgs e)
+        {
+
+        }
+
+        private void lblActiveMembers_Click_1(object sender, EventArgs e)
         {
 
         }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using Library_Management_System.Models;
 using LibraryManagementSystem.Data;
@@ -14,9 +15,20 @@ namespace LibraryManagementSystem
         private Timer refreshTimer;
         private bool isViewingMember = false;
 
+        private int targetWidth = 150; // final width when fully shown
+        private Timer slideTimer;
+
+
         public ManageMembersControl()
         {
             InitializeComponent();
+            // Initially collapsed
+            panel1.Width = 0;
+
+            // Setup Timer
+            slideTimer = new Timer();
+            slideTimer.Interval = 10;
+            slideTimer.Tick += SlideTimer_Tick;
 
             // Set search box style
 
@@ -585,6 +597,53 @@ namespace LibraryManagementSystem
         private void dgvMembers_CellContentClick_1(object sender, DataGridViewCellEventArgs e)
         {
 
+        }
+
+        private void SlideTimer_Tick(object sender, EventArgs e)
+        {
+            if (panel1.Width < targetWidth)
+            {
+                panel1.Width += 8; // adjust speed
+                panel1.Invalidate(); // redraw rounded corners
+            }
+            else
+            {
+                slideTimer.Stop(); // stop when fully expanded
+            }
+        }
+
+        // Call this from MainForm
+        public void RollOutPanel()
+        {
+            // Reset panel to collapsed before rolling out
+            if (panel1.Width != 0)
+            {
+                panel1.Width = 0;
+                panel1.Invalidate();
+            }
+
+            slideTimer.Start();
+        }
+
+
+        private void panel1_Paint(object sender, PaintEventArgs e)
+        {
+            int radius = 20;
+            Graphics g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+
+            GraphicsPath path = new GraphicsPath();
+
+            // Only round top-right and bottom-right corners
+            path.AddLine(0, 0, panel1.Width - radius, 0);                    // top edge
+            path.AddArc(panel1.Width - radius, 0, radius, radius, 270, 90); // top-right
+            path.AddLine(panel1.Width, radius, panel1.Width, panel1.Height - radius); // right edge
+            path.AddArc(panel1.Width - radius, panel1.Height - radius, radius, radius, 0, 90); // bottom-right
+            path.AddLine(panel1.Width - radius, panel1.Height, 0, panel1.Height);             // bottom edge
+            path.AddLine(0, panel1.Height, 0, 0);                                           // left edge
+            path.CloseFigure();
+
+            panel1.Region = new Region(path);
         }
     }
 }
