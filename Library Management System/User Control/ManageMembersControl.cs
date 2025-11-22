@@ -124,8 +124,8 @@ namespace LibraryManagementSystem
                         dgvMembers.Columns["StudentNo"].HeaderText = "Student Number";
                         dgvMembers.Columns["FirstName"].HeaderText = "First Name";
                         dgvMembers.Columns["LastName"].HeaderText = "Last Name";
-                        dgvMembers.Columns["Course"].HeaderText = "Course";
-                        dgvMembers.Columns["YearLevel"].HeaderText = "Year Level";
+                        dgvMembers.Columns["Course"].HeaderText = "Course/Strand";
+                        dgvMembers.Columns["YearLevel"].HeaderText = "Year/Grade Level";
                         dgvMembers.Columns["Status"].HeaderText = "Status";
                         dgvMembers.Columns["HasPendingBorrow"].HeaderText = "Pending Borrow";
                        
@@ -510,7 +510,7 @@ namespace LibraryManagementSystem
                     if (activeBorrows > 0)
                     {
                         MessageBox.Show(
-                            "This member cannot be deactivated because they still have borrowed books.",
+                            "This Student cannot be deactivated because they still have borrowed books.",
                             "Action Denied",
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Warning
@@ -526,7 +526,7 @@ namespace LibraryManagementSystem
                 }
             }
 
-            MessageBox.Show("Member deactivated successfully!");
+            MessageBox.Show("Student deactivated successfully!");
 
             // Update buttons for this row only
             row.Cells["Status"].Value = "Inactive";
@@ -548,7 +548,7 @@ namespace LibraryManagementSystem
                 }
             }
 
-            MessageBox.Show("Member reactivated successfully!");
+            MessageBox.Show("Student reactivated successfully!");
 
             // Update buttons for this row only
             row.Cells["Status"].Value = "Active";

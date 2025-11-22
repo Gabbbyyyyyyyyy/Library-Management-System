@@ -512,7 +512,7 @@ namespace Library_Management_System
 
             // Set new active button
             activeButton = clickedButton;
-            activeButton.ForeColor = Color.Black; // Peru
+            activeButton.ForeColor = Color.FromArgb(242, 229, 217); // Peru
             activeButton.BackColor = Color.Transparent; // optional very light beige highlight
 
             // Move and show the indicator beside it

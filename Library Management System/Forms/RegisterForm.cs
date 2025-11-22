@@ -248,32 +248,30 @@ namespace Library_Management_System.Forms
         {
             string input = textYearLevel.Text;
 
-            // If user types letters
+            // Limit input to 2 characters
+            if (input.Length > 2)
+            {
+                textYearLevel.Text = input.Substring(0, 2);
+                textYearLevel.SelectionStart = textYearLevel.Text.Length;
+                return;
+            }
+
+            // Remove any non-digit input
             if (input.Any(c => !char.IsDigit(c)))
             {
-                lblMessage.Text = "Year Level can't contain letters.";
+                lblMessage.Text = "Year / Grade Level can't contain letters.";
                 lblMessage.ForeColor = Color.Red;
                 textYearLevel.Text = new string(input.Where(char.IsDigit).ToArray());
                 textYearLevel.SelectionStart = textYearLevel.Text.Length;
                 return;
             }
 
-            // Limit input to 1 character only
-            if (textYearLevel.Text.Length > 1)
-            {
-                lblMessage.Text = "Year Level can only be a single digit (1-6).";
-                lblMessage.ForeColor = Color.Red;
-                textYearLevel.Text = textYearLevel.Text.Substring(0, 1);
-                textYearLevel.SelectionStart = textYearLevel.Text.Length;
-                return;
-            }
-
-            // Check if the number is between 1 and 6
             if (int.TryParse(textYearLevel.Text, out int year))
             {
-                if (year < 1 || year > 6)
+                // Allow College: 1-6, Senior High: 11-12
+                if (!((year >= 1 && year <= 6) || (year >= 11 && year <= 12)))
                 {
-                    lblMessage.Text = "Year Level must be between 1 and 6.";
+                    lblMessage.Text = "Year / Grade Level must be 1-6 (College) or 11-12 (Senior High).";
                     lblMessage.ForeColor = Color.Red;
                 }
                 else
@@ -283,6 +281,7 @@ namespace Library_Management_System.Forms
                 }
             }
         }
+
 
 
 

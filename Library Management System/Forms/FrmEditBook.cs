@@ -21,6 +21,10 @@ namespace Library_Management_System.Forms
             _bookId = bookId;
             _parentControl = parentControl;
             LoadBookDetails();
+
+            // Subscribe to the Shown event
+            this.Shown += FrmEditBook_Shown;
+
         }
 
         private void LoadBookDetails()
@@ -58,6 +62,7 @@ namespace Library_Management_System.Forms
             txtTitle.BackColor = SystemColors.Control;
             txtAuthor.BackColor = SystemColors.Control;
             txtCategory.BackColor = SystemColors.Control;
+
         }
 
         private bool ValidateInputs()
@@ -174,7 +179,30 @@ namespace Library_Management_System.Forms
 
         private void FrmEditBook_Load(object sender, EventArgs e)
         {
-
+          
         }
+
+        private void FrmEditBook_Shown(object sender, EventArgs e)
+        {
+            // ISBN and other read-only textboxes: show value, no selection
+            txtISBN.SelectionStart = 0;
+            txtISBN.SelectionLength = 0;
+
+            txtTitle.SelectionStart = 0;
+            txtTitle.SelectionLength = 0;
+
+            txtAuthor.SelectionStart = 0;
+            txtAuthor.SelectionLength = 0;
+
+            txtCategory.SelectionStart = 0;
+            txtCategory.SelectionLength = 0;
+
+            // Quantity textbox: focus and select all text
+            txtQuantity.Focus();
+            txtQuantity.SelectionStart = 0;
+            txtQuantity.SelectionLength = txtQuantity.Text.Length;
+        }
+
+
     }
 }

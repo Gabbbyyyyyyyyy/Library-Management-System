@@ -55,7 +55,7 @@
             this.btnReturn.Name = "btnReturn";
             this.btnReturn.Size = new System.Drawing.Size(180, 63);
             this.btnReturn.TabIndex = 1;
-            this.btnReturn.Text = "Return Book";
+            this.btnReturn.Text = "Confirm";
             this.btnReturn.UseVisualStyleBackColor = false;
             this.btnReturn.Click += new System.EventHandler(this.btnReturn_Click);
             // 
