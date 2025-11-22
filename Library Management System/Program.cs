@@ -18,6 +18,7 @@ namespace LibraryManagementSystem
 
             // Run your startup form
             Application.Run(new PreLoginButtons());
+            //Minor issue the penaltty in return still counting if admin did not click the confirm button. e.g : the student has 10 pesos penalty then the admin forget to confirm it then in the next day the penalty display of the student is become 20 in the message box appears.
         }
     }
 }

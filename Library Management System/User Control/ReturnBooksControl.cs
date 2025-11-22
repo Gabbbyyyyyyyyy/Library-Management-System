@@ -20,6 +20,7 @@ namespace Library_Management_System.User_Control
         public ReturnBooksControl()
         {
             InitializeComponent();
+            btnReturn.ApplyRoundedCorners(10,Color.FromArgb(211, 181, 139));
             // Initially collapsed
             panel1.Width = 0;
 
