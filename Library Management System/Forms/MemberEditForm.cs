@@ -28,7 +28,7 @@ namespace LibraryManagementSystem
             if (string.IsNullOrWhiteSpace(txtFirstName.Text))
             {
                 MessageBox.Show("First Name cannot be blank.");
-             
+
             }
 
             if (!System.Text.RegularExpressions.Regex.IsMatch(txtFirstName.Text, @"^[a-zA-Z\s.]*$"))
@@ -52,7 +52,7 @@ namespace LibraryManagementSystem
             if (string.IsNullOrWhiteSpace(txtLastName.Text))
             {
                 MessageBox.Show("Last Name cannot be blank.");
-               
+
             }
 
             if (!System.Text.RegularExpressions.Regex.IsMatch(txtLastName.Text, @"^[a-zA-Z\s]*$"))
@@ -71,7 +71,7 @@ namespace LibraryManagementSystem
             if (string.IsNullOrWhiteSpace(txtCourse.Text))
             {
                 MessageBox.Show("Course cannot be blank.");
-                
+
             }
 
             if (!System.Text.RegularExpressions.Regex.IsMatch(txtCourse.Text, @"^[a-zA-Z\s]*$"))

@@ -15,6 +15,8 @@ namespace Library_Management_System.User_Control
         private const int MaxBorrowLimit = 1;
         private const int DefaultLoanDays = 1; // due date = borrowdate + 1 day
         private int currentMemberId = -1;
+        private Image noBooksIcon;
+
 
         private int targetWidth = 150; // final width when fully shown
         private Timer slideTimer;
@@ -22,6 +24,14 @@ namespace Library_Management_System.User_Control
         public BorrowBooksControl()
         {
             InitializeComponent();
+            noBooksIcon = Library_Management_System.Properties.Resources.NoBooksIcon;
+            dgvAvailableBooks.Paint += DgvAvailableBooks_PaintNoResults;
+
+            // Apply default styling
+            DataGridViewHelper.ApplyDefaultStyle(dgvAvailableBooks);
+
+            // Handle Status coloring
+            dgvAvailableBooks.CellFormatting += dgvAvailableBooks_CellFormatting;
             // Initially collapsed
             panel1.Width = 0;
 
@@ -36,9 +46,11 @@ namespace Library_Management_System.User_Control
             EnsureBooksStatusColumn();
 
             dgvAvailableBooks.CellFormatting += dgvAvailableBooks_CellFormatting;
+            Color headerColor = Color.FromArgb(242, 229, 217); // same as rows
             dgvAvailableBooks.EnableHeadersVisualStyles = false;
+            dgvAvailableBooks.ColumnHeadersDefaultCellStyle.BackColor = headerColor;
+            dgvAvailableBooks.ColumnHeadersDefaultCellStyle.ForeColor = Color.Black;
             dgvAvailableBooks.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
-            dgvAvailableBooks.ColumnHeadersDefaultCellStyle.BackColor = Color.White;
 
 
             dgvAvailableBooks.DataBindingComplete += (s, e) =>
@@ -87,6 +99,35 @@ namespace Library_Management_System.User_Control
                 e.FormattingApplied = true;
             }
         }
+
+        private void DgvAvailableBooks_PaintNoResults(object sender, PaintEventArgs e)
+        {
+            if (dgvAvailableBooks.Rows.Count == 0)
+            {
+                string message = "No books found";
+
+                // Scale icon to 20% of DataGridView width, max 150x150
+                int iconWidth = Math.Min((int)(dgvAvailableBooks.ClientSize.Width * 0.2), 150);
+                int iconHeight = (int)(iconWidth * ((float)noBooksIcon.Height / noBooksIcon.Width)); // keep aspect ratio
+
+                int iconX = (dgvAvailableBooks.ClientSize.Width - iconWidth) / 2;
+                int iconY = (dgvAvailableBooks.ClientSize.Height - iconHeight) / 2 - 20; // slightly above center
+
+                e.Graphics.DrawImage(noBooksIcon, new Rectangle(iconX, iconY, iconWidth, iconHeight));
+
+                // Draw message below icon
+                float fontSize = Math.Min(dgvAvailableBooks.ClientSize.Width / 25f, 24f); // max 24pt
+                using (Font font = new Font("Segoe UI", fontSize, FontStyle.Bold | FontStyle.Italic))
+                using (SolidBrush brush = new SolidBrush(Color.Gray))
+                {
+                    SizeF textSize = e.Graphics.MeasureString(message, font);
+                    float textX = (dgvAvailableBooks.ClientSize.Width - textSize.Width) / 2;
+                    float textY = iconY + iconHeight + 10; // 10px below icon
+                    e.Graphics.DrawString(message, font, brush, textX, textY);
+                }
+            }
+        }
+
 
 
         // ✅ Automatically check and add missing Status column
@@ -160,7 +201,8 @@ namespace Library_Management_System.User_Control
                     dgvAvailableBooks.Focus(); // optional: removes dotted focus box
 
 
-
+                    // Force repaint to show "No books found" message if empty
+                    dgvAvailableBooks.Invalidate();
 
                     //ColorStatusColumnText();
                 }
@@ -299,7 +341,8 @@ namespace Library_Management_System.User_Control
                         dgvAvailableBooks.ClearSelection();
                         dgvAvailableBooks.CurrentCell = null;
 
-
+                        // Force repaint to show "No books found" message if empty
+                        dgvAvailableBooks.Invalidate();
                     }
                 }
             }

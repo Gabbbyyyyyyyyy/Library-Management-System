@@ -46,7 +46,7 @@
             // txtMemberID
             // 
             this.txtMemberID.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtMemberID.Location = new System.Drawing.Point(328, 242);
+            this.txtMemberID.Location = new System.Drawing.Point(329, 119);
             this.txtMemberID.Margin = new System.Windows.Forms.Padding(4);
             this.txtMemberID.Name = "txtMemberID";
             this.txtMemberID.Size = new System.Drawing.Size(199, 27);
@@ -56,7 +56,7 @@
             // btnLoadMember
             // 
             this.btnLoadMember.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnLoadMember.Location = new System.Drawing.Point(541, 239);
+            this.btnLoadMember.Location = new System.Drawing.Point(542, 116);
             this.btnLoadMember.Margin = new System.Windows.Forms.Padding(4);
             this.btnLoadMember.Name = "btnLoadMember";
             this.btnLoadMember.Size = new System.Drawing.Size(145, 31);
@@ -69,7 +69,7 @@
             // 
             this.lblMemberName.AutoSize = true;
             this.lblMemberName.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblMemberName.Location = new System.Drawing.Point(328, 285);
+            this.lblMemberName.Location = new System.Drawing.Point(329, 162);
             this.lblMemberName.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblMemberName.Name = "lblMemberName";
             this.lblMemberName.Size = new System.Drawing.Size(124, 20);
@@ -82,21 +82,21 @@
             this.dgvAvailableBooks.AllowUserToDeleteRows = false;
             this.dgvAvailableBooks.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvAvailableBooks.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvAvailableBooks.Location = new System.Drawing.Point(277, 350);
+            this.dgvAvailableBooks.Location = new System.Drawing.Point(277, 197);
             this.dgvAvailableBooks.Margin = new System.Windows.Forms.Padding(4);
             this.dgvAvailableBooks.MultiSelect = false;
             this.dgvAvailableBooks.Name = "dgvAvailableBooks";
             this.dgvAvailableBooks.ReadOnly = true;
             this.dgvAvailableBooks.RowHeadersWidth = 51;
             this.dgvAvailableBooks.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvAvailableBooks.Size = new System.Drawing.Size(1728, 724);
+            this.dgvAvailableBooks.Size = new System.Drawing.Size(1728, 885);
             this.dgvAvailableBooks.TabIndex = 3;
             this.dgvAvailableBooks.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvAvailableBooks_CellContentClick);
             // 
             // btnIssue
             // 
             this.btnIssue.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnIssue.Location = new System.Drawing.Point(754, 233);
+            this.btnIssue.Location = new System.Drawing.Point(755, 110);
             this.btnIssue.Margin = new System.Windows.Forms.Padding(4);
             this.btnIssue.Name = "btnIssue";
             this.btnIssue.Size = new System.Drawing.Size(133, 37);
@@ -109,7 +109,7 @@
             // 
             this.lblDueDate.AutoSize = true;
             this.lblDueDate.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblDueDate.Location = new System.Drawing.Point(914, 243);
+            this.lblDueDate.Location = new System.Drawing.Point(915, 120);
             this.lblDueDate.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblDueDate.Name = "lblDueDate";
             this.lblDueDate.Size = new System.Drawing.Size(86, 20);
@@ -121,7 +121,7 @@
             this.lblMessage.AutoSize = true;
             this.lblMessage.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblMessage.ForeColor = System.Drawing.Color.Red;
-            this.lblMessage.Location = new System.Drawing.Point(754, 282);
+            this.lblMessage.Location = new System.Drawing.Point(755, 159);
             this.lblMessage.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lblMessage.Name = "lblMessage";
             this.lblMessage.Size = new System.Drawing.Size(86, 20);
@@ -141,7 +141,7 @@
             // 
             // txtSearch
             // 
-            this.txtSearch.Location = new System.Drawing.Point(1763, 317);
+            this.txtSearch.Location = new System.Drawing.Point(1763, 165);
             this.txtSearch.Name = "txtSearch";
             this.txtSearch.Size = new System.Drawing.Size(242, 22);
             this.txtSearch.TabIndex = 0;
@@ -151,7 +151,7 @@
             // 
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(328, 222);
+            this.label1.Location = new System.Drawing.Point(329, 99);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(96, 20);
             this.label1.TabIndex = 8;
@@ -194,6 +194,7 @@
             this.Controls.Add(this.lblMemberName);
             this.Controls.Add(this.btnLoadMember);
             this.Controls.Add(this.txtMemberID);
+            this.Location = new System.Drawing.Point(277, 202);
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "BorrowBooksControl";
             this.Size = new System.Drawing.Size(1855, 947);

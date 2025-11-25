@@ -46,9 +46,9 @@ namespace Library_Management_System.Forms
             this.button5.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button5.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.button5.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.button5.Location = new System.Drawing.Point(12, 268);
+            this.button5.Location = new System.Drawing.Point(23, 203);
             this.button5.Name = "button5";
-            this.button5.Size = new System.Drawing.Size(148, 48);
+            this.button5.Size = new System.Drawing.Size(177, 48);
             this.button5.TabIndex = 6;
             this.button5.Text = "Logout";
             this.button5.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -86,14 +86,14 @@ namespace Library_Management_System.Forms
             // 
             // btnAvailableCopies
             // 
-            this.btnAvailableCopies.BackColor = System.Drawing.Color.White;
+            this.btnAvailableCopies.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(194)))), ((int)(((byte)(167)))), ((int)(((byte)(144)))));
             this.btnAvailableCopies.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnAvailableCopies.FlatAppearance.BorderSize = 0;
             this.btnAvailableCopies.FlatAppearance.MouseOverBackColor = System.Drawing.Color.LightGray;
             this.btnAvailableCopies.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnAvailableCopies.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnAvailableCopies.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnAvailableCopies.Location = new System.Drawing.Point(12, 160);
+            this.btnAvailableCopies.Location = new System.Drawing.Point(23, 95);
             this.btnAvailableCopies.Name = "btnAvailableCopies";
             this.btnAvailableCopies.Size = new System.Drawing.Size(177, 48);
             this.btnAvailableCopies.TabIndex = 5;
@@ -141,7 +141,7 @@ namespace Library_Management_System.Forms
             this.btnBorrowing.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnBorrowing.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnBorrowing.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnBorrowing.Location = new System.Drawing.Point(12, 214);
+            this.btnBorrowing.Location = new System.Drawing.Point(23, 149);
             this.btnBorrowing.Name = "btnBorrowing";
             this.btnBorrowing.Size = new System.Drawing.Size(177, 48);
             this.btnBorrowing.TabIndex = 0;
@@ -154,9 +154,9 @@ namespace Library_Management_System.Forms
             // 
             this.pictureBox1.Cursor = System.Windows.Forms.Cursors.Hand;
             this.pictureBox1.Image = global::Library_Management_System.Properties.Resources.logo2;
-            this.pictureBox1.Location = new System.Drawing.Point(-10, 3);
+            this.pictureBox1.Location = new System.Drawing.Point(3, 3);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(170, 101);
+            this.pictureBox1.Size = new System.Drawing.Size(170, 73);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
             this.pictureBox1.TabIndex = 8;
             this.pictureBox1.TabStop = false;
@@ -164,7 +164,7 @@ namespace Library_Management_System.Forms
             // 
             // panel1
             // 
-            this.panel1.BackColor = System.Drawing.Color.White;
+            this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(194)))), ((int)(((byte)(167)))), ((int)(((byte)(144)))));
             this.panel1.Controls.Add(this.pictureBox1);
             this.panel1.Controls.Add(this.btnBorrowing);
             this.panel1.Controls.Add(this.btnAvailableCopies);
@@ -172,18 +172,19 @@ namespace Library_Management_System.Forms
             this.panel1.Dock = System.Windows.Forms.DockStyle.Left;
             this.panel1.Location = new System.Drawing.Point(0, 0);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(215, 878);
+            this.panel1.Size = new System.Drawing.Size(228, 878);
             this.panel1.TabIndex = 12;
             this.panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.panel1_Paint);
             // 
             // panelContent
             // 
-            this.panelContent.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.panelContent.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(212)))), ((int)(((byte)(201)))));
             this.panelContent.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelContent.Location = new System.Drawing.Point(215, 0);
+            this.panelContent.Location = new System.Drawing.Point(228, 0);
             this.panelContent.Name = "panelContent";
-            this.panelContent.Size = new System.Drawing.Size(1235, 878);
+            this.panelContent.Size = new System.Drawing.Size(1222, 878);
             this.panelContent.TabIndex = 13;
+            this.panelContent.Paint += new System.Windows.Forms.PaintEventHandler(this.panelContent_Paint);
             // 
             // StudentForm
             // 

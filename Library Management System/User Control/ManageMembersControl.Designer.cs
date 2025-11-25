@@ -38,6 +38,8 @@ namespace LibraryManagementSystem
             this.label6 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
             this.label1 = new System.Windows.Forms.Label();
+            this.cmbStatusFilter = new System.Windows.Forms.ComboBox();
+            this.cmbBorrowFilter = new System.Windows.Forms.ComboBox();
             ((System.ComponentModel.ISupportInitialize)(this.dgvMembers)).BeginInit();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
@@ -103,11 +105,33 @@ namespace LibraryManagementSystem
             this.label1.Text = "Students";
             this.label1.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
+            // cmbStatusFilter
+            // 
+            this.cmbStatusFilter.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cmbStatusFilter.FormattingEnabled = true;
+            this.cmbStatusFilter.Location = new System.Drawing.Point(294, 158);
+            this.cmbStatusFilter.Name = "cmbStatusFilter";
+            this.cmbStatusFilter.Size = new System.Drawing.Size(192, 33);
+            this.cmbStatusFilter.TabIndex = 23;
+            this.cmbStatusFilter.SelectedIndexChanged += new System.EventHandler(this.cmbStatusFilter_SelectedIndexChanged);
+            // 
+            // cmbBorrowFilter
+            // 
+            this.cmbBorrowFilter.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cmbBorrowFilter.FormattingEnabled = true;
+            this.cmbBorrowFilter.Location = new System.Drawing.Point(503, 158);
+            this.cmbBorrowFilter.Name = "cmbBorrowFilter";
+            this.cmbBorrowFilter.Size = new System.Drawing.Size(192, 33);
+            this.cmbBorrowFilter.TabIndex = 24;
+            this.cmbBorrowFilter.SelectedIndexChanged += new System.EventHandler(this.cmbBorrowFilter_SelectedIndexChanged);
+            // 
             // ManageMembersControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(212)))), ((int)(((byte)(201)))));
+            this.Controls.Add(this.cmbBorrowFilter);
+            this.Controls.Add(this.cmbStatusFilter);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.lblSearchMessage);
@@ -131,5 +155,7 @@ namespace LibraryManagementSystem
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.ComboBox cmbStatusFilter;
+        private System.Windows.Forms.ComboBox cmbBorrowFilter;
     }
 }

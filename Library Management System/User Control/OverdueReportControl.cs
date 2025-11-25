@@ -6,6 +6,8 @@ using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using LibraryManagementSystem.Data;
 using LibraryManagementSystem.Helpers;
+using Library_Management_System.Models; // for ApplyRoundedCorners extension
+
 
 namespace Library_Management_System.User_Control
 {
@@ -49,12 +51,9 @@ namespace Library_Management_System.User_Control
         private void SetupDataGridView()
         {
             dgvBorrowedBooks.Columns.Clear();
-            dgvBorrowedBooks.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            dgvBorrowedBooks.AllowUserToAddRows = false;
-            dgvBorrowedBooks.ReadOnly = true;
-            dgvBorrowedBooks.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvBorrowedBooks.RowHeadersVisible = false;
-            dgvBorrowedBooks.BackgroundColor = Color.White;
+
+            // ✅ Apply default style from helper
+            DataGridViewHelper.ApplyDefaultStyle(dgvBorrowedBooks);
 
             // Add numbering column
             dgvBorrowedBooks.Columns.Add("No", "No.");
@@ -68,17 +67,12 @@ namespace Library_Management_System.User_Control
             dgvBorrowedBooks.Columns.Add("DueDate", "Due Date");
             dgvBorrowedBooks.Columns.Add("ReturnDate", "Return Date");
 
-            // ✅ Single column for overdue duration
-            dgvBorrowedBooks.Columns.Add("Overdue", "Overdue");
-
+            dgvBorrowedBooks.Columns.Add("Overdue", "Overdue"); // Single column for overdue duration
             dgvBorrowedBooks.Columns.Add("Penalty", "Penalty (₱)");
             dgvBorrowedBooks.Columns.Add("Status", "Status");
 
-            // Styling
-            dgvBorrowedBooks.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
-            dgvBorrowedBooks.DefaultCellStyle.Font = new Font("Segoe UI", 9);
+            // Optional: adjust row height
             dgvBorrowedBooks.RowTemplate.Height = 40;
-            dgvBorrowedBooks.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(245, 245, 245);
         }
 
 

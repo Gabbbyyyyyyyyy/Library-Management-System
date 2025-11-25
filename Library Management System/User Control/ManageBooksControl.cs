@@ -1,17 +1,18 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Library_Management_System.Forms;
+using Library_Management_System.Models;
+using LibraryManagementSystem.Data;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Data;
 using System.Data.SQLite;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Library_Management_System.Forms;
-using LibraryManagementSystem.Data;
-using Library_Management_System.Models;
 using static Guna.UI2.WinForms.Suite.Descriptions;
-using System.Drawing.Drawing2D;
 
 namespace LibraryManagementSystem
 {
@@ -34,6 +35,7 @@ namespace LibraryManagementSystem
         {
             InitializeComponent();
             //dgvBooks.CellPainting += DgvBooks_CustomButtonColor;
+            btnAdd.ApplyRoundedCorners(10, Color.Black, 2); // radius 12
 
             // Initially collapsed
             panel1.Width = 0;
@@ -230,6 +232,17 @@ namespace LibraryManagementSystem
         {
             if (dgvBooks.Columns.Contains("Edit")) dgvBooks.Columns.Remove("Edit");
             if (dgvBooks.Columns.Contains("Delete")) dgvBooks.Columns.Remove("Delete");
+            if (dgvBooks.Columns.Contains("View")) dgvBooks.Columns.Remove("View");
+
+            // ➤ View button
+            DataGridViewButtonColumn viewCol = new DataGridViewButtonColumn
+            {
+                Name = "View",
+                HeaderText = "",
+                Text = "View",
+                UseColumnTextForButtonValue = true
+            };
+            dgvBooks.Columns.Add(viewCol);
 
             DataGridViewButtonColumn editCol = new DataGridViewButtonColumn
             {
@@ -237,7 +250,7 @@ namespace LibraryManagementSystem
                 HeaderText = "",
                 Text = "Edit",
                 UseColumnTextForButtonValue = true,
-               
+
             };
             dgvBooks.Columns.Add(editCol);
 
@@ -247,9 +260,10 @@ namespace LibraryManagementSystem
                 HeaderText = "",
                 Text = "Delete",
                 UseColumnTextForButtonValue = true,
-               
+
             };
             dgvBooks.Columns.Add(deleteCol);
+            viewCol.Width = 70;
             editCol.Width = 70;
             deleteCol.Width = 70;
             dgvBooks.ClearSelection();
@@ -265,6 +279,17 @@ namespace LibraryManagementSystem
 
             string colName = dgvBooks.Columns[e.ColumnIndex].Name;
 
+
+            // Color View button
+            if (colName == "View")
+            {
+                e.CellStyle.BackColor = Color.LightGreen;
+                e.CellStyle.ForeColor = Color.LightGreen;
+                e.CellStyle.SelectionBackColor = Color.Green;
+                e.CellStyle.Font = new Font(dgvBooks.Font, FontStyle.Regular);
+                e.FormattingApplied = true;
+            }
+
             // Color Edit button
             if (colName == "Edit")
             {
@@ -278,7 +303,7 @@ namespace LibraryManagementSystem
             else if (colName == "Delete")
             {
                 e.CellStyle.BackColor = Color.IndianRed;
-                e.CellStyle.ForeColor = Color.  IndianRed;
+                e.CellStyle.ForeColor = Color.IndianRed;
                 e.CellStyle.SelectionBackColor = Color.Red;
                 e.CellStyle.Font = new Font(dgvBooks.Font, FontStyle.Regular);
                 e.FormattingApplied = true;
@@ -325,24 +350,39 @@ namespace LibraryManagementSystem
 
         private void DgvBooks_Paint_ActionHeader(object sender, PaintEventArgs e)
         {
-            if (!dgvBooks.Columns.Contains("Edit") || !dgvBooks.Columns.Contains("Delete")) return;
+            if (!dgvBooks.Columns.Contains("View") ||
+                !dgvBooks.Columns.Contains("Edit") ||
+                !dgvBooks.Columns.Contains("Delete"))
+                return;
 
-            Rectangle firstCol = dgvBooks.GetCellDisplayRectangle(dgvBooks.Columns["Edit"].Index, -1, true);
-            Rectangle lastCol = dgvBooks.GetCellDisplayRectangle(dgvBooks.Columns["Delete"].Index, -1, true);
+            // Get all three action column rectangles
+            Rectangle viewCol = dgvBooks.GetCellDisplayRectangle(dgvBooks.Columns["View"].Index, -1, true);
+            Rectangle editCol = dgvBooks.GetCellDisplayRectangle(dgvBooks.Columns["Edit"].Index, -1, true);
+            Rectangle deleteCol = dgvBooks.GetCellDisplayRectangle(dgvBooks.Columns["Delete"].Index, -1, true);
 
-            Rectangle headerRect = new Rectangle(firstCol.X, firstCol.Y, lastCol.X + lastCol.Width - firstCol.X, firstCol.Height);
-            e.Graphics.FillRectangle(Brushes.LightGray, headerRect);
-            e.Graphics.DrawRectangle(Pens.Gray, headerRect);
+            // Entire Action header rectangle
+            Rectangle actionHeader = new Rectangle(
+                viewCol.X,
+                viewCol.Y,
+                (deleteCol.X + deleteCol.Width) - viewCol.X,
+                viewCol.Height
+            );
 
+            // Draw background + border
+            e.Graphics.FillRectangle(Brushes.LightGray, actionHeader);
+            e.Graphics.DrawRectangle(Pens.Gray, actionHeader);
+
+            // Draw the "Action" label centered
             TextRenderer.DrawText(
-                  e.Graphics,
-                  "Action",
-                  new Font("Segoe UI", 10, FontStyle.Regular),   // ★ custom font here
-                  headerRect,
-                  Color.Black,
-                  TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter
-              );
+                e.Graphics,
+                "Action",
+                new Font("Segoe UI", 10, FontStyle.Regular),
+                actionHeader,
+                Color.Black,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter
+            );
         }
+
 
         #endregion
 
@@ -368,6 +408,7 @@ namespace LibraryManagementSystem
 
         private async void btnAdd_Click(object sender, EventArgs e)
         {
+
             using (Add_Book addBookForm = new Add_Book())
             {
                 if (addBookForm.ShowDialog() == DialogResult.OK)
@@ -386,7 +427,9 @@ namespace LibraryManagementSystem
             }
         }
 
-     
+
+
+
         private async Task InsertOrUpdateBook(string isbn, string title, string author, string category, int quantity, string successMessage)
         {
             using (SQLiteConnection con = Db.GetConnection())
@@ -442,18 +485,82 @@ namespace LibraryManagementSystem
             }
         }
 
-        private void DgvBooks_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private async void DgvBooks_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
 
             int bookId = Convert.ToInt32(dgvBooks.Rows[e.RowIndex].Cells["BookId"].Value);
-
             string colName = dgvBooks.Columns[e.ColumnIndex].Name;
+
             if (colName == "Edit")
+            {
                 OpenEditForm(bookId);
+            }
             else if (colName == "Delete")
+            {
                 DeleteBook(bookId);
+            }
+            else
+            {
+                // Get the list of borrowers for the selected book
+                await ShowBookBorrowers(bookId);
+            }
         }
+
+        private async Task ShowBookBorrowers(int bookId)
+        {
+            try
+            {
+                using (SQLiteConnection con = Db.GetConnection())
+                {
+                    await con.OpenAsync();
+
+                    string query = @"
+                SELECT 
+                    u.FirstName || ' ' || u.LastName AS FullName,
+                    b.BorrowDate,
+                    b.DueDate
+                FROM Borrowings b
+                JOIN Members u ON b.MemberId = u.MemberId
+                WHERE b.BookId = @bookId AND b.Status = 'Borrowed'";
+
+                    using (SQLiteCommand cmd = new SQLiteCommand(query, con))
+                    {
+                        cmd.Parameters.AddWithValue("@bookId", bookId);
+
+                        using (SQLiteDataReader reader = (SQLiteDataReader)await cmd.ExecuteReaderAsync())
+                        {
+                            if (reader.HasRows)
+                            {
+                                StringBuilder borrowersList = new StringBuilder();
+
+                                while (await reader.ReadAsync())
+                                {
+                                    string fullName = reader["FullName"].ToString();
+                                    DateTime borrowedDate = Convert.ToDateTime(reader["BorrowDate"]);
+                                    DateTime dueDate = Convert.ToDateTime(reader["DueDate"]);
+
+                                    borrowersList.AppendLine(
+                                        $"{fullName} - Borrowed on {borrowedDate.ToShortDateString()} - Due on {dueDate.ToShortDateString()}"
+                                    );
+                                }
+
+                                MessageBox.Show(borrowersList.ToString(), "Borrowers", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            }
+                            else
+                            {
+                                MessageBox.Show("No active borrowings for this book.", "No Borrowers", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error retrieving borrowers: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
 
         private void OpenEditForm(int bookId)
         {
@@ -543,4 +650,3 @@ namespace LibraryManagementSystem
         }
     }
 }
-

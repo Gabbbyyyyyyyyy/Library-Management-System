@@ -102,8 +102,9 @@ namespace Library_Management_System.Forms
             {
                 con.Open();
 
-                // Get current Quantity & AvailableCopies
-                int currentQty = 0, currentAvailable = 0;
+                int currentQty = 0, currentAvailable = 0, borrowedCount = 0;
+
+                // 🔹 Step 1: Get current Quantity and AvailableCopies
                 string getQuery = "SELECT Quantity, AvailableCopies FROM Books WHERE BookId=@id";
                 using (var getCmd = new SQLiteCommand(getQuery, con))
                 {
@@ -118,11 +119,40 @@ namespace Library_Management_System.Forms
                     }
                 }
 
+                // 🔹 Step 2: Count how many copies are currently borrowed
+                string countQuery = "SELECT COUNT(*) FROM Borrowings WHERE BookId=@id AND Status='Borrowed'";
+                using (var countCmd = new SQLiteCommand(countQuery, con))
+                {
+                    countCmd.Parameters.AddWithValue("@id", _bookId);
+                    borrowedCount = Convert.ToInt32(countCmd.ExecuteScalar());
+                }
+
+                // 🔥 VALIDATION: new quantity cannot be less than borrowed count
+                if (newQty < borrowedCount)
+                {
+                    MessageBox.Show(
+                        $"You cannot set the quantity to {newQty}.\n" +
+                        $"There are currently {borrowedCount} borrower(s) using this book.",
+                        "Invalid Quantity",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning
+                    );
+                    return; // ❌ cancel update
+                }
+
+                // 🔹 Step 3: Recalculate AvailableCopies safely
                 int diff = newQty - currentQty;
                 int newAvailable = currentAvailable + diff;
+
                 if (newAvailable < 0) newAvailable = 0;
 
-                string updateQuery = "UPDATE Books SET ISBN=@isbn, Title=@title, Author=@author, Category=@category, Quantity=@qty, AvailableCopies=@available WHERE BookId=@id";
+                // 🔹 Step 4: Update the Book
+                string updateQuery = @"
+            UPDATE Books 
+            SET ISBN=@isbn, Title=@title, Author=@author, 
+                Category=@category, Quantity=@qty, AvailableCopies=@available 
+            WHERE BookId=@id";
+
                 using (var cmd = new SQLiteCommand(updateQuery, con))
                 {
                     cmd.Parameters.AddWithValue("@isbn", txtISBN.Text);
@@ -132,14 +162,16 @@ namespace Library_Management_System.Forms
                     cmd.Parameters.AddWithValue("@qty", newQty);
                     cmd.Parameters.AddWithValue("@available", newAvailable);
                     cmd.Parameters.AddWithValue("@id", _bookId);
+
                     cmd.ExecuteNonQuery();
                 }
             }
 
-            MessageBox.Show("Book updated successfully!");
+            MessageBox.Show("Book updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
             _parentControl.LoadBooksAsync();
             this.Close();
         }
+
 
         // --- TextBox Validations ---
         private void txtISBN_TextChanged(object sender, EventArgs e)
@@ -179,7 +211,7 @@ namespace Library_Management_System.Forms
 
         private void FrmEditBook_Load(object sender, EventArgs e)
         {
-          
+
         }
 
         private void FrmEditBook_Shown(object sender, EventArgs e)

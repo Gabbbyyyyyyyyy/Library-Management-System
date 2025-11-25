@@ -213,6 +213,16 @@ namespace Library_Management_System.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap circulation {
+            get {
+                object obj = ResourceManager.GetObject("circulation", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Collapse {
             get {
                 object obj = ResourceManager.GetObject("Collapse", resourceCulture);
@@ -436,6 +446,16 @@ namespace Library_Management_System.Properties {
         internal static System.Drawing.Bitmap NoBooksIcon {
             get {
                 object obj = ResourceManager.GetObject("NoBooksIcon", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap NoPerson {
+            get {
+                object obj = ResourceManager.GetObject("NoPerson", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

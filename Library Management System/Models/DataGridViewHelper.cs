@@ -15,6 +15,7 @@ namespace Library_Management_System.Models
             dgv.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgv.RowHeadersVisible = false;
 
+       
 
             // ★ Make all rows same background
             Color rowColor = Color.FromArgb(242, 229, 217);

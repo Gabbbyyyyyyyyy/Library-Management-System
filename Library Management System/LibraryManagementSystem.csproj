@@ -164,6 +164,7 @@
     <Compile Include="Data\Books.cs" />
     <Compile Include="Data\Borrowings.cs" />
     <Compile Include="Data\Members.cs" />
+    <Compile Include="Data\Notifications.cs" />
     <Compile Include="Data\Penalties.cs" />
     <Compile Include="Data\Reservations.cs" />
     <Compile Include="Data\Settings.cs" />
@@ -215,6 +216,7 @@
     <Compile Include="Forms\StudentForm.Designer.cs">
       <DependentUpon>StudentForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Models\ControlExtensions.cs" />
     <Compile Include="Models\DatabaseHelper.cs" />
     <Compile Include="Models\DataGridViewHelper.cs" />
     <Compile Include="Models\GoogleBooksHelper.cs" />
@@ -301,6 +303,12 @@
     <Compile Include="User Control\OverdueReportControl.Designer.cs">
       <DependentUpon>OverdueReportControl.cs</DependentUpon>
     </Compile>
+    <Compile Include="User Control\ReservationsControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="User Control\ReservationsControl.Designer.cs">
+      <DependentUpon>ReservationsControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="User Control\ReturnBooksControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -369,6 +377,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="User Control\OverdueReportControl.resx">
       <DependentUpon>OverdueReportControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="User Control\ReservationsControl.resx">
+      <DependentUpon>ReservationsControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="User Control\ReturnBooksControl.resx">
       <DependentUpon>ReturnBooksControl.cs</DependentUpon>
@@ -449,6 +460,8 @@
     <None Include="Resources\Image1.bmp" />
     <None Include="Resources\delete.png" />
     <None Include="Resources\edit.png" />
+    <None Include="Resources\circulation.png" />
+    <None Include="Resources\NoPerson.png" />
     <Content Include="schema.sql" />
   </ItemGroup>
   <ItemGroup>

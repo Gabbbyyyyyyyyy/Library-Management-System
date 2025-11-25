@@ -51,6 +51,8 @@ namespace LibraryManagementSystem.Data
                 Borrowings.EnsureCreated(con);
                 Reservations.EnsureCreated(con);
                 Penalties.EnsureCreated(con);
+                Notifications.EnsureCreated(con);
+
 
 
                 // ✅ Ensure indexes exist on Borrowings table

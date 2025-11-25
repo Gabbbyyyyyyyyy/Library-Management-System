@@ -5,6 +5,8 @@ using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using LibraryManagementSystem.Data;
+using Library_Management_System.Models;
+
 
 namespace Library_Management_System.User_Control_Student
 {
@@ -28,6 +30,9 @@ namespace Library_Management_System.User_Control_Student
         public Borrowing()
         {
             InitializeComponent();
+
+            btnReturnBook.ApplyRoundedCorners(10, Color.FromArgb(211, 181, 139));
+            dgvBorrowedBooks.RowTemplate.Height = 40; // optional: keep taller rows
         }
 
         private void LoadBorrowedBooks()
@@ -64,10 +69,15 @@ namespace Library_Management_System.User_Control_Student
                         adapter.Fill(dt);
 
                         dgvBorrowedBooks.DataSource = dt;
+                        dgvBorrowedBooks.Columns["BorrowDate"].HeaderText = "Borrow Date";
+                        dgvBorrowedBooks.Columns["DueDate"].HeaderText = "Due Date";
 
                         // Hide BorrowId column
                         if (dgvBorrowedBooks.Columns.Contains("BorrowId"))
                             dgvBorrowedBooks.Columns["BorrowId"].Visible = false;
+
+                        // ★ Apply default styling from helper
+                        DataGridViewHelper.ApplyDefaultStyle(dgvBorrowedBooks);
 
                         ColorStatusText();
                     }
@@ -141,6 +151,8 @@ namespace Library_Management_System.User_Control_Student
 
         private void Borrowing_Load(object sender, EventArgs e)
         {
+
+            DataGridViewHelper.ApplyDefaultStyle(dgvBorrowedBooks);
             // When the control loads, if StudentNo is already set, load data
             if (!string.IsNullOrEmpty(_studentNo))
             {

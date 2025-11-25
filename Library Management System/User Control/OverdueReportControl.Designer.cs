@@ -42,14 +42,14 @@
             this.dgvBorrowedBooks.AllowUserToDeleteRows = false;
             this.dgvBorrowedBooks.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvBorrowedBooks.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvBorrowedBooks.Location = new System.Drawing.Point(277, 350);
+            this.dgvBorrowedBooks.Location = new System.Drawing.Point(277, 197);
             this.dgvBorrowedBooks.MultiSelect = false;
             this.dgvBorrowedBooks.Name = "dgvBorrowedBooks";
             this.dgvBorrowedBooks.ReadOnly = true;
             this.dgvBorrowedBooks.RowHeadersWidth = 51;
             this.dgvBorrowedBooks.RowTemplate.Height = 24;
             this.dgvBorrowedBooks.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvBorrowedBooks.Size = new System.Drawing.Size(1728, 724);
+            this.dgvBorrowedBooks.Size = new System.Drawing.Size(1728, 885);
             this.dgvBorrowedBooks.TabIndex = 1;
             this.dgvBorrowedBooks.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvBorrowedBooks_CellContentClick);
             // 

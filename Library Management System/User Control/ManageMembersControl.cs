@@ -7,6 +7,7 @@ using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using Library_Management_System.Models;
 using LibraryManagementSystem.Data;
+using static Guna.UI2.WinForms.Suite.Descriptions;
 
 namespace LibraryManagementSystem
 {
@@ -17,11 +18,18 @@ namespace LibraryManagementSystem
 
         private int targetWidth = 150; // final width when fully shown
         private Timer slideTimer;
+        private string currentBorrowFilter = "All";
+
 
 
         public ManageMembersControl()
         {
             InitializeComponent();
+
+            dgvMembers.Paint += (s, e) => DrawNoMembersMessage(dgvMembers, e);
+
+
+
             // Initially collapsed
             panel1.Width = 0;
 
@@ -39,7 +47,7 @@ namespace LibraryManagementSystem
 
             dgvMembers.CellPainting += dgvMembers_CellPainting_HeaderAction;
             dgvMembers.CellFormatting += dgvMembers_CellFormatting;
-   
+
             dgvMembers.CellDoubleClick += dgvMembers_CellDoubleClick;
             dgvMembers.Paint += DgvMembers_Paint_ActionHeader;
 
@@ -54,7 +62,7 @@ namespace LibraryManagementSystem
             this.Location = Screen.PrimaryScreen.Bounds.Location;
 
             DataGridViewHelper.ApplyDefaultStyle(dgvMembers);
-            TextBoxHelper.ApplySearchBox(txtSearch, "Search members...", txtSearch_KeyDown);
+            TextBoxHelper.ApplySearchBox(txtSearch, "Search students...", txtSearch_KeyDown);
             txtSearch.ForeColor = Color.Black;
             txtSearch.TextChanged += txtSearch_TextChanged;
             lblSearchMessage.Text = "";
@@ -64,6 +72,22 @@ namespace LibraryManagementSystem
             refreshTimer.Interval = 3000; // 3 seconds
             refreshTimer.Tick += RefreshTimer_Tick;
             refreshTimer.Start();
+
+            // Populate Status filter
+            cmbStatusFilter.Items.Add("All");
+            cmbStatusFilter.Items.Add("Active");
+            cmbStatusFilter.Items.Add("Inactive");
+            cmbStatusFilter.SelectedIndex = 0; // default to All
+
+            // Populate Borrow filter
+            cmbBorrowFilter.Items.Add("All");
+            cmbBorrowFilter.Items.Add("Borrowing");
+            cmbBorrowFilter.Items.Add("No Borrowings");
+            cmbBorrowFilter.SelectedIndex = 0; // default to All
+
+            // Hook up events
+            cmbStatusFilter.SelectedIndexChanged += cmbStatusFilter_SelectedIndexChanged;
+            cmbBorrowFilter.SelectedIndexChanged += cmbBorrowFilter_SelectedIndexChanged;
 
 
         }
@@ -76,7 +100,7 @@ namespace LibraryManagementSystem
             }));
         }
 
-        private void LoadMembers(string searchText = "")
+        private void LoadMembers(string searchText = "", string statusFilter = "All", string borrowFilter = "All")
         {
             if (isViewingMember) return; // prevent overwriting during view
 
@@ -103,10 +127,25 @@ namespace LibraryManagementSystem
                 END AS HasPendingBorrow
             FROM Members m";
 
+                List<string> conditions = new List<string>();
+
                 if (!string.IsNullOrWhiteSpace(searchText))
-                {
-                    query += " WHERE (StudentNo LIKE @search OR FirstName LIKE @search OR LastName LIKE @search OR Course LIKE @search)";
-                }
+                    conditions.Add("(StudentNo LIKE @search OR FirstName LIKE @search OR LastName LIKE @search OR Course LIKE @search)");
+
+                if (statusFilter == "Active")
+                    conditions.Add("m.IsActive = 1");
+                else if (statusFilter == "Inactive")
+                    conditions.Add("m.IsActive = 0");
+
+                if (borrowFilter == "Borrowing")
+                    conditions.Add(@"EXISTS (SELECT 1 FROM Borrowings b 
+                        WHERE b.MemberId = m.MemberId AND (b.ReturnDate IS NULL OR b.ReturnDate = ''))");
+                else if (borrowFilter == "No Borrowings")
+                    conditions.Add(@"NOT EXISTS (SELECT 1 FROM Borrowings b 
+                        WHERE b.MemberId = m.MemberId AND (b.ReturnDate IS NULL OR b.ReturnDate = ''))");
+
+                if (conditions.Count > 0)
+                    query += " WHERE " + string.Join(" AND ", conditions);
 
                 using (var cmd = new SQLiteCommand(query, con))
                 {
@@ -117,60 +156,50 @@ namespace LibraryManagementSystem
                     {
                         DataTable dt = new DataTable();
                         da.Fill(dt);
-
-                        // 2️⃣ Bind data
                         dgvMembers.DataSource = dt;
-
-                        dgvMembers.Columns["StudentNo"].HeaderText = "Student Number";
-                        dgvMembers.Columns["FirstName"].HeaderText = "First Name";
-                        dgvMembers.Columns["LastName"].HeaderText = "Last Name";
-                        dgvMembers.Columns["Course"].HeaderText = "Course/Strand";
-                        dgvMembers.Columns["YearLevel"].HeaderText = "Year/Grade Level";
-                        dgvMembers.Columns["Status"].HeaderText = "Status";
-                        dgvMembers.Columns["HasPendingBorrow"].HeaderText = "Pending Borrow";
-                       
-
-
-                        // 1️⃣ Setup Action button column first
-                        SetupActionButtons();
-
-                        // 3️⃣ Hide MemberId
-                        if (dgvMembers.Columns.Contains("MemberId"))
-                            dgvMembers.Columns["MemberId"].Visible = false;
-
-                        // 4️⃣ Set Action text per row
-                        foreach (DataGridViewRow row in dgvMembers.Rows)
-                        {
-                            bool isActive = row.Cells["Status"].Value.ToString() == "Active";
-                            row.Cells["Action"].Value = isActive ? "Deactivate" : "Reactivate";
-                        }
-                        // Clear selection so no row is pre-selected
-                        dgvMembers.ClearSelection();
-                        dgvMembers.CurrentCell = null; // also removes focus from any cell
-
-                        // Format rows and add color for HasPendingBorrow
-                        foreach (DataGridViewRow row in dgvMembers.Rows)
-                        {
-                            row.Height = 40;
-
-                            string pending = row.Cells["HasPendingBorrow"].Value.ToString();
-                            row.Cells["HasPendingBorrow"].Style.ForeColor =
-                                pending == "Borrowing" ? Color.Red : Color.Black;
-                        }
-
-                        // ✅ Ensure no row stays selected
-
-                        dgvMembers.CurrentCell = null;
-
-
-
-
-                        lblSearchMessage.Text = dt.Rows.Count == 0 ? "No members match your search." : "";
-
+                        FormatDataGridView(); // format headers, buttons, row colors
                     }
                 }
             }
         }
+
+        private void FormatDataGridView()
+        {
+            // Rename headers
+            dgvMembers.Columns["StudentNo"].HeaderText = "Student Number";
+            dgvMembers.Columns["FirstName"].HeaderText = "First Name";
+            dgvMembers.Columns["LastName"].HeaderText = "Last Name";
+            dgvMembers.Columns["Course"].HeaderText = "Course/Strand";
+            dgvMembers.Columns["YearLevel"].HeaderText = "Year/Grade Level";
+            dgvMembers.Columns["Status"].HeaderText = "Status";
+            dgvMembers.Columns["HasPendingBorrow"].HeaderText = "Pending Borrow";
+
+            // Setup action buttons
+            SetupActionButtons();
+
+            // Hide MemberId
+            if (dgvMembers.Columns.Contains("MemberId"))
+                dgvMembers.Columns["MemberId"].Visible = false;
+
+            // Set Action text per row
+            foreach (DataGridViewRow row in dgvMembers.Rows)
+            {
+                bool isActive = row.Cells["Status"].Value.ToString() == "Active";
+                row.Cells["Action"].Value = isActive ? "Deactivate" : "Reactivate";
+            }
+
+            dgvMembers.ClearSelection();
+            dgvMembers.CurrentCell = null;
+
+            // Row formatting
+            foreach (DataGridViewRow row in dgvMembers.Rows)
+            {
+                row.Height = 40;
+                string pending = row.Cells["HasPendingBorrow"].Value.ToString();
+                row.Cells["HasPendingBorrow"].Style.ForeColor = pending == "Borrowing" ? Color.Red : Color.Black;
+            }
+        }
+
 
 
         private void RefreshTimer_Tick(object sender, EventArgs e)
@@ -258,8 +287,11 @@ namespace LibraryManagementSystem
 
         private void txtSearch_TextChanged(object sender, EventArgs e)
         {
-            LoadMembers(txtSearch.Text.Trim());
+            string selectedStatus = cmbStatusFilter.SelectedItem?.ToString() ?? "All";
+            string borrowStatus = cmbBorrowFilter.SelectedItem?.ToString() ?? "All";
+            LoadMembers(txtSearch.Text.Trim(), selectedStatus, borrowStatus);
         }
+
 
         private void txtSearch_KeyDown(object sender, KeyEventArgs e)
         {
@@ -319,7 +351,7 @@ namespace LibraryManagementSystem
 
         }
 
-       
+
 
         private void dgvMembers_CellClick(object sender, DataGridViewCellEventArgs e)
         {
@@ -441,7 +473,7 @@ namespace LibraryManagementSystem
                     HeaderText = "",
                     Text = "Edit",
                     UseColumnTextForButtonValue = true,
-                    
+
                 };
                 dgvMembers.Columns.Add(editCol);
                 editCol.Width = 70;
@@ -455,7 +487,7 @@ namespace LibraryManagementSystem
                     Name = "Action",
                     HeaderText = "",
                     UseColumnTextForButtonValue = false, // text will change per row
-                   
+
                 };
                 dgvMembers.Columns.Add(actionCol);
                 actionCol.Width = 70;
@@ -594,6 +626,52 @@ namespace LibraryManagementSystem
 
         }
 
+        private void DrawNoMembersMessage(DataGridView dgv, PaintEventArgs e)
+        {
+            if (dgv.Rows.Count == 0)
+            {
+                string message;
+                Image icon = Library_Management_System.Properties.Resources.NoPerson; // default icon
+
+                // Set message based on current filter
+                switch (currentBorrowFilter)
+                {
+                    case "Borrowing":
+                        message = "No students are currently borrowing books.";
+                        break;
+                    case "No Borrowings":
+                        message = "All students have returned their books.";
+                        break;
+                    default:
+                        message = "No students found.";
+                        break;
+                }
+
+                // Scale icon to 20% of DataGridView width, max 150x150
+                int iconWidth = Math.Min((int)(dgv.ClientSize.Width * 0.2), 150);
+                int iconHeight = (int)(iconWidth * ((float)icon.Height / icon.Width));
+
+                // Center coordinates
+                int iconX = (dgv.ClientSize.Width - iconWidth) / 2;
+                int iconY = (dgv.ClientSize.Height - iconHeight) / 2 - 20;
+
+                e.Graphics.DrawImage(icon, new Rectangle(iconX, iconY, iconWidth, iconHeight));
+
+                // Draw message below icon
+                float fontSize = Math.Min(dgv.ClientSize.Width / 25f, 24f);
+                using (Font font = new Font("Segoe UI", fontSize, FontStyle.Bold | FontStyle.Italic))
+                using (SolidBrush brush = new SolidBrush(Color.Gray))
+                {
+                    SizeF textSize = e.Graphics.MeasureString(message, font);
+                    float textX = (dgv.ClientSize.Width - textSize.Width) / 2;
+                    float textY = iconY + iconHeight + 10; // 10px spacing below icon
+                    e.Graphics.DrawString(message, font, brush, textX, textY);
+                }
+            }
+        }
+
+
+
         private void dgvMembers_CellContentClick_1(object sender, DataGridViewCellEventArgs e)
         {
 
@@ -644,6 +722,27 @@ namespace LibraryManagementSystem
             path.CloseFigure();
 
             panel1.Region = new Region(path);
+        }
+
+        private void cmbStatusFilter_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string selectedStatus = cmbStatusFilter.SelectedItem?.ToString() ?? "All";
+            string borrowStatus = cmbBorrowFilter.SelectedItem?.ToString() ?? "All";
+
+            LoadMembers(txtSearch.Text.Trim(), selectedStatus, borrowStatus);
+        }
+
+        private void cmbBorrowFilter_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            currentBorrowFilter = cmbBorrowFilter.SelectedItem?.ToString() ?? "All";
+            string selectedStatus = cmbStatusFilter.SelectedItem?.ToString() ?? "All";
+            LoadMembers(txtSearch.Text.Trim(), selectedStatus, currentBorrowFilter);
+        }
+
+
+        private void picNoMembers_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

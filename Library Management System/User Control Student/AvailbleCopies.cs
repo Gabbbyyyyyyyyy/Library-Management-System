@@ -17,6 +17,7 @@ using System.Drawing.Drawing2D;
 
 namespace Library_Management_System.User_Control_Student
 {
+
     public partial class AvailbleCopies : UserControl
     {
         private string _studentNo;
@@ -27,6 +28,10 @@ namespace Library_Management_System.User_Control_Student
         private static bool _booksLoaded = false;
         private static List<Panel> _cachedBookCards = new List<Panel>();
         private System.Windows.Forms.Timer _searchTimer;
+        private System.Windows.Forms.Timer notifTimer;
+        private System.Windows.Forms.Timer dueReminderTimer;
+
+
 
         private class BookCache
         {
@@ -83,6 +88,7 @@ private void MakeButtonRounded(Button btn, float radiusPercent = 0.02f)
         {
             InitializeComponent();
 
+
             // Load categories and sort options
             LoadCategoryComboBox();
             LoadSortComboBox();
@@ -106,7 +112,7 @@ private void MakeButtonRounded(Button btn, float radiusPercent = 0.02f)
             {
                 Dock = DockStyle.Fill,
                 Padding = new Padding(0, 150, 0, 0), // 👈 adds 100px top space
-                BackColor = Color.WhiteSmoke
+                BackColor = Color.FromArgb(224, 212, 201),
             };
 
             flowBooks = new FlowLayoutPanel
@@ -115,7 +121,7 @@ private void MakeButtonRounded(Button btn, float radiusPercent = 0.02f)
                 AutoScroll = true,
                 WrapContents = true,
                 Padding = new Padding(20),
-                BackColor = Color.WhiteSmoke
+                BackColor = Color.FromArgb(224, 212, 201),
             };
 
             container.Controls.Add(flowBooks);
@@ -156,10 +162,51 @@ private void MakeButtonRounded(Button btn, float radiusPercent = 0.02f)
                 SizeMode = PictureBoxSizeMode.Zoom,
                 Size = new Size(26, 26),
                 Cursor = Cursors.Hand,
-                BackColor = Color.Transparent
+                BackColor = Color.Transparent,
+                Location = new Point(this.Width - 60, 12), // top-right corner
+                Anchor = AnchorStyles.Top | AnchorStyles.Right
             };
+            picBell.Click += (s, e) => LoadNotifications();
             Controls.Add(picBell);
             picBell.BringToFront();
+
+            // 🔴 Notification counter badge
+            Label lblNotifCount = new Label
+            {
+                AutoSize = false,
+                Size = new Size(18, 18),
+                TextAlign = ContentAlignment.MiddleCenter,
+                BackColor = Color.Red,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 8, FontStyle.Bold),
+                Location = new Point(picBell.Right - 159, picBell.Top - 6), // top-right of bell
+                Text = "0",
+                Visible = false,
+                BorderStyle = BorderStyle.None
+            };
+            // Immediately update the badge
+            UpdateNotificationBadge(lblNotifCount);
+
+            // Timer to auto-update badge every 5 seconds
+            notifTimer = new System.Windows.Forms.Timer
+            {
+                Interval = 5000
+            };
+            notifTimer.Tick += (s, e) => UpdateNotificationBadge(lblNotifCount);
+            notifTimer.Start();
+
+            // Timer for sending reminders about due books
+            dueReminderTimer = new System.Windows.Forms.Timer
+            {
+                Interval = 60 * 1000 // check every minute
+            };
+            dueReminderTimer.Tick += DueReminderTimer_Tick;
+            dueReminderTimer.Start();
+
+
+            Controls.Add(lblNotifCount);
+            lblNotifCount.BringToFront();
+
 
             // Reposition when form resizes
             this.Resize += (s, e) =>
@@ -170,6 +217,164 @@ private void MakeButtonRounded(Button btn, float radiusPercent = 0.02f)
                 picProfile.Location = new Point(this.Width - 60, 10);
             };
         }
+
+        private void DueReminderTimer_Tick(object sender, EventArgs e)
+        {
+            try
+            {
+                using (var con = Db.GetConnection())
+                {
+                    con.Open();
+                    string query = @"
+                SELECT b.Title, br.DueDate
+                FROM Borrowings br
+                INNER JOIN Books b ON b.BookId = br.BookId
+                INNER JOIN Members m ON m.MemberId = br.MemberId
+                WHERE m.StudentNo = @studentNo
+                  AND br.Status = 'Borrowed'";
+
+                    using (var cmd = new SQLiteCommand(query, con))
+                    {
+                        cmd.Parameters.AddWithValue("@studentNo", _studentNo);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                string title = reader["Title"].ToString();
+                                if (DateTime.TryParse(reader["DueDate"].ToString(), out DateTime dueDate))
+                                {
+                                    DateTime tomorrow = DateTime.Today.AddDays(1);
+                                    DateTime now = DateTime.Now;
+
+                                    // Check if due date is tomorrow and current time is between 7–8 PM
+                                    if (dueDate.Date == tomorrow.Date && now.Hour >= 19 && now.Hour < 20)
+                                    {
+                                        ShowDueReminder(title, dueDate);
+                                        AddNotificationToDb(title, dueDate);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch { /* silent fail */ }
+        }
+        private void ShowDueReminder(string bookTitle, DateTime dueDate)
+        {
+            MessageBox.Show(
+                $"Reminder: The book '{bookTitle}' is due tomorrow ({dueDate:dd/MM/yyyy})!",
+                "Book Due Reminder",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+        }
+
+        private void AddNotificationToDb(string bookTitle, DateTime dueDate)
+        {
+            using (var con = Db.GetConnection())
+            {
+                con.Open();
+                string insertQuery = @"
+            INSERT INTO Notifications (StudentNo, Message, DateCreated, IsRead)
+            VALUES (@studentNo, @message, @date, 0)";
+                using (var cmd = new SQLiteCommand(insertQuery, con))
+                {
+                    cmd.Parameters.AddWithValue("@studentNo", _studentNo);
+                    cmd.Parameters.AddWithValue("@message", $"Reminder: '{bookTitle}' is due tomorrow ({dueDate:dd/MM/yyyy})");
+                    cmd.Parameters.AddWithValue("@date", DateTime.Now);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+
+        private void UpdateNotificationBadge(Label lbl)
+        {
+            try
+            {
+                using (var con = Db.GetConnection())
+                {
+                    con.Open();
+                    string query = @"
+                SELECT COUNT(*)
+                FROM Notifications
+                WHERE StudentNo=@stud
+                  AND IsRead=0"; // assuming you have an IsRead column
+
+                    using (var cmd = new SQLiteCommand(query, con))
+                    {
+                        cmd.Parameters.AddWithValue("@stud", _studentNo);
+                        long count = (long)cmd.ExecuteScalar();
+
+                        lbl.Text = count.ToString();
+                        lbl.Visible = count > 0;
+                    }
+                }
+            }
+            catch { /* silent fail */ }
+        }
+
+
+        private void LoadNotifications()
+        {
+            Form notifForm = new Form
+            {
+                Text = "Notifications",
+                Size = new Size(400, 500),
+                StartPosition = FormStartPosition.CenterParent,
+                BackColor = Color.White
+            };
+
+            ListBox list = new ListBox
+            {
+                Dock = DockStyle.Fill,
+                Font = new Font("Segoe UI", 10),
+                ItemHeight = 40
+            };
+            notifForm.Controls.Add(list);
+
+            using (var con = Db.GetConnection())
+            {
+                con.Open();
+                string query = @"
+        SELECT Message, DateCreated
+        FROM Notifications
+        WHERE StudentNo=@stud
+        ORDER BY NotificationId DESC";
+
+                using (var cmd = new SQLiteCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@stud", _studentNo);
+
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            string msg = reader["Message"].ToString();
+                            string date = reader["DateCreated"].ToString();
+
+                            list.Items.Add($"{date}\n{msg}");
+                        }
+                    }
+                }
+            }
+
+            notifForm.ShowDialog();
+
+            // ✅ Mark notifications as read after viewing
+            using (var con = Db.GetConnection())
+            {
+                con.Open();
+                string updateQuery = "UPDATE Notifications SET IsRead=1 WHERE StudentNo=@stud";
+                using (var cmd = new SQLiteCommand(updateQuery, con))
+                {
+                    cmd.Parameters.AddWithValue("@stud", _studentNo);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
 
         private string GetFullNameFromDatabase(string studentNo)
         {
@@ -644,17 +849,64 @@ private void MakeButtonRounded(Button btn, float radiusPercent = 0.02f)
                 btnReserve.Cursor = Cursors.No;
             }
 
-            btnReserve.FlatAppearance.BorderColor = Color.FromArgb(64, 64, 64);
-            btnReserve.FlatAppearance.BorderSize = 0;
-
             btnReserve.Click += (s, e) =>
             {
-                if (status == "Not Available")
+                // Only allow if book is NOT available
+                if (status != "Not Available")
                 {
-                    MessageBox.Show($"You have reserved {title}!", "Reserved",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("You can only reserve books that are currently borrowed.");
+                    return;
                 }
+
+                using (var con = Db.GetConnection())
+                {
+                    con.Open();
+
+                    // Check if student already has ANY active reservation
+                    string checkAnyQuery = @"
+            SELECT COUNT(*)
+            FROM Reservations r
+            INNER JOIN Members m ON m.MemberId = r.MemberId
+            WHERE m.StudentNo = @studentNo
+              AND r.Status = 'Active'";
+
+                    using (var cmdAny = new SQLiteCommand(checkAnyQuery, con))
+                    {
+                        cmdAny.Parameters.AddWithValue("@studentNo", _studentNo);
+
+                        long activeReservations = (long)cmdAny.ExecuteScalar();
+                        if (activeReservations > 0)
+                        {
+                            MessageBox.Show(
+                                "You already have an active reservation. You may reserve only 1 book at a time.",
+                                "Reservation Limit",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Warning
+                            );
+                            return;
+                        }
+                    }
+
+                    // Insert new reservation (only if no active reservations)
+                    string insertQuery = @"
+            INSERT INTO Reservations (BookId, MemberId, ReserveDate, Status)
+            SELECT b.BookId, m.MemberId, @reserveDate, 'Active'
+            FROM Books b, Members m
+            WHERE b.ISBN = @isbn AND m.StudentNo = @studentNo";
+
+                    using (var cmdInsert = new SQLiteCommand(insertQuery, con))
+                    {
+                        cmdInsert.Parameters.AddWithValue("@reserveDate", DateTime.Now);
+                        cmdInsert.Parameters.AddWithValue("@isbn", isbn);
+                        cmdInsert.Parameters.AddWithValue("@studentNo", _studentNo);
+                        cmdInsert.ExecuteNonQuery();
+                    }
+                }
+
+                MessageBox.Show($"You have reserved '{title}'!", "Reserved",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
             };
+
 
             // Apply rounded corners AFTER button has a valid size
             MakeButtonRounded(btnView);

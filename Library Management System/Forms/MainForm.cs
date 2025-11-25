@@ -34,7 +34,7 @@ namespace Library_Management_System
 
         private bool isCollapsed = false; // Add this near your other fields (top of the class)
         private bool isDarkMode = false; // start with dark mode
-                                        // store original texts so we can restore them exactly
+                                         // store original texts so we can restore them exactly
         private Dictionary<Button, string> originalButtonTexts = new Dictionary<Button, string>();
 
         private Timer sidebarTimer = new Timer();
@@ -58,7 +58,15 @@ namespace Library_Management_System
         private ManageMembersControl manageMembersControl;
         private BorrowBooksControl borrowBooksControl = new BorrowBooksControl();
         private OverdueReportControl overdueBooksControl;
-     
+        private ReservationsControl reservationsControl;
+
+        private Button subBorrowBooks;
+        private Button subReturnBooks;
+        private Button subReservations;
+        private Panel circulationPanel;
+        private bool isCirculationExpanded = false; // track Circulation panel state
+
+
 
 
 
@@ -112,7 +120,7 @@ namespace Library_Management_System
             bottomSpacer.Width = panel1.Width;
             bottomSpacer.Location = new Point(0, panel1.Height - bottomSpacer.Height);
 
-          
+
         }
 
 
@@ -152,6 +160,19 @@ namespace Library_Management_System
             }
         }
 
+        private void DrawVerticalLineForSubmenu(Panel panel)
+        {
+            panel.Paint += (s, e) =>
+            {
+                using (Pen pen = new Pen(Color.White, 1))
+                {
+                    int x = 25; // align with the tree symbol
+                    e.Graphics.DrawLine(pen, x, 0, x, panel.Height);
+                }
+            };
+        }
+
+
         private void ApplyCollapsedState()
         {
             foreach (Control ctrl in panel1.Controls)
@@ -177,24 +198,20 @@ namespace Library_Management_System
             button8.Padding = new Padding(0);
         }
 
-
-
+        // ---------- APPLY THIS Updated ApplyExpandedState (replace existing) ----------
         private void ApplyExpandedState()
         {
-            // ✅ Restore Dashboard text here!
+            // Restore top-level button texts that still exist
             btnDashboard.Text = "  Dashboard";
-
-            // Restore button texts
             button1.Text = "  Manage Books";
             button2.Text = "  Manage Members";
-            button3.Text = "  Borrow Books";
-            button4.Text = "  Return Books";
+            // Borrow/Return moved under Circulation submenu, so no top-level labels for them
             button9.Text = "  Overdue Books";
             button5.Text = "  Reports";
             button6.Text = "  Settings";
             button7.Text = isDarkMode ? "  Light UI" : "  Dark UI";
             button8.Text = "  Collapse";
-
+            // Restore images/text alignment for all sidebar buttons
             foreach (Control ctrl in panel1.Controls)
             {
                 if (ctrl is Button btn)
@@ -204,13 +221,10 @@ namespace Library_Management_System
                     btn.Padding = new Padding(10, 0, 0, 0);
                 }
             }
-
-            // Collapse icon (◀)
-            button8.Image = Properties.Resources.Collapse; // left arrow
+            button8.Image = Properties.Resources.Collapse;
             button8.ImageAlign = ContentAlignment.MiddleLeft;
             UpdateBottomSpacer();
         }
-
 
         private void button1_Click(object sender, EventArgs e)
         {
@@ -266,38 +280,128 @@ namespace Library_Management_System
         }
 
 
+        private async void ExpandPanel(Panel panel, int targetHeight)
+        {
+            panel.Visible = true;
+            int step = 10;
+            while (panel.Height < targetHeight)
+            {
+                panel.Height += step;
+                await Task.Delay(10);
+            }
+            panel.Height = targetHeight;
+        }
+
+        private async void CollapsePanel(Panel panel)
+        {
+            int step = 10;
+            while (panel.Height > 0)
+            {
+                panel.Height -= step;
+                await Task.Delay(10);
+            }
+            panel.Height = 0;
+            panel.Visible = false;
+        }
 
 
+        // ---------- APPLY THIS Updated MainForm_Load (replace existing) ----------
         private void MainForm_Load(object sender, EventArgs e)
         {
-            // === Load Dashboard by default ===
-            // ✅ Create the dashboard once and store reference
+            // Circulation panel
+            circulationPanel = new Panel
+            {
+                Size = new Size(panel1.Width, 0), // initially collapsed
+                BackColor = Color.FromArgb(45, 45, 45),
+                Location = new Point(0, btnCirculation.Bottom),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
+                Visible = false
+            };
+            panel1.Controls.Add(circulationPanel);
+            panel1.Controls.SetChildIndex(circulationPanel, panel1.Controls.Count - 1);
+
+            // Sub-buttons
+            subBorrowBooks = new Button { Text = "  Borrow Books", Dock = DockStyle.Top, Height = 36, FlatStyle = FlatStyle.Flat };
+            subReturnBooks = new Button { Text = "  Return Books", Dock = DockStyle.Top, Height = 36, FlatStyle = FlatStyle.Flat };
+            subReservations = new Button { Text = "  Reservations", Dock = DockStyle.Top, Height = 36, FlatStyle = FlatStyle.Flat };
+
+            circulationPanel.Controls.Add(subReservations);
+            circulationPanel.Controls.Add(subReturnBooks);
+            circulationPanel.Controls.Add(subBorrowBooks);
+
+            // Add in reverse order so DockStyle.Top works
+            StyleSubButton(subBorrowBooks, false);
+            StyleSubButton(subReturnBooks, false);
+            StyleSubButton(subReservations, true);
+
+            DrawVerticalLineForSubmenu(circulationPanel);
+
+            // Click actions
+            subBorrowBooks.Click += (s, g) =>
+            {
+                SetActiveButton(btnCirculation);
+                var borrowControl = new BorrowBooksControl();
+                borrowControl.Dock = DockStyle.Fill;
+                panelContainer.Controls.Clear();
+                panelContainer.Controls.Add(borrowControl);
+                borrowControl.RollOutPanel();
+            };
+
+            subReturnBooks.Click += (s, g) =>
+            {
+                SetActiveButton(btnCirculation);
+                returnBooksControl.Dock = DockStyle.Fill;
+                panelContainer.Controls.Clear();
+                panelContainer.Controls.Add(returnBooksControl);
+                returnBooksControl.RollOutPanel();
+            };
+
+            subReservations.Click += (s, g) =>
+            {
+                SetActiveButton(btnCirculation);
+                var reservationsControl = new ReservationsControl();
+                reservationsControl.Dock = DockStyle.Fill;
+                panelContainer.Controls.Clear();
+                panelContainer.Controls.Add(reservationsControl);
+                reservationsControl.RollOutPanel();
+            };
+
+            // Toggle submenu when Circulation button clicked
+            btnCirculation.Click += (s, g) =>
+            {
+                circulationPanel.Visible = !circulationPanel.Visible;
+
+                // Smooth rollout (optional)
+                if (circulationPanel.Visible)
+                    ExpandPanel(circulationPanel, 3 * 36); // 3 sub-buttons * height
+                else
+                    CollapsePanel(circulationPanel);
+            };
+
+
+            // === Existing initialization kept below ===
             DashboardInstance = new DashboardControl(Username);
             LoadControl(DashboardInstance);
 
-            // === Connect Dashboard and ReturnBooks controls ===
+            // prepare returnBooksControl once (keeps existing behavior)
             returnBooksControl = new ReturnBooksControl();
-            //returnBooksControl.PenaltyUpdated += DashboardInstance.RefreshPenaltySummary;
-
-
 
             moveTimer = new Timer { Interval = 15 };
             moveTimer.Tick += MoveIndicatorSmooth;
 
-
-            // === Create sidebar selection indicator ===
+            // sidebar indicator
             sidebarIndicator = new Panel();
-            sidebarIndicator.Size = new Size(4, 40); // thin vertical bar
-            sidebarIndicator.BackColor = Color.FromArgb(242, 229, 217); // Coffee brown
+            sidebarIndicator.Size = new Size(4, 40);
+            sidebarIndicator.BackColor = Color.FromArgb(242, 229, 217);
             sidebarIndicator.Visible = false;
             panel1.Controls.Add(sidebarIndicator);
-            // Pre-select dashboard button on login
             SetActiveButton(btnDashboard);
 
-
-
-
-
+            // picture/logo placement and other existing code...
+            // (Paste back your pictureBox + hover panel + bottom spacer initialization here unchanged)
+            // ...
+            // NOTE: keep the rest of your existing initialization (hover panel, logout button wiring, etc.)
+        
             // === Ensure pictureBoxLogo is inside panel1 ===
             if (!panel1.Controls.Contains(pictureBoxLogo))
             {
@@ -448,13 +552,13 @@ namespace Library_Management_System
             if (panel1.Controls.Contains(button7)) panel1.Controls.SetChildIndex(button7, 1);
             if (panel1.Controls.Contains(button6)) panel1.Controls.SetChildIndex(button6, 2);
             if (panel1.Controls.Contains(button5)) panel1.Controls.SetChildIndex(button5, 3);
-            if (panel1.Controls.Contains(button4)) panel1.Controls.SetChildIndex(button9, 4);
-            if (panel1.Controls.Contains(button4)) panel1.Controls.SetChildIndex(button4, 5);
-            if (panel1.Controls.Contains(button3)) panel1.Controls.SetChildIndex(button3, 6);
+            if (panel1.Controls.Contains(button9)) panel1.Controls.SetChildIndex(button9, 4);
+            if (panel1.Controls.Contains(btnCirculation)) panel1.Controls.SetChildIndex(btnCirculation, 6);
             if (panel1.Controls.Contains(button2)) panel1.Controls.SetChildIndex(button2, 7);
             if (panel1.Controls.Contains(button1)) panel1.Controls.SetChildIndex(button1, 8);
             if (panel1.Controls.Contains(btnDashboard)) panel1.Controls.SetChildIndex(btnDashboard, 9);
             if (panel1.Controls.Contains(pictureBoxLogo)) panel1.Controls.SetChildIndex(pictureBoxLogo, 10);
+
 
             // ✅ Move dashboard indicator after all layout changes
             SetActiveButton(btnDashboard);
@@ -487,7 +591,6 @@ namespace Library_Management_System
             };
 
         }
-
         public void OpenManageBooksFromDashboard()
         {
             SetActiveButton(button1); // button1 = Manage Books
@@ -575,12 +678,6 @@ namespace Library_Management_System
                 this.Invalidate();
             }
         }
-
-
-
-
-
-
         private void button6_MouseEnter(object sender, EventArgs e)
         {
             // Show dropdown items
@@ -606,19 +703,11 @@ namespace Library_Management_System
             };
             hideTimer.Start();
         }
-
-
-
-
         private void btnDashboard_Click(object sender, EventArgs e)
         {
             SetActiveButton(btnDashboard);
             LoadControl(new DashboardControl());
         }
-
-    
-
-
         private void panelContainer_Paint(object sender, PaintEventArgs e)
         {
 
@@ -680,41 +769,6 @@ namespace Library_Management_System
             p.Region = new Region(path);
         }
 
-
-        private void button3_Click(object sender, EventArgs e)
-        {
-            SetActiveButton(button3);
-
-            // Create a fresh instance every time (so updates are reflected)
-            BorrowBooksControl borrowControl = new BorrowBooksControl();
-            borrowControl.Dock = DockStyle.Fill;
-
-            // Clear previous control and add the new one
-            panelContainer.Controls.Clear();
-            panelContainer.Controls.Add(borrowControl);
-
-            // Trigger horizontal rollout animation
-            borrowControl.RollOutPanel();
-        }
-
-
-        private void button4_Click(object sender, EventArgs e)
-        {
-            SetActiveButton(button4);
-
-            panelContainer.Controls.Clear();
-
-            // ✅ Reuse the same instance so the event connection works
-            returnBooksControl.Dock = DockStyle.Fill;
-            panelContainer.Controls.Add(returnBooksControl);
-
-            // Trigger horizontal rollout animation
-            returnBooksControl.RollOutPanel();
-        }
-
-
-
-
         private void button5_Click(object sender, EventArgs e)
         {
             SetActiveButton(button5);
@@ -731,10 +785,6 @@ namespace Library_Management_System
             // Start the timer to animate
             sidebarTimer.Start();
         }
-
-
-
-
 
         private void button7_Click(object sender, EventArgs e)
         {
@@ -802,12 +852,6 @@ namespace Library_Management_System
             }
         }
 
-
-
-
-
-
-
         private void button6_Click(object sender, EventArgs e)
         {
 
@@ -835,18 +879,88 @@ namespace Library_Management_System
             // Trigger horizontal rollout animation
             overdueBooks.RollOutPanel();
         }
+        private async void btnCirculation_Click(object sender, EventArgs e)
+        {
+            isCirculationExpanded = !isCirculationExpanded;
+
+            int targetHeight = isCirculationExpanded ? 3 * 36 : 0;
+
+            // Ensure panel is visible before expanding
+            if (isCirculationExpanded)
+                circulationPanel.Visible = true;
+
+            if (isCirculationExpanded)
+                await ExpandPanelWithShift(circulationPanel, targetHeight);
+            else
+                await CollapsePanelWithShift(circulationPanel);
+
+            SetActiveButton(btnCirculation);
+        }
 
 
+        // Animate expanding and shift buttons below
+        private async Task ExpandPanelWithShift(Panel panel, int targetHeight)
+        {
+            panel.Visible = true;
+            int step = 10;
+            while (panel.Height < targetHeight)
+            {
+                panel.Height += step;
+                // Shift buttons below dynamically
+                ShiftButtonsBelow(panel);
+                await Task.Delay(10);
+            }
+            panel.Height = targetHeight;
+            panel.Visible = isCirculationExpanded; // hide when collapsed
+            ShiftButtonsBelow(panel);
+        }
 
+        // Animate collapsing and shift buttons below
+        private async Task CollapsePanelWithShift(Panel panel)
+        {
+            int step = 10;
+            while (panel.Height > 0)
+            {
+                panel.Height -= step;
+                ShiftButtonsBelow(panel);
+                await Task.Delay(10);
+            }
+            panel.Height = 0;
+            panel.Visible = false;
+            ShiftButtonsBelow(panel);
+        }
 
+        // Adjust positions of buttons below Circulation
+        private void ShiftButtonsBelow(Panel circulationPanel)
+        {
+            List<Button> buttonsBelow = new List<Button> { button9, button5 /* add more */ };
+            int top = btnCirculation.Bottom + circulationPanel.Height + 5;
 
-        //private void button1_Click(object sender, EventArgs e)
-        //{
-        //    using (var con = Db.GetConnection())
-        //    {
-        //        con.Open();
-        //        MessageBox.Show("Database connection successful!");
-        //    }
-        //}
+            foreach (var btn in buttonsBelow)
+            {
+                btn.Top = top;
+                top = btn.Bottom + 5;
+            }
+        }
+
+        private void StyleSubButton(Button btn, bool isLast = false)
+        {
+            btn.FlatStyle = FlatStyle.Flat;
+            btn.FlatAppearance.BorderSize = 0;
+            btn.Height = 36;
+            btn.Font = new Font("Segoe UI", 10, FontStyle.Regular);
+            btn.ForeColor = Color.Black;
+            btn.BackColor = Color.FromArgb(194, 167, 144);
+            btn.TextAlign = ContentAlignment.MiddleLeft;
+            btn.Padding = new Padding(40, 0, 0, 0); // extra padding for line
+            btn.Cursor = Cursors.Hand;
+
+            // Prepend line symbol
+            btn.Text = (isLast ? "└─ " : "├─ ") + btn.Text.Trim();
+
+            // Hover effect
+            btn.MouseEnter += (s, e) => btn.BackColor = Color.FromArgb(194, 167, 144);
+            btn.MouseLeave += (s, e) => btn.BackColor = Color.FromArgb(194, 167, 144);
+        }
     }
 }

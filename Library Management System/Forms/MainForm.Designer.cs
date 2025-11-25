@@ -32,15 +32,14 @@
             this.button9 = new System.Windows.Forms.Button();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.button8 = new System.Windows.Forms.Button();
-            this.button4 = new System.Windows.Forms.Button();
             this.button7 = new System.Windows.Forms.Button();
             this.button6 = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
             this.button5 = new System.Windows.Forms.Button();
-            this.button3 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.btnDashboard = new System.Windows.Forms.Button();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.btnCirculation = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
@@ -58,14 +57,13 @@
             // button9
             // 
             this.button9.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.button9.Dock = System.Windows.Forms.DockStyle.Top;
             this.button9.FlatAppearance.BorderSize = 0;
             this.button9.FlatAppearance.MouseOverBackColor = System.Drawing.Color.LightGray;
             this.button9.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button9.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.button9.Image = global::Library_Management_System.Properties.Resources.ov1;
             this.button9.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.button9.Location = new System.Drawing.Point(0, 397);
+            this.button9.Location = new System.Drawing.Point(0, 313);
             this.button9.Name = "button9";
             this.button9.Size = new System.Drawing.Size(275, 48);
             this.button9.TabIndex = 12;
@@ -80,7 +78,7 @@
             this.pictureBox1.Cursor = System.Windows.Forms.Cursors.Hand;
             this.pictureBox1.Dock = System.Windows.Forms.DockStyle.Top;
             this.pictureBox1.Image = global::Library_Management_System.Properties.Resources.myLogo1;
-            this.pictureBox1.Location = new System.Drawing.Point(0, 288);
+            this.pictureBox1.Location = new System.Drawing.Point(0, 144);
             this.pictureBox1.Name = "pictureBox1";
             this.pictureBox1.Size = new System.Drawing.Size(275, 109);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -107,26 +105,6 @@
             this.button8.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.button8.UseVisualStyleBackColor = true;
             this.button8.Click += new System.EventHandler(this.button8_Click);
-            // 
-            // button4
-            // 
-            this.button4.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.button4.Dock = System.Windows.Forms.DockStyle.Top;
-            this.button4.FlatAppearance.BorderSize = 0;
-            this.button4.FlatAppearance.MouseOverBackColor = System.Drawing.Color.LightGray;
-            this.button4.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button4.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button4.Image = global::Library_Management_System.Properties.Resources.RBooks;
-            this.button4.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.button4.Location = new System.Drawing.Point(0, 240);
-            this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(275, 48);
-            this.button4.TabIndex = 3;
-            this.button4.Text = "  Return Books";
-            this.button4.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.button4.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
-            this.button4.UseVisualStyleBackColor = true;
-            this.button4.Click += new System.EventHandler(this.button4_Click);
             // 
             // button7
             // 
@@ -177,7 +155,7 @@
             this.button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.button1.Image = global::Library_Management_System.Properties.Resources.MBooks;
             this.button1.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.button1.Location = new System.Drawing.Point(0, 192);
+            this.button1.Location = new System.Drawing.Point(0, 96);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(275, 48);
             this.button1.TabIndex = 0;
@@ -190,14 +168,13 @@
             // button5
             // 
             this.button5.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.button5.Dock = System.Windows.Forms.DockStyle.Top;
             this.button5.FlatAppearance.BorderSize = 0;
             this.button5.FlatAppearance.MouseOverBackColor = System.Drawing.Color.LightGray;
             this.button5.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button5.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.button5.Image = global::Library_Management_System.Properties.Resources.Reports;
             this.button5.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.button5.Location = new System.Drawing.Point(0, 144);
+            this.button5.Location = new System.Drawing.Point(0, 367);
             this.button5.Name = "button5";
             this.button5.Size = new System.Drawing.Size(275, 48);
             this.button5.TabIndex = 4;
@@ -206,26 +183,6 @@
             this.button5.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.button5.UseVisualStyleBackColor = true;
             this.button5.Click += new System.EventHandler(this.button5_Click);
-            // 
-            // button3
-            // 
-            this.button3.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.button3.Dock = System.Windows.Forms.DockStyle.Top;
-            this.button3.FlatAppearance.BorderSize = 0;
-            this.button3.FlatAppearance.MouseOverBackColor = System.Drawing.Color.LightGray;
-            this.button3.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button3.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button3.Image = global::Library_Management_System.Properties.Resources.BBooks;
-            this.button3.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.button3.Location = new System.Drawing.Point(0, 96);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(275, 48);
-            this.button3.TabIndex = 2;
-            this.button3.Text = "  Borrow Books";
-            this.button3.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.button3.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.button3_Click);
             // 
             // button2
             // 
@@ -271,15 +228,14 @@
             // panel1
             // 
             this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(194)))), ((int)(((byte)(167)))), ((int)(((byte)(144)))));
+            this.panel1.Controls.Add(this.btnCirculation);
             this.panel1.Controls.Add(this.button9);
             this.panel1.Controls.Add(this.pictureBox1);
             this.panel1.Controls.Add(this.button8);
-            this.panel1.Controls.Add(this.button4);
             this.panel1.Controls.Add(this.button7);
             this.panel1.Controls.Add(this.button6);
             this.panel1.Controls.Add(this.button1);
             this.panel1.Controls.Add(this.button5);
-            this.panel1.Controls.Add(this.button3);
             this.panel1.Controls.Add(this.button2);
             this.panel1.Controls.Add(this.btnDashboard);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Left;
@@ -288,6 +244,25 @@
             this.panel1.Size = new System.Drawing.Size(275, 910);
             this.panel1.TabIndex = 9;
             this.panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.panel1_Paint);
+            // 
+            // btnCirculation
+            // 
+            this.btnCirculation.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnCirculation.FlatAppearance.BorderSize = 0;
+            this.btnCirculation.FlatAppearance.MouseOverBackColor = System.Drawing.Color.LightGray;
+            this.btnCirculation.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCirculation.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnCirculation.Image = global::Library_Management_System.Properties.Resources.circulation;
+            this.btnCirculation.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnCirculation.Location = new System.Drawing.Point(0, 259);
+            this.btnCirculation.Name = "btnCirculation";
+            this.btnCirculation.Size = new System.Drawing.Size(275, 48);
+            this.btnCirculation.TabIndex = 13;
+            this.btnCirculation.Text = "  Circulation";
+            this.btnCirculation.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.btnCirculation.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
+            this.btnCirculation.UseVisualStyleBackColor = true;
+            this.btnCirculation.Click += new System.EventHandler(this.btnCirculation_Click);
             // 
             // MainForm
             // 
@@ -309,8 +284,6 @@
 
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Button button2;
-        private System.Windows.Forms.Button button3;
-        private System.Windows.Forms.Button button4;
         private System.Windows.Forms.Button button5;
         private System.Windows.Forms.Button btnDashboard;
         public System.Windows.Forms.Panel panelContainer;
@@ -321,6 +294,7 @@
         private System.Windows.Forms.Button button7;
         private System.Windows.Forms.Button button9;
         private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Button btnCirculation;
     }
 }
 

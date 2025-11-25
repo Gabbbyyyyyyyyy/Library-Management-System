@@ -24,6 +24,7 @@
             this.label6 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
             this.label2 = new System.Windows.Forms.Label();
+            this.txtSearch = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.dgvBorrowedBooks)).BeginInit();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
@@ -34,26 +35,28 @@
             this.dgvBorrowedBooks.AllowUserToDeleteRows = false;
             this.dgvBorrowedBooks.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvBorrowedBooks.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvBorrowedBooks.Location = new System.Drawing.Point(277, 350);
+            this.dgvBorrowedBooks.Location = new System.Drawing.Point(277, 196);
             this.dgvBorrowedBooks.Margin = new System.Windows.Forms.Padding(4);
             this.dgvBorrowedBooks.MultiSelect = false;
             this.dgvBorrowedBooks.Name = "dgvBorrowedBooks";
             this.dgvBorrowedBooks.ReadOnly = true;
             this.dgvBorrowedBooks.RowHeadersWidth = 51;
             this.dgvBorrowedBooks.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvBorrowedBooks.Size = new System.Drawing.Size(1728, 724);
+            this.dgvBorrowedBooks.Size = new System.Drawing.Size(1728, 887);
             this.dgvBorrowedBooks.TabIndex = 0;
             this.dgvBorrowedBooks.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvBorrowedBooks_CellContentClick);
             // 
             // btnReturn
             // 
-            this.btnReturn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(128)))));
+            this.btnReturn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(211)))), ((int)(((byte)(181)))), ((int)(((byte)(139)))));
             this.btnReturn.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btnReturn.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnReturn.Location = new System.Drawing.Point(277, 278);
+            this.btnReturn.FlatAppearance.BorderSize = 0;
+            this.btnReturn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnReturn.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnReturn.Location = new System.Drawing.Point(294, 140);
             this.btnReturn.Margin = new System.Windows.Forms.Padding(4);
             this.btnReturn.Name = "btnReturn";
-            this.btnReturn.Size = new System.Drawing.Size(180, 63);
+            this.btnReturn.Size = new System.Drawing.Size(196, 49);
             this.btnReturn.TabIndex = 1;
             this.btnReturn.Text = "Confirm";
             this.btnReturn.UseVisualStyleBackColor = false;
@@ -90,11 +93,19 @@
             this.label2.Text = "Return";
             this.label2.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
+            // txtSearch
+            // 
+            this.txtSearch.Location = new System.Drawing.Point(1763, 165);
+            this.txtSearch.Name = "txtSearch";
+            this.txtSearch.Size = new System.Drawing.Size(242, 22);
+            this.txtSearch.TabIndex = 24;
+            // 
             // ReturnBooksControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(212)))), ((int)(((byte)(201)))));
+            this.Controls.Add(this.txtSearch);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.btnReturn);
@@ -116,5 +127,6 @@
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.TextBox txtSearch;
     }
 }

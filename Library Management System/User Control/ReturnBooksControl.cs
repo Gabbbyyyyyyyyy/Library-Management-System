@@ -15,11 +15,20 @@ namespace Library_Management_System.User_Control
         public event Action PenaltyUpdated;
         private int targetWidth = 150; // final width when fully shown
         private Timer slideTimer;
+        private Panel noResultPanel;
+
 
 
         public ReturnBooksControl()
         {
             InitializeComponent();
+
+            dgvBorrowedBooks.DataError += (s, e) =>
+            {
+                e.ThrowException = false; // prevents crash
+            };
+
+            btnReturn.ApplyRoundedCorners(10, Color.FromArgb(211, 181, 139));
             // Initially collapsed
             panel1.Width = 0;
 
@@ -27,10 +36,118 @@ namespace Library_Management_System.User_Control
             slideTimer = new Timer();
             slideTimer.Interval = 10;
             slideTimer.Tick += SlideTimer_Tick;
-            dgvBorrowedBooks.EnableHeadersVisualStyles = false;
-            dgvBorrowedBooks.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
-            // 🔹 Make rows taller
-            dgvBorrowedBooks.RowTemplate.Height = 40; // increase row height (default is ~22)
+            // Apply default DataGridView styling
+            DataGridViewHelper.ApplyDefaultStyle(dgvBorrowedBooks);
+            dgvBorrowedBooks.RowTemplate.Height = 40; // optional: keep taller rows
+
+            dgvBorrowedBooks.CellFormatting += (s, e) =>
+            {
+                if (dgvBorrowedBooks.Columns[e.ColumnIndex].Name == "Status" && e.Value != null)
+                {
+                    string status = e.Value.ToString().Trim();
+
+                    switch (status)
+                    {
+                        case "Pending":
+                            e.CellStyle.ForeColor = Color.Orange;
+                            break;
+                        case "Returned":
+                            e.CellStyle.ForeColor = Color.Green;
+                            break;
+                        case "Accepted":
+                            e.CellStyle.ForeColor = Color.Blue;
+                            break;
+                        default:
+                            e.CellStyle.ForeColor = Color.Black;
+                            break;
+                    }
+
+                    e.FormattingApplied = true;
+                }
+
+                // Optional: format Penalty column
+                if (dgvBorrowedBooks.Columns[e.ColumnIndex].Name == "Penalty" && e.Value != null)
+                {
+                    e.CellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                    e.CellStyle.Format = "₱0.00";
+                    e.FormattingApplied = true;
+                }
+            };
+
+            // Hook up search
+            txtSearch.KeyDown += TxtSearchReturn_KeyDown;
+            txtSearch.TextChanged += TxtSearchReturn_TextChanged;
+
+             // Create hidden no-result panel
+            noResultPanel = new Panel
+            {
+                Size = dgvBorrowedBooks.Size,
+                Location = dgvBorrowedBooks.Location,
+                BackColor = Color.Transparent,
+                Visible = false
+            };
+            this.Controls.Add(noResultPanel);
+
+            // Add the picture
+            PictureBox pic = new PictureBox
+            {
+                Image = Properties.Resources.NoBooksIcon,   // <-- Put your icon in Resources
+                Size = new Size(120, 120),
+                SizeMode = PictureBoxSizeMode.Zoom,
+                BackColor = Color.Transparent
+            };
+            noResultPanel.Controls.Add(pic);
+
+            // Center later in RefreshNoResultLayout()
+
+            // Main title
+            Label lblMain = new Label
+            {
+                Text = "No returns found",
+                Font = new Font("Segoe UI", 18, FontStyle.Bold),
+                ForeColor = Color.Gray,
+                AutoSize = true,
+                BackColor = Color.Transparent
+            };
+            noResultPanel.Controls.Add(lblMain);
+
+            // Subtitle
+            Label lblSub = new Label
+            {
+                Text = "Try searching again or wait for a return.",
+                Font = new Font("Segoe UI", 10, FontStyle.Regular),
+                ForeColor = Color.DimGray,
+                AutoSize = true,
+                BackColor = Color.Transparent
+            };
+            noResultPanel.Controls.Add(lblSub);
+
+            // Save controls for resizing later
+            noResultPanel.Tag = new Control[] { pic, lblMain, lblSub };
+
+
+
+            // Placeholder text settings
+            txtSearch.ForeColor = Color.Gray;
+            txtSearch.Text = "Search name or book...";
+
+            txtSearch.Enter += (s, e) =>
+            {
+                if (txtSearch.Text == "Search name or book...")
+                {
+                    txtSearch.Text = "";
+                    txtSearch.ForeColor = Color.Black;
+                }
+            };
+
+            txtSearch.Leave += (s, e) =>
+            {
+                if (string.IsNullOrWhiteSpace(txtSearch.Text))
+                {
+                    txtSearch.Text = "Search name or book...";
+                    txtSearch.ForeColor = Color.Gray;
+                }
+            };
 
 
             LoadBorrowedBooks();
@@ -41,6 +158,139 @@ namespace Library_Management_System.User_Control
 
             Library_Management_System.User_Control_Student.Borrowing.BookReturned += LoadBorrowedBooks;
         }
+
+        private void RefreshNoResultLayout(string mainText, string subText)
+        {
+            var controls = (Control[])noResultPanel.Tag;
+            PictureBox pic = (PictureBox)controls[0];
+            Label lblMain = (Label)controls[1];
+            Label lblSub = (Label)controls[2];
+
+            lblMain.Text = mainText;
+            lblSub.Text = subText;
+
+            // Center icon
+            pic.Location = new Point(
+                (noResultPanel.Width - pic.Width) / 2,
+                20
+            );
+
+            // Center text
+            lblMain.Location = new Point(
+                (noResultPanel.Width - lblMain.Width) / 2,
+                pic.Bottom + 15
+            );
+
+            lblSub.Location = new Point(
+                (noResultPanel.Width - lblSub.Width) / 2,
+                lblMain.Bottom + 5
+            );
+        }
+
+
+        private void TxtSearchReturn_TextChanged(object sender, EventArgs e)
+        {
+            PerformSearchReturn();
+        }
+
+        private void TxtSearchReturn_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.SuppressKeyPress = true; // prevent beep
+                PerformSearchReturn();
+            }
+        }
+
+        private void PerformSearchReturn()
+        {
+            string searchText = txtSearch.Text.Trim();
+
+            // 🔥 FIX: If placeholder is active, DO NOT run a search
+            if (searchText == "Search name or book..." || string.IsNullOrWhiteSpace(searchText))
+            {
+                LoadBorrowedBooks();
+                return;
+            }
+
+
+            var dt = DatabaseHelper.Query(@"
+        SELECT br.BorrowId, 
+               m.FirstName || ' ' || m.LastName AS FullName, 
+               b.Title, 
+               br.BorrowDate, 
+               br.DueDate,
+               br.ReturnDate,
+               br.Penalty,
+               br.Status
+        FROM Borrowings br
+        INNER JOIN Members m ON br.MemberId = m.MemberId
+        INNER JOIN Books b ON br.BookId = b.BookId
+        WHERE br.Status = 'Pending'
+          AND (m.FirstName LIKE @search OR m.LastName LIKE @search OR b.Title LIKE @search)
+        ORDER BY br.DueDate ASC;
+    ", new SQLiteParameter("@search", "%" + searchText + "%"));
+
+            // Recalculate penalty for filtered rows
+            foreach (DataRow row in dt.Rows)
+            {
+                if (row["DueDate"] != DBNull.Value)
+                {
+                    DateTime dueDate = Convert.ToDateTime(row["DueDate"]);
+                    DateTime? returnDate = row["ReturnDate"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(row["ReturnDate"]);
+
+                    double totalPenalty;
+                    int daysOverdue, hoursOverdue;
+                    PenaltyHelper.CalculatePenalty(dueDate, returnDate, out totalPenalty, out daysOverdue, out hoursOverdue);
+                    row["Penalty"] = totalPenalty;
+                }
+            }
+
+            dgvBorrowedBooks.DataSource = dt;
+
+            // Optional: adjust headers again
+            dgvBorrowedBooks.Columns["FullName"].HeaderText = "Name of Students";
+            dgvBorrowedBooks.Columns["BorrowDate"].HeaderText = "Borrow Date";
+            dgvBorrowedBooks.Columns["ReturnDate"].HeaderText = "Return Date";
+            dgvBorrowedBooks.Columns["DueDate"].HeaderText = "Due Date";
+            if (dgvBorrowedBooks.Columns.Contains("BorrowId"))
+                dgvBorrowedBooks.Columns["BorrowId"].Visible = false;
+            // Fix Penalty column type
+            if (dt.Columns.Contains("Penalty"))
+            {
+                dt.Columns["Penalty"].ReadOnly = false;
+                dt.Columns["Penalty"].DataType = typeof(double);
+
+                foreach (DataRow row in dt.Rows)
+                {
+                    if (row["Penalty"] == DBNull.Value || row["Penalty"].ToString() == "")
+                        row["Penalty"] = 0.0;
+                }
+            }
+            // ----- NO DATA OR NO SEARCH RESULT -----
+            if (dt.Rows.Count == 0)
+            {
+                noResultPanel.Visible = true;
+                dgvBorrowedBooks.Visible = false;
+
+                if (string.IsNullOrWhiteSpace(searchText) || searchText == "Search name or book...")
+                    RefreshNoResultLayout("No return records yet", "Returned books will appear here.");
+                else
+                    RefreshNoResultLayout("No match found", "Try checking the spelling or use different keywords.");
+
+                // Disable search only if no returns at all
+                if (string.IsNullOrWhiteSpace(searchText) || searchText == "Search name or book...")
+                    txtSearch.Enabled = false;
+            }
+            else
+            {
+                dgvBorrowedBooks.Visible = true;
+                noResultPanel.Visible = false;
+
+                txtSearch.Enabled = true;
+            }
+        }
+
 
         private void LoadBorrowedBooks()
         {
@@ -87,16 +337,36 @@ namespace Library_Management_System.User_Control
                 dgvBorrowedBooks.Columns["BorrowId"].Visible = false;
 
 
-            if (dgvBorrowedBooks.Columns.Contains("Penalty"))
+            // Fix Penalty column type
+            if (dt.Columns.Contains("Penalty"))
             {
-                dgvBorrowedBooks.Columns["Penalty"].DefaultCellStyle.Format = "₱0.00";
-                dgvBorrowedBooks.Columns["Penalty"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                dt.Columns["Penalty"].ReadOnly = false;
+                dt.Columns["Penalty"].DataType = typeof(double);
+
+                foreach (DataRow row in dt.Rows)
+                {
+                    if (row["Penalty"] == DBNull.Value || row["Penalty"].ToString() == "")
+                        row["Penalty"] = 0.0;
+                }
+            }
+            if (dt.Rows.Count == 0)
+            {
+                dgvBorrowedBooks.Visible = false;
+                noResultPanel.Visible = true;
+                RefreshNoResultLayout("No return records yet", "Returned books will appear here.");
+
+                // Disable search
+                txtSearch.Enabled = false;
+            }
+            else
+            {
+                dgvBorrowedBooks.Visible = true;
+                noResultPanel.Visible = false;
+
+                // Enable search
+                txtSearch.Enabled = true;
             }
 
-            dgvBorrowedBooks.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill; // auto-fit columns
-                                                                                         // 🔹 Remove pre-selection completely
-            dgvBorrowedBooks.ClearSelection();
-            dgvBorrowedBooks.CurrentCell = null;
         }
 
         private int GetBookIdFromBorrowing(int borrowId)
