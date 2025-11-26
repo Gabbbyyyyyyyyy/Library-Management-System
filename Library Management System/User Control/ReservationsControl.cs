@@ -150,7 +150,7 @@ namespace Library_Management_System.User_Control
                         con.Open();
 
                         // Update status to Rejected
-                        string updateQuery = "UPDATE Reservations SET Status='Rejected' WHERE ReservationId=@id";
+                        string updateQuery = "UPDATE Reservations SET Status='Cancelled' WHERE ReservationId=@id";
                         using (var cmd = new SQLiteCommand(updateQuery, con))
                         {
                             cmd.Parameters.AddWithValue("@id", reservationId);
@@ -164,7 +164,7 @@ namespace Library_Management_System.User_Control
                         using (var cmd = new SQLiteCommand(notifQuery, con))
                         {
                             cmd.Parameters.AddWithValue("@studentNo", studentNo);
-                            cmd.Parameters.AddWithValue("@msg", $"Your reservation for '{bookTitle}' has been rejected by the admin.");
+                            cmd.Parameters.AddWithValue("@msg", $" Your reservation for '{bookTitle}' has been rejected by the admin.");
                             cmd.Parameters.AddWithValue("@date", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
                             cmd.ExecuteNonQuery();
                         }
