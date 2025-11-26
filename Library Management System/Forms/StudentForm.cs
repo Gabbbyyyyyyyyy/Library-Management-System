@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data.SQLite;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
@@ -52,6 +53,14 @@ namespace Library_Management_System.Forms
             this.Shown += (s, e) => PreSelectBookHub();
         }
 
+        private void StartDueCheckTimer()
+        {
+            Timer timer = new Timer();
+            timer.Interval = 1000 * 60 * 30; // every 30 mins
+            timer.Tick += (s, e) => CheckDueSoonNotifications();
+            timer.Start();
+        }
+
         private void LoadControl(UserControl control)
         {
             control.Dock = DockStyle.Fill;
@@ -61,9 +70,108 @@ namespace Library_Management_System.Forms
 
         private void StudentForm_Load(object sender, EventArgs e)
         {
+            StartDueCheckTimer();
+            CheckDueSoonNotifications(); // initial check
             this.WindowState = FormWindowState.Maximized;
             LoadControl(new AvailbleCopies { StudentNo = _studentNo });
         }
+        private void CheckDueSoonNotifications()
+        {
+            using (var con = new SQLiteConnection(Db.ConnectionString))
+            {
+                con.Open();
+
+                string query = @"
+            SELECT br.BorrowId, br.MemberId, br.DueDate, m.StudentNo, br.DueReminderSent, br.OverdueNotificationSent
+            FROM Borrowings br
+            INNER JOIN Members m ON br.MemberId = m.MemberId
+            WHERE br.Status = 'Borrowed'
+        ";
+
+                using (var cmd = new SQLiteCommand(query, con))
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        int borrowId = Convert.ToInt32(reader["BorrowId"]);
+                        string studentNo = reader["StudentNo"].ToString();
+                        DateTime dueDate = DateTime.Parse(reader["DueDate"].ToString());
+                        bool dueReminderSent = reader["DueReminderSent"] != DBNull.Value && Convert.ToInt32(reader["DueReminderSent"]) == 1;
+                        bool overdueNotificationSent = reader["OverdueNotificationSent"] != DBNull.Value && Convert.ToInt32(reader["OverdueNotificationSent"]) == 1;
+
+                        // --- 1️⃣ Due Reminder ---
+                        DateTime notifyTime = dueDate.AddDays(-1).Date.AddHours(18);
+                        if (!dueReminderSent && DateTime.Now >= notifyTime && DateTime.Now < dueDate)
+                        {
+                            InsertNotificationDirect(con, studentNo,
+                                $"Reminder: Your borrowed book is due tomorrow at {dueDate:hh:mm tt}.");
+
+                            string updateQuery = "UPDATE Borrowings SET DueReminderSent = 1 WHERE BorrowId = @borrowId";
+                            using (var updateCmd = new SQLiteCommand(updateQuery, con))
+                            {
+                                updateCmd.Parameters.AddWithValue("@borrowId", borrowId);
+                                updateCmd.ExecuteNonQuery();
+                            }
+                        }
+
+                        // --- 2️⃣ Overdue Notification ---
+                        DateTime penaltyStart = dueDate.AddHours(1);
+                        if (!overdueNotificationSent && DateTime.Now >= penaltyStart)
+                        {
+                            InsertNotificationDirect(con, studentNo,
+                                $"⚠️ Your borrowed book was due at {dueDate:hh:mm tt}. Penalty has now started.");
+
+                            string updateQuery = "UPDATE Borrowings SET OverdueNotificationSent = 1 WHERE BorrowId = @borrowId";
+                            using (var updateCmd = new SQLiteCommand(updateQuery, con))
+                            {
+                                updateCmd.Parameters.AddWithValue("@borrowId", borrowId);
+                                updateCmd.ExecuteNonQuery();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Use this method instead of opening a new connection
+        private void InsertNotificationDirect(SQLiteConnection con, string studentNo, string message)
+        {
+            string query = @"
+        INSERT INTO Notifications (StudentNo, Message, DateCreated, IsRead, IsFollowUp)
+        VALUES (@StudentNo, @Message, @DateCreated, 0, 0)
+    ";
+
+            using (var cmd = new SQLiteCommand(query, con))
+            {
+                cmd.Parameters.AddWithValue("@StudentNo", studentNo);
+                cmd.Parameters.AddWithValue("@Message", message);
+                cmd.Parameters.AddWithValue("@DateCreated", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+
+        private void InsertNotification(string studentNo, string message)
+        {
+            using (var con = new SQLiteConnection(Db.ConnectionString))
+            {
+                con.Open();
+
+                string query = @"
+            INSERT INTO Notifications (StudentNo, Message, DateCreated, IsRead, IsFollowUp)
+            VALUES (@StudentNo, @Message, @DateCreated, 0, 0)
+        ";
+
+                using (var cmd = new SQLiteCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@StudentNo", studentNo);
+                    cmd.Parameters.AddWithValue("@Message", message);
+                    cmd.Parameters.AddWithValue("@DateCreated", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
 
         private void btnAvailableCopies_Click(object sender, EventArgs e)
         {

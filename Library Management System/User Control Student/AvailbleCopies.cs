@@ -839,22 +839,68 @@ private void MakeButtonRounded(Button btn, float radiusPercent = 0.02f)
                 Cursor = Cursors.Hand,
             };
 
-            // 💡 ENABLE ONLY WHEN NOT AVAILABLE
-            btnReserve.Enabled = status == "Not Available";
+            // 💡 Check if student can reserve
+            bool canReserve = false;
+            using (var con = Db.GetConnection())
+            {
+                con.Open();
 
-            // Optional: change appearance when disabled
+                // 1️⃣ Check active borrowings
+                string checkBorrowingQuery = @"
+        SELECT COUNT(*)
+        FROM Borrowings br
+        INNER JOIN Members m ON m.MemberId = br.MemberId
+        WHERE m.StudentNo = @studentNo
+          AND br.Status = 'Borrowed'";
+                using (var cmdBorrow = new SQLiteCommand(checkBorrowingQuery, con))
+                {
+                    cmdBorrow.Parameters.AddWithValue("@studentNo", _studentNo);
+                    long activeBorrowings = (long)cmdBorrow.ExecuteScalar();
+
+                    if (activeBorrowings == 0)
+                    {
+                        // 2️⃣ Check active or approved reservations
+                        string checkReservationQuery = @"
+                SELECT COUNT(*)
+                FROM Reservations r
+                INNER JOIN Members m ON m.MemberId = r.MemberId
+                WHERE m.StudentNo = @studentNo
+                  AND r.Status IN ('Active','Approved')"; // ✅ include approved reservations
+                        using (var cmdReserve = new SQLiteCommand(checkReservationQuery, con))
+                        {
+                            cmdReserve.Parameters.AddWithValue("@studentNo", _studentNo);
+                            long activeReservations = (long)cmdReserve.ExecuteScalar();
+
+                            if (activeReservations == 0)
+                                canReserve = true; // ✅ Student can reserve
+                        }
+                    }
+                }
+            }
+
+            // Enable Reserve button only if book is not available AND student can reserve
+            btnReserve.Enabled = status == "Not Available" && canReserve;
+
+            // Optional: gray out button when disabled and show tooltip
             if (!btnReserve.Enabled)
             {
                 btnReserve.BackColor = Color.Gray;
                 btnReserve.Cursor = Cursors.No;
+
+                ToolTip tip = new ToolTip();
+                if (status != "Not Available")
+                    tip.SetToolTip(btnReserve, "You can only reserve books that are currently borrowed.");
+                else
+                    tip.SetToolTip(btnReserve, "You already have a borrowed or reserved book, or a reservation has been approved.");
             }
+
 
             btnReserve.Click += (s, e) =>
             {
-                // Only allow if book is NOT available
                 if (status != "Not Available")
                 {
-                    MessageBox.Show("You can only reserve books that are currently borrowed.");
+                    MessageBox.Show("You can only reserve books that are currently borrowed.",
+                                    "Cannot Reserve", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
@@ -862,38 +908,54 @@ private void MakeButtonRounded(Button btn, float radiusPercent = 0.02f)
                 {
                     con.Open();
 
-                    // Check if student already has ANY active reservation
-                    string checkAnyQuery = @"
+                    // 1️⃣ Check active borrowings
+                    string checkBorrowingQuery = @"
             SELECT COUNT(*)
-            FROM Reservations r
-            INNER JOIN Members m ON m.MemberId = r.MemberId
+            FROM Borrowings br
+            INNER JOIN Members m ON m.MemberId = br.MemberId
             WHERE m.StudentNo = @studentNo
-              AND r.Status = 'Active'";
-
-                    using (var cmdAny = new SQLiteCommand(checkAnyQuery, con))
+              AND br.Status = 'Borrowed'";
+                    using (var cmdBorrow = new SQLiteCommand(checkBorrowingQuery, con))
                     {
-                        cmdAny.Parameters.AddWithValue("@studentNo", _studentNo);
-
-                        long activeReservations = (long)cmdAny.ExecuteScalar();
-                        if (activeReservations > 0)
+                        cmdBorrow.Parameters.AddWithValue("@studentNo", _studentNo);
+                        long activeBorrowings = (long)cmdBorrow.ExecuteScalar();
+                        if (activeBorrowings > 0)
                         {
                             MessageBox.Show(
-                                "You already have an active reservation. You may reserve only 1 book at a time.",
-                                "Reservation Limit",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Warning
+                                "You already have a borrowed book. Return it before reserving another one.",
+                                "Cannot Reserve", MessageBoxButtons.OK, MessageBoxIcon.Warning
                             );
                             return;
                         }
                     }
 
-                    // Insert new reservation (only if no active reservations)
+                    // 2️⃣ Check active reservations
+                    string checkReservationQuery = @"
+            SELECT COUNT(*)
+            FROM Reservations r
+            INNER JOIN Members m ON m.MemberId = r.MemberId
+            WHERE m.StudentNo = @studentNo
+              AND r.Status = 'Active'";
+                    using (var cmdReserve = new SQLiteCommand(checkReservationQuery, con))
+                    {
+                        cmdReserve.Parameters.AddWithValue("@studentNo", _studentNo);
+                        long activeReservations = (long)cmdReserve.ExecuteScalar();
+                        if (activeReservations > 0)
+                        {
+                            MessageBox.Show(
+                                "You already have an active reservation. You can only reserve one book at a time.",
+                                "Reservation Limit", MessageBoxButtons.OK, MessageBoxIcon.Warning
+                            );
+                            return;
+                        }
+                    }
+
+                    // 3️⃣ Insert new reservation
                     string insertQuery = @"
             INSERT INTO Reservations (BookId, MemberId, ReserveDate, Status)
             SELECT b.BookId, m.MemberId, @reserveDate, 'Active'
             FROM Books b, Members m
             WHERE b.ISBN = @isbn AND m.StudentNo = @studentNo";
-
                     using (var cmdInsert = new SQLiteCommand(insertQuery, con))
                     {
                         cmdInsert.Parameters.AddWithValue("@reserveDate", DateTime.Now);
@@ -906,6 +968,7 @@ private void MakeButtonRounded(Button btn, float radiusPercent = 0.02f)
                 MessageBox.Show($"You have reserved '{title}'!", "Reserved",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
             };
+
 
 
             // Apply rounded corners AFTER button has a valid size

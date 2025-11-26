@@ -78,7 +78,7 @@ namespace Library_Management_System.User_Control
                         {
                             Name = "Action",
                             HeaderText = "Action",
-                            Text = "Remove",
+                            Text = "Reject",
                             UseColumnTextForButtonValue = true,
                             Width = 70
                         };
@@ -204,6 +204,25 @@ namespace Library_Management_System.User_Control
             {
                 con.Open();
 
+                // ✅ Check current reservation status
+                string statusQuery = "SELECT Status FROM Reservations WHERE ReservationId=@id";
+                using (var cmd = new SQLiteCommand(statusQuery, con))
+                {
+                    cmd.Parameters.AddWithValue("@id", reservationId);
+                    string currentStatus = cmd.ExecuteScalar()?.ToString();
+
+                    if (currentStatus == "Cancelled")
+                    {
+                        MessageBox.Show("Cannot accept this reservation because it is already cancelled.");
+                        return;
+                    }
+                    else if (currentStatus == "Fulfilled")
+                    {
+                        MessageBox.Show("This reservation has already been processed.");
+                        return;
+                    }
+                }
+
                 // 1️⃣ Check if the book is currently borrowed
                 string borrowQuery = @"
             SELECT ReturnDate, DueDate 
@@ -230,18 +249,18 @@ namespace Library_Management_System.User_Control
                             {
                                 // Book will be returned in the future
                                 availableDate = dueDate;
-                                message = $" Your reservation for '{bookTitle}' has been approved. You can pick it up on {availableDate:MMMM dd, yyyy HH:mm tt}.";
+                                message = $"Your reservation for '{bookTitle}' has been approved. You can pick it up on {availableDate:MMMM dd, yyyy HH:mm tt}.";
                             }
                             else
                             {
                                 // Borrowed book overdue → can pick up now
-                                message = $" Your reservation for '{bookTitle}' is ready. You can pick it up now.";
+                                message = $"Your reservation for '{bookTitle}' is ready. You can pick it up now.";
                             }
                         }
                         else
                         {
                             // Book not borrowed, available immediately
-                            message = $" Your reservation for '{bookTitle}' has been approved. You can pick it up now.";
+                            message = $"Your reservation for '{bookTitle}' has been approved. You can pick it up now.";
                         }
                     }
                 }
@@ -270,7 +289,6 @@ namespace Library_Management_System.User_Control
             MessageBox.Show("Reservation processed and student notified!");
             LoadReservations(); // reload table
         }
-
 
 
         private void SlideTimer_Tick(object sender, EventArgs e)

@@ -303,6 +303,12 @@
     <Compile Include="User Control\OverdueReportControl.Designer.cs">
       <DependentUpon>OverdueReportControl.cs</DependentUpon>
     </Compile>
+    <Compile Include="User Control\ReportControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="User Control\ReportControl.Designer.cs">
+      <DependentUpon>ReportControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="User Control\ReservationsControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -377,6 +383,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="User Control\OverdueReportControl.resx">
       <DependentUpon>OverdueReportControl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="User Control\ReportControl.resx">
+      <DependentUpon>ReportControl.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="User Control\ReservationsControl.resx">
       <DependentUpon>ReservationsControl.cs</DependentUpon>
