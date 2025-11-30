@@ -573,22 +573,79 @@ namespace LibraryManagementSystem
 
         private void DeleteBook(int bookId)
         {
-            if (MessageBox.Show("Are you sure you want to delete this book?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
-                return;
-
-            using (SQLiteConnection con = Db.GetConnection())
+            try
             {
-                con.Open();
-                using (SQLiteCommand cmd = new SQLiteCommand("DELETE FROM Books WHERE BookId=@id", con))
+                using (SQLiteConnection con = Db.GetConnection())
                 {
-                    cmd.Parameters.AddWithValue("@id", bookId);
-                    cmd.ExecuteNonQuery();
+                    con.Open();
+
+                    // Check if the book is borrowed or not available
+                    string statusQuery = "SELECT AvailableCopies FROM Books WHERE BookId=@id";
+                    using (SQLiteCommand statusCmd = new SQLiteCommand(statusQuery, con))
+                    {
+                        statusCmd.Parameters.AddWithValue("@id", bookId);
+                        int availableCopies = Convert.ToInt32(statusCmd.ExecuteScalar());
+
+                        if (availableCopies <= 0)
+                        {
+                            MessageBox.Show(
+                                "This book cannot be deleted because it is currently borrowed.",
+                                "Cannot Delete",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Warning
+                            );
+                            return;
+                        }
+                    }
+
+                    // Optionally: also check active reservations
+                    string reservationQuery = "SELECT COUNT(1) FROM Reservations WHERE BookId=@id AND Status='Active'";
+                    using (SQLiteCommand reserveCmd = new SQLiteCommand(reservationQuery, con))
+                    {
+                        reserveCmd.Parameters.AddWithValue("@id", bookId);
+                        int activeReservations = Convert.ToInt32(reserveCmd.ExecuteScalar());
+
+                        if (activeReservations > 0)
+                        {
+                            MessageBox.Show(
+                                "This book cannot be deleted because there are active reservations.",
+                                "Cannot Delete",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Warning
+                            );
+                            return;
+                        }
+                    }
+
+                    // Confirm deletion
+                    if (MessageBox.Show(
+                        "Are you sure you want to delete this book?",
+                        "Confirm Delete",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Warning) == DialogResult.No)
+                    {
+                        return;
+                    }
+
+                    // Delete the book
+                    using (SQLiteCommand cmd = new SQLiteCommand("DELETE FROM Books WHERE BookId=@id", con))
+                    {
+                        cmd.Parameters.AddWithValue("@id", bookId);
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    MessageBox.Show("Book deleted successfully!", "Deleted", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    // Reload books
+                    LoadBooksAsync().ConfigureAwait(false);
                 }
             }
-
-            MessageBox.Show("Book deleted successfully!");
-            LoadBooksAsync().ConfigureAwait(false);
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error deleting book: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
+
 
         #endregion
 

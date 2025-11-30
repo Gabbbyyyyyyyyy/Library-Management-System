@@ -759,7 +759,7 @@ private void MakeButtonRounded(Button btn, float radiusPercent = 0.02f)
             Panel card = new Panel
             {
                 Width = 230,
-                Height = 360, // a little taller to fit buttons
+                Height = 360,
                 Margin = new Padding(10),
                 BorderStyle = BorderStyle.FixedSingle,
                 BackColor = Color.WhiteSmoke
@@ -770,12 +770,13 @@ private void MakeButtonRounded(Button btn, float radiusPercent = 0.02f)
             {
                 Width = 220,
                 Height = 220,
-                Image = Properties.Resources.admin, // placeholder
+                Image = Properties.Resources.admin,
                 SizeMode = PictureBoxSizeMode.Zoom,
                 Location = new Point(5, 5),
                 Cursor = Cursors.Hand
             };
 
+            // Async cover loading
             Task.Run(() =>
             {
                 if (cover != null)
@@ -823,7 +824,6 @@ private void MakeButtonRounded(Button btn, float radiusPercent = 0.02f)
                 FlatStyle = FlatStyle.Flat,
                 Cursor = Cursors.Hand
             };
-            btnView.FlatAppearance.BorderColor = Color.FromArgb(64, 64, 64); // light black
             btnView.FlatAppearance.BorderSize = 0;
             btnView.Click += (s, e) => ShowBookDetails(isbn, title, author, status, cover, category);
 
@@ -836,71 +836,62 @@ private void MakeButtonRounded(Button btn, float radiusPercent = 0.02f)
                 Location = new Point(120, 290),
                 BackColor = Color.LightGreen,
                 FlatStyle = FlatStyle.Flat,
-                Cursor = Cursors.Hand,
+                Cursor = Cursors.Hand
             };
 
-            // 💡 Check if student can reserve
-            bool canReserve = false;
+            // -------------------------------------------------------
+            // 🔥 NEW LOGIC (Correct Reservation Rule)
+            // Reserve enabled ALWAYS unless student has 1 accepted/fulfilled reservation
+            // -------------------------------------------------------
+
+            bool blocked = false;
+
             using (var con = Db.GetConnection())
             {
                 con.Open();
 
-                // 1️⃣ Check active borrowings
-                string checkBorrowingQuery = @"
-        SELECT COUNT(*)
-        FROM Borrowings br
-        INNER JOIN Members m ON m.MemberId = br.MemberId
-        WHERE m.StudentNo = @studentNo
-          AND br.Status = 'Borrowed'";
-                using (var cmdBorrow = new SQLiteCommand(checkBorrowingQuery, con))
+                string checkApproved = @"
+            SELECT COUNT(*)
+            FROM Reservations r
+            INNER JOIN Members m ON m.MemberId = r.MemberId
+            WHERE m.StudentNo = @studentNo
+              AND r.Status IN ('Accepted','Fulfilled')
+        ";
+
+                using (var cmd = new SQLiteCommand(checkApproved, con))
                 {
-                    cmdBorrow.Parameters.AddWithValue("@studentNo", _studentNo);
-                    long activeBorrowings = (long)cmdBorrow.ExecuteScalar();
-
-                    if (activeBorrowings == 0)
-                    {
-                        // 2️⃣ Check active or approved reservations
-                        string checkReservationQuery = @"
-                SELECT COUNT(*)
-                FROM Reservations r
-                INNER JOIN Members m ON m.MemberId = r.MemberId
-                WHERE m.StudentNo = @studentNo
-                  AND r.Status IN ('Active','Approved')"; // ✅ include approved reservations
-                        using (var cmdReserve = new SQLiteCommand(checkReservationQuery, con))
-                        {
-                            cmdReserve.Parameters.AddWithValue("@studentNo", _studentNo);
-                            long activeReservations = (long)cmdReserve.ExecuteScalar();
-
-                            if (activeReservations == 0)
-                                canReserve = true; // ✅ Student can reserve
-                        }
-                    }
+                    cmd.Parameters.AddWithValue("@studentNo", _studentNo);
+                    long count = (long)cmd.ExecuteScalar();
+                    blocked = count > 0;
                 }
             }
 
-            // Enable Reserve button only if book is not available AND student can reserve
-            btnReserve.Enabled = status == "Not Available" && canReserve;
-
-            // Optional: gray out button when disabled and show tooltip
-            if (!btnReserve.Enabled)
+            if (blocked)
             {
+                btnReserve.Enabled = false;
+                btnReserve.Text = "Reserved";
                 btnReserve.BackColor = Color.Gray;
                 btnReserve.Cursor = Cursors.No;
-
-                ToolTip tip = new ToolTip();
-                if (status != "Not Available")
-                    tip.SetToolTip(btnReserve, "You can only reserve books that are currently borrowed.");
-                else
-                    tip.SetToolTip(btnReserve, "You already have a borrowed or reserved book, or a reservation has been approved.");
+            }
+            else
+            {
+                btnReserve.Enabled = true; // always allowed unless blocked
+                btnReserve.BackColor = Color.LightGreen;
             }
 
 
+            // When clicking the button
             btnReserve.Click += (s, e) =>
             {
-                if (status != "Not Available")
+                // 🔒 Blocked if student already has an accepted or fulfilled reservation
+                if (blocked)
                 {
-                    MessageBox.Show("You can only reserve books that are currently borrowed.",
-                                    "Cannot Reserve", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(
+                        "You already have a reservation that has been accepted or fulfilled.\nYou cannot reserve another book.",
+                        "Reservation Blocked",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning
+                    );
                     return;
                 }
 
@@ -967,18 +958,26 @@ private void MakeButtonRounded(Button btn, float radiusPercent = 0.02f)
 
                 MessageBox.Show($"You have reserved '{title}'!", "Reserved",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                // After reservation, disable the button immediately
+                btnReserve.Enabled = false;
+                btnReserve.BackColor = Color.Gray;
+                btnReserve.Cursor = Cursors.No;
+                btnReserve.Text = "Reserved";
             };
 
 
-
-            // Apply rounded corners AFTER button has a valid size
+            // Rounded corners
             MakeButtonRounded(btnView);
             MakeButtonRounded(btnReserve);
+
+            // Add to card
             card.Controls.Add(pic);
             card.Controls.Add(lblTitle);
             card.Controls.Add(lblStatus);
             card.Controls.Add(btnView);
             card.Controls.Add(btnReserve);
+
             return card;
         }
 
@@ -986,6 +985,28 @@ private void MakeButtonRounded(Button btn, float radiusPercent = 0.02f)
 
         private void ShowBookDetails(string isbn, string title, string author, string status, Image cover, string category)
         {
+            int availableCopies = 0;
+
+            // Fetch live available copies from the database
+            try
+            {
+                using (var con = Db.GetConnection())
+                {
+                    con.Open();
+                    string query = "SELECT AvailableCopies FROM Books WHERE ISBN = @isbn";
+                    using (var cmd = new SQLiteCommand(query, con))
+                    {
+                        cmd.Parameters.AddWithValue("@isbn", isbn);
+                        var result = cmd.ExecuteScalar();
+                        if (result != null && int.TryParse(result.ToString(), out int copies))
+                            availableCopies = copies;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error fetching available copies: " + ex.Message);
+            }
             // Example: simple pop-up (you can replace this with a custom form later)
             Form detailsForm = new Form
             {
@@ -1035,6 +1056,17 @@ private void MakeButtonRounded(Button btn, float radiusPercent = 0.02f)
                 Location = new Point(20, 320)
             };
             detailsForm.Controls.Add(lblStatus);
+
+            Label lblAvailable = new Label
+            {
+                Text = $"Available Copies: {availableCopies}",
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                ForeColor = availableCopies > 0 ? Color.Green : Color.Red,
+                AutoSize = false,
+                Width = 350,
+                Location = new Point(20, 350)
+            };
+            detailsForm.Controls.Add(lblAvailable);
 
             Label lblCategory = new Label
             {
@@ -1162,6 +1194,29 @@ private void MakeButtonRounded(Button btn, float radiusPercent = 0.02f)
         {
 
         }
+
+        private bool StudentHasAcceptedOrFulfilled(string studentNo)
+        {
+            using (var con = Db.GetConnection())
+            {
+                con.Open();
+
+                string query = @"
+            SELECT COUNT(*)
+            FROM Reservations
+            WHERE StudentNo = @stud
+            AND (Status = 'Accepted' OR Status = 'Fulfilled')
+        ";
+
+                using (var cmd = new SQLiteCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@stud", studentNo);
+                    long count = (long)cmd.ExecuteScalar();
+                    return count > 0;  // true = cannot reserve
+                }
+            }
+        }
+
 
         private void LoadCategoryComboBox()
         {

@@ -426,5 +426,9 @@ namespace Library_Management_System.User_Control
             RefreshNoResultLayout("No reservations yet", "Reserved books will appear here.");
         }
 
+        private void txtSearch_TextChanged(object sender, EventArgs e)
+        {
+
+        }
     }
 }

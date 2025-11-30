@@ -773,7 +773,15 @@ namespace Library_Management_System
         {
             SetActiveButton(button5);
 
+            // Create a new instance of ReportControl
+            ReportControl reportsControl = new ReportControl();
+            reportsControl.Dock = DockStyle.Fill;
+
+            // Clear the container and add ReportControl
+            panelContainer.Controls.Clear();
+            panelContainer.Controls.Add(reportsControl);
         }
+
 
         private void panel2_Paint(object sender, PaintEventArgs e)
         {
