@@ -18,8 +18,8 @@ namespace LibraryManagementSystem
             Data.Db.EnsureCreated();
 
             // Run your startup form
-            Application.Run(new PreLoginButtons());// Student Side/Panel
-            //Application.Run(new PreLoginButtons2());//Admin Side/Panel
+            //Application.Run(new PreLoginButtons());// Student Side/Panel
+            Application.Run(new PreLoginButtons2());//Admin Side/Panel
         }
     }
 }
