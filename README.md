@@ -9,18 +9,12 @@ A C# Windows Forms application for managing a library, using **SQLite** as the d
 - SQLite (CLI tool) installed on your system
 - 
 ## Setup Instructions
-1. Clone the repository:
+1. Clone the repository: https://github.com/Gabbbyyyyyyyyy/Library-Management-System.git
    
-  https://github.com/Gabbbyyyyyyyyy/Library-Management-System.git
+2.  Download System.Data.SQLite.Core and Newtonsoft.Json
 
-   download System.Data.SQLite.Core and Newtonsoft.Json
-   then copy it from data then past it in the bin debug data.
-   
-   
-3. Open the solution in **Visual Studio**.
+3. Copy the library.db in the Data and go to bin debug Data, then delete the library.db in there then paste the new library.db 
 
-4. Restore NuGet packages if required.
-
-5. Build and run the project.
+4. Build and run the project.
 
 
